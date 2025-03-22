@@ -1,0 +1,260 @@
+﻿
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<div id="MapModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Harita Geçmişi</h6>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-sm-12">
+
+                            <div id="map2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-9">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="$('#MapModal').modal('hide')"><i class="fa fa-times"></i> Ekranı Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    #map2 {
+        height: 75vh;
+    }
+
+    path.leaflet-interactive.animate {
+        stroke-dasharray: 1920;
+        stroke-dashoffset: 1920;
+        animation: dash 20s linear 5s forwards;
+    }
+
+    @@keyframes dash {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    .leaflet-marker-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        line-height: 1;
+        color: #fff;
+        font-size: 12px;
+        box-shadow: 0px 0px 10px #ff0000;
+        border-radius: 100%;
+        border: 2px solid #fff;
+        background: #ff3939;
+    }
+
+        .active-sidebar .leaflet-marker-icon,
+        .leaflet-marker-icon:hover {
+            animation: border-pulse 1.5s infinite;
+        }
+
+    .leaflet-marker-icon-start {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        line-height: 1;
+        color: #fff;
+        font-size: 11px;
+        box-shadow: 0px 0px 10px #181a18;
+        border-radius: 100%;
+        border: 2px solid #fff;
+        background: #181a18;
+        z-index: 9999999999 !important;
+    }
+
+        .active-sidebar .leaflet-marker-icon-start,
+        .leaflet-marker-icon-start:hover {
+            animation: border-pulse 1.5s infinite;
+        }
+
+    .leaflet-marker-icon-end {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        line-height: 1;
+        color: #fff;
+        font-size: 11px;
+        box-shadow: 0px 0px 10px #4e39ff;
+        border-radius: 100%;
+        border: 2px solid #fff;
+        background: #4e39ff;
+        z-index: 9999999999 !important;
+    }
+
+        .active-sidebar .leaflet-marker-icon-end,
+        .leaflet-marker-icon-end:hover {
+            animation: border-pulse 1.5s infinite;
+        }
+</style>
+
+<script>
+
+    //Mesai dışı harita ekranı
+    function funcGetOutOfHoursMap(vecOperationId) {
+        loadMap2(vecOperationId);
+        //sendAjxForm({ vecOperationId: vecOperationId },
+        //    "/OutOfHour/GetOutOfHourHistoryMap",
+        //    function (e) {
+        //        if (e.length > 0) {
+        //            loadMap2(e);
+        //            $('#MapModal').modal("show");
+        //        } else {
+        //            map.remove()
+        //            ShowMessage("info", "Bilgi", "Koordinat bilgisi bulunamadı");
+        //            map = new L.Map('map2');
+        //        }
+        //    }, "GET");
+    }
+
+    var markers = [];
+    var markersPopup = [];
+    var map = new L.Map('map2');
+    async function fetchData(url) {
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            $('#loadingEffect').css("display", "none");
+
+            return data;
+        } catch (err) { }
+    }
+
+    function loadMap2(vecOperationId) {
+        $('#loadingEffect').css("display", "flex");
+        map.remove();
+        var googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+        var googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+        var googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+        var googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+        var base = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+            renderer: L.canvas(),
+            subdomains: 'Tech',
+            attribution: 'Harita',
+        });
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: 'Harita'
+        });
+
+        map = L.map('map2', {
+            layers: [googleStreets],
+            fullscreenControl: true,
+            fullscreenControlOptions: { // optional
+                title: "Tam Ekran",
+                titleCancel: "Tam Ekrandan Çık"
+            }
+        });
+
+        var baseMaps = {
+            "OpenStreetMap": base,
+            "Mapbox Streets": osm,
+            "Google Streets": googleStreets,
+            "Google Hybrid": googleHybrid,
+            "Google Sat": googleSat,
+            "Google Terrain": googleTerrain
+        };
+
+        var layerControl = L.control.layers(baseMaps).addTo(map);
+        map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text.
+
+        let featureGroups = [];
+        let groupBounds;
+        let latlngs = [];
+
+
+        fetchData("/OutOfHour/GetOutOfHourHistoryMap?vecOperationId=" + vecOperationId)
+            .then((data) => {
+                data.map((marker, i, arr) => {
+                    var count = i + 1
+                    var coords = [marker.Enlem.replace(',', '.'), marker.Boylam.replace(',', '.')]
+                    var popupText = "";
+
+                    var className_ = "leaflet-marker-icon";
+
+                    if (i == 0) {
+                        className_ = "leaflet-marker-icon-start";
+                        popupText = "(Başlangıç Noktası) Hız: <b>" + marker.Hiz + " Km/h</b> <br/>Tarih: <b>" + marker.Tarih.replace('T', ' ').replace('+03:00', '') + "</b>";
+                    }
+                    else if (arr.length - 1 === i) {
+                        className_ = "leaflet-marker-icon-end";
+                        popupText = "(Bitiş Noktası) Hız: <b>" + marker.Hiz + " Km/h</b> <br/>Tarih: <b>" + marker.Tarih.replace('T', ' ').replace('+03:00', '') + "</b>";
+                    } 
+                    else
+                        popupText = "Hız: <b>" + marker.Hiz + " Km/h</b> <br/>Tarih: <b>" + marker.Tarih.replace('T', ' ').replace('+03:00', '') + "</b>";
+
+                    featureGroups.push(
+                        L.marker(coords, {
+                            icon: L.divIcon({
+                                className: className_,
+                                html: `${count}`,
+                                iconSize: L.point(30, 30),
+                                popupAnchor: [3, -5]
+                            }),
+                            "marker-options-id": count,
+                        }).bindPopup(popupText)
+                    );
+
+                    latlngs.push(coords);
+                });
+
+                // add polyline to map
+                L.polyline(latlngs, {
+                    color: "red",
+                    weight: 5,
+                }).addTo(map);
+
+                return data;
+            }).then((data) => {
+
+                featureGroups.map((marker) => {
+                    marker.addTo(map);
+                });
+
+                var centNumber = parseInt(data.length / 2);
+                var centerCoor = new L.LatLng(data[centNumber].Enlem.replace(',', '.'), data[centNumber].Boylam.replace(',', '.'));
+                map.setView(centerCoor, 13);
+
+                setTimeout(function () { map.invalidateSize() }, 800);
+
+                if (data.length > 0) {
+                    $('#MapModal').modal("show");
+                } else
+                    ShowMessage("info", "Bilgi", "Koordinat bilgisi bulunamadı");
+            });
+
+
+    }
+
+</script>

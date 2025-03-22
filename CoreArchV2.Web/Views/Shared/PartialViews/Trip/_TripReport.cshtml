@@ -1,0 +1,85 @@
+﻿<div id="TripReportModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Rapor</h6>
+            </div>
+            <div class="modal-body">
+                <div id="TripReport_FormId">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>Baş.Tarihi (*):</label>
+                                <input id="StartDate" table-param="StartDate" tabindex="2" class="form-control" type="date" autocomplete="off" table-description="Başlangıç Tarihi" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Bit.Tarihi (*):</label>
+                                <input id="EndDate" table-param="EndDate" tabindex="3" class="form-control" type="date" autocomplete="off" table-description="Bitiş Tarihi" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Müdürlük/Proje :</label>
+                                <select id="UnitId"
+                                        tabindex="1"
+                                        class="select-search"
+                                        table-param="UnitId"
+                                        table-id="comboBox-UnitId"
+                                        table-model-url="/Combo/GetUnitCmbx"
+                                        table-tool-type="comboBox"
+                                        table-description="Birim"
+                                        data-option-label="Birim Seçiniz">
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>---</label>
+                                <button type="button" onclick="funcGetReport()" style="width: 100%; margin-top: -2px;" class="btn border-warning text-warning-600 btn-flat btn-icon">
+                                    <i class="icon-circle-down2 position-left"></i> Araç Listele
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="TripReportDiv" style="background-color: aliceblue">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div id="tripReportBody" class="panel-body" style="height: 66vh; overflow: scroll;">
+                                    @* @await Html.PartialAsync("~/Views/Shared/PartialViews/Trip/Table/_TripReportTable.cshtml")*@
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-9">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#TripReport_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                @*  <div class="col-sm-4 col-md-3">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="funcGetReport()"><i class="fa fa-check"></i> Rapor Listele</button>
+                    </div>*@
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    function openTripReportModal() {
+        $('#tripReportBody').html("");
+        FormAllInputsClearNoCloseModal('#TripReport_FormId [table-param]');
+        $('#TripReportModal').modal("show");
+    }
+
+    function funcGetReport() {
+        var model = FormGetAllValue("#TripReport_FormId [table-param]");
+        if (model != null) {
+            var path = insertFormDataParamReturnString(model);
+            $('#tripReportBody').load('@Url.Action("GetReport","Trip")' + path);
+        }
+    }
+</script>

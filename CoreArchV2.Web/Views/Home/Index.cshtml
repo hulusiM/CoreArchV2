@@ -1,0 +1,566 @@
+﻿@using Microsoft.AspNetCore.Http
+@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Dashboard')</script>
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+    var unitId = HttpContextAccessor.HttpContext.Session.GetInt32("UnitId");
+    var parentUnitId = HttpContextAccessor.HttpContext.Session.GetInt32("ParentUnitId");
+}
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Home/_SideBarMenu.cshtml")
+
+<div class="row" style="margin: 3px -20px -5px -29px;">
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-info has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="fixVehicleDiv">---</h3>
+                    <span class="text-uppercase text-size-mini">Mülkiyet Araç</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-car icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-success has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="rentVehicleDiv">---</h3>
+                    <span class="text-uppercase text-size-mini">Kiralık Araç</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-weather-windy icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-warning has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="serviceVehicleDiv">---</h3>
+                    <span class="text-uppercase text-size-mini">Servisteki Araç</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-car2 icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-danger-300 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="allVehicleDiv">---</h3>
+                    <span class="text-uppercase text-size-mini">Toplam Araç</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-cabinet icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin: 3px -20px 2px -29px;">
+    <div class="col-md-4">
+        <input id="genelSearch" tabindex="1" type="text" autocomplete="off" class="form-control" placeholder="Sayfa içinde ara ...">
+    </div>
+    <div class="col-md-2">
+        <div class="checkbox checkbox-switchery switchery-sm">
+            <label>
+                <input id="allHistorySearch" type="checkbox" class="switchery">
+                Zimmet Geçmişi Dahil
+            </label>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <select id="mainPageParentUnitId"
+                tabindex="3"
+                table-param="ParentUnitId"
+                onchange="changeGetUnitId()"
+                class="select-search"
+                table-id="comboBox-mainPageParentUnitId"
+                table-model-url="/Combo/GetUnitJustParentCmbx"
+                table-tool-type="comboBox"
+                data-option-label="Müdürlük Seçiniz">
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select id="mainPageUnitId"
+                tabindex="4"
+                table-param="UnitId"
+                onchange="activeVehicle()"
+                class="select-search"
+                table-id="comboBox-mainPageUnitId"
+                table-model-url=""
+                table-tool-type="comboBox"
+                data-option-label="Proje Seçiniz">
+        </select>
+    </div>
+</div>
+
+<div class="row" style="margin: 0px -20px 0 -29px;">
+    <div class="col-md-6">
+        <div class="panel panel-info panel-bordered">
+            <div class="panel-heading">
+                <h6 class="panel-title text-semibold" id="rentHeadDiv">Kiralık Araçlar</h6>
+                <div class="heading-elements panel-nav">
+                    <ul class="icons-list panel-actions">
+                        <li style="display: none;">
+                            <input type="text" id="rentInput" class="form-control input-sm" autocomplete="off" placeholder="Ara..." hidden>
+                            <div class="form-control-feedback">
+                                <i class="icon-search4 text-size-base"></i>
+                            </div>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="icon-mul position-left"></i>
+                                <span class="caret"></span>
+                            </a>
+
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li> <a onclick="exportPrintWithJs('rentCarTableDiv')"><i class="icon-printer2 position-left" style="color:magenta"></i> Yazdır</a></li>
+                                @*<li> <a onclick="exportExcelWithJs('rentCarTableDiv','Kiralık Araçlar')"><i class="icon-file-excel position-left" style="color:magenta"></i> Excel</a></li>*@
+                            </ul>
+                        </li>
+                        <li style="margin-left: 20px;">
+                            <a href="#" id="panel-fullscreen" role="button" title="Tam Ekran">
+                                <i class="glyphicon glyphicon-resize-full"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="table-responsive" style="font-size: 11px; height: 50vh; overflow: scroll;">
+                <table border="1" cellpadding="5" id="rentCarTableDiv" class="table table-bordered ">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Plaka</th>
+                            <th class="text-center">Proje</th>
+                            <th class="text-center">Zimmetli Bilgileri</th>
+                            <th class="text-center">Firma</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center" id="rentCarListDiv">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-success panel-bordered">
+            <div class="panel-heading">
+                <h6 class="panel-title text-semibold" id="FixHeadDiv">Mülkiyet Araçlar</h6>
+                <div class="heading-elements panel-nav">
+                    <ul class="icons-list">
+                        <li style="display: none;">
+                            <input type="text" id="fixInput" class="form-control input-sm" autocomplete="off" placeholder="Ara..." hidden>
+                            <div class="form-control-feedback">
+                                <i class="icon-search4 text-size-base"></i>
+                            </div>
+                        </li>
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="icon-mul position-left"></i>
+                                <span class="caret"></span>
+                            </a>
+
+                            <ul class="dropdown-menu dropdown-menu-right">
+                                <li> <a onclick="exportPrintWithJs('fixCarTableDiv')"><i class="icon-printer2 position-left" style="color:magenta"></i> Yazdır</a></li>
+                                @*<li> <a onclick="exportExcelWithJs('fixCarTableDiv','Mülkiyet Araçlar')"><i class="icon-file-excel position-left" style="color:magenta"></i> Excel</a></li>*@
+                            </ul>
+                        </li>
+                        <li style="margin-left: 20px;">
+                            <a href="#" id="panel-fullscreen2" role="button" title="Tam Ekran">
+                                <i class="glyphicon glyphicon-resize-full"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="table-responsive" style="font-size: 11px; height: 50vh; overflow: scroll;">
+                <table border="1" cellpadding="5" id="fixCarTableDiv" class="table table-bordered ">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Plaka</th>
+                            <th class="text-center">Proje</th>
+                            <th class="text-center">Zimmetli Bilgileri</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center" id="fixCarListDiv">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{
+    if (Convert.ToBoolean(isAdmin))
+    {
+        <div class="row" style="margin: 0px -20px 0 -29px;">
+            <div class="col-md-6">
+                <div class="panel panel-warning panel-bordered">
+                    <div class="panel-heading">
+                        <h6 class="panel-title text-semibold" id="ServiceHeadDiv"></h6>
+                        <div class="heading-elements panel-nav">
+                            <ul class="icons-list">
+                                <li style="display: none;">
+                                    <input type="text" id="ServiceCarInput" class="form-control input-sm" autocomplete="off" placeholder="Ara...">
+                                    <div class="form-control-feedback">
+                                        <i class="icon-search4 text-size-base"></i>
+                                    </div>
+                                </li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="icon-mul position-left"></i>
+                                        <span class="caret"></span>
+                                    </a>
+
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li> <a onclick="exportPrintWithJs('serviceCarTableDiv')"><i class="icon-printer2 position-left" style="color:magenta"></i> Yazdır</a></li>
+                                    </ul>
+                                </li>
+                                <li style="margin-left: 20px;">
+                                    <a href="#" id="panel-fullscreen3" role="button" title="Tam Ekran">
+                                        <i class="glyphicon glyphicon-resize-full"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="font-size: 11px; height: 50vh; overflow: scroll;">
+                        <table border="1" cellpadding="5" id="serviceCarTableDiv" class="table table-bordered ">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Plaka</th>
+                                    <th class="text-center">İkame Araç</th>
+                                    <th class="text-center">Servise Giriş T.</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center" id="ServiceCarListDiv"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="panel panel-white">
+                    <div class="panel-heading">
+                        <h6 class="panel-title text-semibold" id="PoolHeadDiv"></h6>
+                        <div class="heading-elements panel-nav">
+                            <ul class="icons-list">
+                                <li style="display: none;">
+                                    <input type="text" id="PoolCarInput" class="form-control input-sm" autocomplete="off" placeholder="Ara...">
+                                    <div class="form-control-feedback">
+                                        <i class="icon-search4 text-size-base"></i>
+                                    </div>
+                                </li>
+                                <li class="dropdown">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="icon-mul position-left"></i>
+                                        <span class="caret"></span>
+                                    </a>
+
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li> <a onclick="exportPrintWithJs('emptyCarTableDiv')"><i class="icon-printer2 position-left" style="color:magenta"></i> Yazdır</a></li>
+                                        @*<li> <a onclick="exportExcelWithJs('emptyCarTableDiv','Havuzda')"><i class="icon-file-excel position-left" style="color:magenta"></i> Excel</a></li>*@
+                                    </ul>
+                                </li>
+                                <li style="margin-left: 20px;">
+                                    <a href="#" id="panel-fullscreen4" role="button" title="Tam Ekran">
+                                        <i class="glyphicon glyphicon-resize-full"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="font-size: 11px; height: 50vh; overflow: scroll;">
+                        <table border="1" cellpadding="5" id="emptyCarTableDiv" class="table table-bordered ">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Plaka</th>
+                                    <th class="text-center">Durum</th>
+                                    <th class="text-center">Demirbaş</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-center" id="PoolCarListDiv"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <script>
+            $(document).ready(function () {
+                if (@isAdmin != true) {
+                    $('.vehicleActionButtons').remove();
+                    $("#VehicleRent_FormId :input").attr("disabled", true);
+                    $("#VehicleFixture_FormId :input").attr("disabled", true);
+                    $("#VehicleContract_FormId :input").attr("disabled", true);
+                    $("#VehicleAmount_FormId :input").attr("disabled", true);
+                    $("#VehicleExaminateDate_FormId :input").attr("disabled", true);
+                    $("#Vehicle_File :input").attr("disabled", true);
+                    $("#VehicleDebit_FormId :input").attr("disabled", true);
+                }
+            });
+        </script>
+    }
+}
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleModal.cshtml")
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleFileSendMailModal.cshtml")
+
+
+<script>
+    $(document).ready(function () {
+        if (@isAdmin != true) {
+            $('#mainPageParentUnitId').val(@parentUnitId).trigger("change");
+
+            if (@unitId > 0)
+                setTimeout(function () { setUnit(@unitId, "mainPageUnitId"); }, 500);
+        } else {
+            activeVehicle();
+            getServiceList();
+        }
+
+        $('#genelSearch').on('input', function (e) {
+            var value = $(this).val();
+            var isDebitHistoryChecked = $('#allHistorySearch').is(':checked');
+            if (isDebitHistoryChecked && value.length > 4) //debit history search
+                activeVehicle();
+            else if (!isDebitHistoryChecked && value.trim() != '')
+                setChangeInputs(value);
+            else if (value.trim() == '')
+                activeVehicle();
+        });
+
+        function setChangeInputs(value) {
+            $('#rentInput').val(value).change();
+            $('#fixInput').val(value).change();
+            $('#ServiceCarInput').val(value).change();
+            $('#PoolCarInput').val(value).change();
+        }
+
+        var messageCount = 0;
+        $("#allHistorySearch").change(function () {
+            var val = $('#genelSearch');
+            if (this.checked) {
+                if (val.val().length > 4) {
+                    activeVehicle();
+                } else {
+                    setChangeInputs();
+                    val.attr("placeholder", "En az 5 harf giriniz ...");
+                }
+                if (messageCount == 0)
+                    ShowMessage("info", "Arama Bilgi", "Plakaya bağlı zimmet geçmişi içerisinde </br><b style='color:orange'>Müdürlük, Proje,Arvento No ve Zimmetli Adı/Soyadı</b> araması yapar.");
+                messageCount++;
+            } else {
+                activeVehicle();
+                val.attr("placeholder", "Sayfa içinde ara ...");
+            }
+
+            val.focus();
+        });
+
+        $("#rentInput").on("change onkeyup paste input",
+            function () {
+                var value = $(this).val().toLocaleLowerCase('tr-TR');
+                $("#rentCarListDiv tr").filter(function () {
+                    $(this).toggle($(this).text().toLocaleLowerCase('tr-TR').indexOf(value) > -1);
+                });
+                $('#rentHeadDiv').html('Kiralık Araçlar ' + '<span class="badge">' + $('#rentCarListDiv tr:visible').length + '</span>');
+            });
+
+        $("#fixInput").on("change onkeyup paste input",
+            function () {
+                var value = $(this).val().toLocaleLowerCase('tr-TR');
+                $("#fixCarListDiv tr").filter(function () {
+                    $(this).toggle($(this).text().toLocaleLowerCase('tr-TR').indexOf(value) > -1);
+                });
+                $('#FixHeadDiv').html('Mülkiyet Araçlar ' + '<span class="badge">' + $('#fixCarListDiv tr:visible').length + '</span>');
+            });
+
+        $("#ServiceCarInput").on("change onkeyup paste input",
+            function () {
+                var value = $(this).val().toLocaleLowerCase('tr-TR');
+                $("#ServiceCarListDiv tr").filter(function () {
+                    $(this).toggle($(this).text().toLocaleLowerCase('tr-TR').indexOf(value) > -1);
+                });
+                $('#PoolHeadDiv').html('Havuzdaki Araçlar ' + '<span class="badge bg-warning-400">' + $('#ServiceCarListDiv tr:visible').length + '</span>');
+            });
+
+        $("#PoolCarInput").on("change onkeyup paste input",
+            function () {
+                var value = $(this).val().toLocaleLowerCase('tr-TR');
+                $("#PoolCarListDiv tr").filter(function () {
+                    $(this).toggle($(this).text().toLocaleLowerCase('tr-TR').indexOf(value) > -1);
+                });
+                $('#ServiceHeadDiv').html('Servisteki Araçlar ' + '<span class="badge bg-warning-400">' + $('#PoolCarListDiv tr:visible').length + '</span>');
+            });
+    });
+
+    function changeGetUnitId() {
+        var parentUnitId = $('#mainPageParentUnitId').val();
+        sendAjxForm({ parentId: parentUnitId },
+            "/Combo/GetUnitChildCmbx",
+            function (e) {
+                funcCustomComboBox(e, "mainPageUnitId", "Proje Seçiniz");
+            },
+            "GET");
+        activeVehicle();
+    }
+
+    function activeVehicle() {
+        var parentUnitId = $('#mainPageParentUnitId').val();
+        var unitId = $('#mainPageUnitId').val();
+        var model = {
+            ParentUnitId: parentUnitId,
+            UnitId: unitId,
+            IsHistoryForDebitList: $('#allHistorySearch').is(':checked'),
+            Search: $('#genelSearch').val()
+        };
+        sendAjxForm(model,
+            "/Home/ActiveVehicleCount",
+            function (data) {
+                $('#allVehicleDiv').text(data.AllVehicle);
+                $('#serviceVehicleDiv').text(data.ServiceInVehicle.length);
+                $('#rentVehicleDiv').text(data.RentVehicle.length);
+                $('#fixVehicleDiv').text(data.FixVehicle.length);
+                setRentCar(data.RentVehicle);
+                setFixCar(data.FixVehicle);
+                setPoolCar(data.InPoolVehicle);
+
+                setTimeout(function () { $(".table").removeClass('').show() }, 2000);
+            }, "GET");
+    }
+
+    function setRentCar(data) {
+        $('#rentHeadDiv').html('Kiralık Araçlar ' + '<span class="badge">' + data.length + '</span>');
+        $('#rentCarListDiv tr').remove();
+        var result = "";
+        for (var i = 0; i < data.length; i++) {
+            result += '<tr><td> ' +
+                data[i].Plate +
+                ' </td>' +
+                '<td> ' +
+                data[i].UnitName +
+                ' </td>' +
+                '<td style="display:none;"> ' +
+                data[i].ArventoNo +
+                ' </td>' +
+                '<td> ' +
+                data[i].DebitNameSurname +
+                '</br></td>' +
+                '<td> ' +
+                data[i].RentFirmName +
+                ' </td></tr >';
+        }
+        $('#rentCarListDiv').append(result);
+    }
+
+    function setFixCar(data) {
+        $('#FixHeadDiv').html('Mülkiyet Araçlar ' + '<span class="badge">' + data.length + '</span>');
+        $('#fixCarListDiv tr').remove();
+        var result = "";
+        for (var i = 0; i < data.length; i++) {
+            result += '<tr><td> ' +
+                data[i].Plate +
+                ' </td>' +
+                '<td> ' +
+                data[i].UnitName +
+                ' </td>' +
+                '<td style="display:none;"> ' +
+                data[i].ArventoNo +
+                ' </td>' +
+                '<td> ' +
+                data[i].DebitNameSurname +
+                '</td></tr >';
+        }
+        $('#fixCarListDiv').append(result);
+    }
+
+    function setPoolCar(data) {
+        $('#PoolHeadDiv').html('Havuzdaki Araçlar ' + '<span class="badge bg-warning-400">' + data.length + '</span>');
+        $('#PoolCarListDiv tr').remove();
+        var result = "";
+        for (var i = 0; i < data.length; i++) {
+            result += '<tr><td> ' +
+                data[i].Plate +
+                ' </td>' +
+                '<td> ' +
+                data[i].DebitNameSurname +
+                ' </td>' +
+                '<td> ' +
+                data[i].FixtureName +
+                ' </td></tr >';
+        }
+        $('#PoolCarListDiv').append(result);
+    }
+
+    function getServiceList() {
+        sendAjxForm("", "/Home/GetLastVehicleDebit",
+            function (data) {
+                $('#ServiceHeadDiv').html('Servisteki Araçlar ' + '<span class="badge bg-warning-400">' + data.length + '</span>');
+                $('#ServiceCarListDiv tr').remove();
+                var result = "";
+                for (var i = 0; i < data.length; i++) {
+                    result += '<tr><td> ' +
+                        data[i].Plate +
+                        ' </td>' +
+                        '<td> ' +
+                        (data[i].Plate2 == null ? '<span class="label bg-orange-300 full-width">Yok</span>' : ('<span class="label bg-success-300 full-width">' + data[i].Plate2 + '</span>')) +
+                        ' </td>' +
+                        '<td> ' +
+                        ConvertJSONJustDateFormatISO(data[i].DebitStartDate) +
+                        ' </td></tr >';
+                }
+                $('#ServiceCarListDiv').append(result);
+            },
+            "GET");
+    }
+
+</script>
+
+<script src="~/js/jsutilities/fullscreen.js"></script>
+<style>
+    .panel-actions {
+        margin-bottom: 0;
+        margin-top: -20px;
+        text-align: right;
+    }
+
+        .panel-actions a {
+            color: #333;
+        }
+
+    .panel-fullscreen {
+        bottom: 0;
+        display: block;
+        height: 100%;
+        left: 0;
+        overflow: auto;
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 100%;
+        z-index: 9999;
+    }
+</style>

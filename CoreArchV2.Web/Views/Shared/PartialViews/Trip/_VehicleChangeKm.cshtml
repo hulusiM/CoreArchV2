@@ -1,0 +1,114 @@
+﻿<div id="VehicleKmChangeModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Araç Km Güncelle</h6>
+            </div>
+            <div class="modal-body">
+                <div id="VehicleKmChange_FormId">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Araç Plaka (*) :</label>
+                                <select id="select-vehicleId-km"
+                                        tabindex="1"
+                                        onchange="getVehicleKm()"
+                                        table-param="vehicleId"
+                                        class="select2-container select2-selection--single">
+                                </select>
+                            </div>
+                            <div class="col-sm-3">
+                                <label>Güncel Km :</label>
+                                <input id="vehicleKm" tabindex="2" type="text" class="form-control moneyCurrency" autocomplete="off" disabled>
+                            </div>
+                            <div class="col-sm-3">
+                                <label>Değiştirilecek Km (*):</label>
+                                <input id="CurrentVehicleKm" table-param="StartKm" tabindex="3" type="text" table-description="Km" class="form-control moneyCurrency" autocomplete="off" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Değiştirme Gerekçesi (*)</label>
+                        <textarea rows="3" cols="5"
+                                  table-param="Description"
+                                  tabindex="4"
+                                  class="form-control"
+                                  table-description="Gerekçe"
+                                  placeholder="Açıklama giriniz" required></textarea>
+                    </div>
+                </div>
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#VehicleKmChange_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="funcUpdateVehicleKm()"><i class="fa fa-check"></i> Km Güncelle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-vehicleId-km').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    function changeVehicleKm() {
+        FormAllInputsClearNoCloseModal('#VehicleKmChange_FormId [table-param]');
+        $('#VehicleKmChangeModal').modal("show");
+    }
+
+    function getVehicleKm() {
+        var vehicleId = $('#select-vehicleId-km').val();
+        if (vehicleId > 0) {
+            sendAjxForm({vehicleId:vehicleId}, "/Trip/GetVehicleLastKm",
+                function (e) {
+                    $('#vehicleKm').val(formatMoney(e.LastKm,0));
+                    //ShowMessage("info", "Bilgi", ("Seçili plakanın güncel km değeri: <b>"+formatMoney(e,0)+"</b>"));
+                }, 'POST');
+        }
+    }
+
+    function funcUpdateVehicleKm() {
+        var model = FormGetAllValue("#VehicleKmChange_FormId [table-param]");
+        if (model != null) {
+            if (model.StartKm == $('#vehicleKm').val()) {
+                ShowMessage("info", "Bilgi", "Aynı km değeri girilemez");
+            } else {
+             sendAjxForm(model, "/Trip/UpdateVehicleKm",
+                function (e) {
+                    if (e.IsSuccess) {
+                        $('#VehicleKmChangeModal').modal("hide");
+                        ShowMessage("success", "Bilgi", e.Message);
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+                }, 'POST');
+            }
+        }
+    }
+</script>

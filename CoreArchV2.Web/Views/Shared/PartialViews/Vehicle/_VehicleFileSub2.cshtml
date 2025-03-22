@@ -1,0 +1,147 @@
+﻿@using CoreArchV2.Core.Enum
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+}
+
+<div class="form-group">
+    <div class="row">
+        <div class="col-md-12">
+            <label class="control-label vehiclePictureDate"></label>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <label>Fotoğraf Tipi :</label>
+            <select id="photographyTypeId"
+                    class="select-search select-results-color"
+                    tabindex="2"
+                    table-param="photographyTypeId"
+                    onchange="changePhotographyType()">
+                <option value="@((int)TypeList.FirstVehicleImage)">İlk Fotoğraflar</option>
+                <option value="@((int)TypeList.LastVehicleImage)">Son Fotoğraflar</option>
+                <option value="@((int)TypeList.AccidentVehicleImage)">Kaza Fotoğraflar</option>
+            </select>
+        </div>
+    </div>
+    <input id="VehiclePhysicalIdForMail" type="text" table-param="VehiclePhysicalIdForMail" hidden />
+    <div class="row" style="margin-top:5px;">
+        <div class="col-md-12">
+            <div class="file-loading">
+                <input id="imageVehicleLoadFromUser" tabindex="1" type="file" multiple>
+            </div>
+            <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "jpeg"</span>
+        </div>
+    </div>
+    <div class="">
+        <div class="row vehicleActionButtons">
+            <div class="col-md-6">
+            </div>
+            <div class="col-md-3">
+                <button onclick="FileSendMailOpenModal()" tabindex="2" type="button" class="btn btn-default btn-info full-width"><i class="icon-make-group position-left"></i> Mail Gönder</button>
+            </div>
+            <div class="col-md-3">
+                <button onclick="FileUploadVehiclePhotography()" tabindex="2" type="button" class="btn btn-default btn-success full-width"><i class="icon-make-group position-left"></i> Dosya Yükle</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+    function changePhotographyType() {
+        var typeId = $('#photographyTypeId').val();
+        if (typeId > 0) {
+            getVehicleImageMobileLoadList(typeId)
+        } else
+            ShowMessage("info", "Bilgi", "Fotoğraf Tipi Seçiniz");
+    }
+
+</script>
+
+<script>
+    $('#VehicleFile2_toggle').click(function () {
+        $('#photographyTypeId').val(@((int)TypeList.LastVehicleImage)).change();
+    });
+
+    function getVehicleImageMobileLoadList(typeId) {
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            var model = {
+                vehicleId: vehicleId,
+                typeId: typeId
+            };
+            sendAjxForm(model,
+                "/Vehicle/GetByVehicleIdLastLoadImageList",
+                function (e) {
+                    if (e.files != null) {
+                        var arr = new Array();
+                        var deleteObj = [];
+                        $('#VehiclePhysicalIdForMail').val(e.VehiclePhysicalImageId);
+
+                        for (var i = 0; i < e.files.length; i++) {
+                            var imgUrl = "/uploads/physicalimage/" + e.files[i].Name;
+                            var type = e.files[i].Extention + '';
+
+                            arr[i] = '<object class="kv-preview-data file-preview-image" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                            deleteObj[i] = {
+                                type: type,
+                                size: e.files[i].FileSize,
+                                caption: e.files[i].Name,
+                                url: "/File/FileDeletePhysicalImage",
+                                key: e.files[i].Id
+                            };
+                        }
+                        setImageVehicleLoadFromUser(arr, deleteObj);
+
+                        //$('.file-caption-main').css("display", "none");
+                        //$('.kv-file-remove').css("display", "none");
+
+                        $('.vehiclePictureDate').html("<b>Toplam " + e.files.length + " Fotoğraf - Kullanıcı: " + e.DebitNameSurname + " (İşlem Tarihi: " + ConvertJSONDateFormatISO(e.CreatedDate) + ")</b>")
+
+                        var message = e.files.length + " adet fotoğraf bulundu.<br/> Bu fotoğraflar " + ConvertJSONDateFormatISONoBackgroundColor(e.CreatedDate) + " tarihinde <b>" + e.DebitNameSurname + "</b> tarafından yüklenmiştir.";
+                        ShowMessage("info", "Bilgi", message, 10000);
+                    } else {
+                        $('.vehiclePictureDate').html("<b style='color:red;'>Bilgi: Araca ait fotoğraf bulunamadı.</b>");
+                        ShowMessage("info", "Bilgi", "Araca ait fotoğraf bulunamadı");
+                        setImageVehicleLoadFromUser(null, null);
+                        //$('.file-caption-main').css("display", "none");
+                    }
+                }, 'GET');
+        }
+    }
+
+    function FileUploadVehiclePhotography() {
+        var vehicleId = $('#vehicle_Id').val();
+        var typeId = $('#photographyTypeId').val();
+
+        var files = $('#imageVehicleLoadFromUser').fileinput('getFileList');
+        var formData = new FormData();
+        for (var i = 0; i != files.length; i++)
+            formData.append("files", files[i]);
+
+        if (files.length > 0) {
+            var url = '/Vehicle/VehiclePhotographyInsert?vehicleId=' + vehicleId + "&typeId=" + typeId
+            sendAjxFormFileUpload(formData,
+                url,
+                function (e) {
+                    if (e.IsSuccess) {
+                        getVehicleImageMobileLoadList(typeId);
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı");
+                    } else {
+                        if (e == 'NotAuthorizationCore') {
+                            var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                            ShowMessage("error", "Yetkisiz İşlem", message);
+                        } else
+                            ShowMessage("error", "Hata", e.Message);
+                    }
+                },
+                'POST');
+        } else
+            ShowMessage("info", "Bilgi", "Lütfen dosya seçiniz");
+    }
+
+</script>

@@ -1,0 +1,122 @@
+﻿@model ELookUpListDto
+
+<div id="lookUpListModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Parametre Ekle</h6>
+            </div>
+            <div class="modal-body">
+                <div id="lookUpList_FormId">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label>Parametre (*) :</label>
+                                @{
+                                    if (Model.SearchTypeName == "Tender")
+                                    {
+                                        <select id="lookUpListTypeId"
+                                                class="select-search"
+                                                tabindex="1"
+                                                table-param="Type"
+                                                table-id="comboBox-MaintenanceTypeId"
+                                                table-model-url="/Combo/LookUpListTender"
+                                                table-tool-type="comboBox"
+                                                table-description="Parametre"
+                                                data-option-label="Parametre Seçiniz" required>
+                                        </select>
+                                    }
+                                    else if (Model.SearchTypeName == "Vehicle")
+                                    {
+                                        <select id="lookUpListTypeId"
+                                                class="select-search"
+                                                tabindex="1"
+                                                table-param="Type"
+                                                table-id="comboBox-MaintenanceTypeId"
+                                                table-model-url="/Combo/LookUpList"
+                                                table-tool-type="comboBox"
+                                                table-description="Parametre"
+                                                data-option-label="Parametre Seçiniz" required>
+                                        </select>
+                                    }
+                                }
+
+                            </div>
+                            <div class="col-md-4">
+                                <label>Şehir :</label>
+                                <select id="CityId2"
+                                        class="select-search"
+                                        tabindex="2"
+                                        table-param="CityId"
+                                        table-id="comboBox-CityIdLookUpList"
+                                        table-model-url="/Combo/GetCityCmbx"
+                                        table-tool-type="comboBox"
+                                        data-option-label="Şehir Seçiniz">
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label>İsim (*) :</label>
+                                <input table-param="Name" tabindex="3" autocomplete="off" type="text" class="form-control" table-description="İsim" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Telefon :</label>
+                                <input table-param="Phone" tabindex="4" autocomplete="off" type="text" class="form-control" table-description="Telefon">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Mail :</label>
+                                <input table-param="EMail" tabindex="5" autocomplete="off" type="text" class="form-control" table-description="E-Mail">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Açıklama</label>
+                        <textarea rows="3" cols="5" table-param="Description" tabindex="6" class="form-control" placeholder="Açıklama"></textarea>
+                    </div>
+                </div>
+
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="8" class="btn btn-danger full-width" onclick="funcCancelModal('#lookUpList_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="7" type="submit" class="btn btn-primary full-width" onclick="funcSaveLookUpList()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function lookUpListOpenModal() {
+        FormAllInputsClearNoCloseModal("#lookUpList_FormId [table-param]");
+        $('#lookUpListModal').modal("show");
+    }
+
+    function funcSaveLookUpList() {
+        var model = FormGetAllValue("#lookUpList_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model,
+                '/Utility/InsertLookUpList',
+                function(e) {
+                    if (e.IsSuccess) {
+                        ShowMessage("success", "Bilgi", "Kayıt başarıyla eklendi");
+                        $('#lookUpListModal').modal("hide");
+                    } else
+                        ShowMessage("error", "Bilgi", e.Message);
+
+                },
+                'POST');
+        }
+    }
+</script>

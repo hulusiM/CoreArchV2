@@ -1,0 +1,47 @@
+﻿<div id="NoticeUnitHistoryModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close closeHistoryModal" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Talep Geçmiş Detay</h6>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="background-color: aliceblue;">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel-body">
+                                <div id="historyVehicleListBody"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-9">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="8" class="btn btn-danger full-width closeHistoryModal"><i class="fa fa-times"></i> Ekranı Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $('.closeHistoryModal').click(function(){
+        $('#NoticeUnitHistoryModal').modal("hide");
+        $("#historyVehicleListBody").empty();
+    });
+    
+    function historyNoticeVehicleList(noticeUnitId,state,createdBy) {
+        $('#historyVehicleListBody').load("/Notice/GetHistoryWithStateVehicleList",
+            {
+                Id: noticeUnitId, 
+                State : state,
+                CreatedBy : createdBy
+            });
+        $('#NoticeUnitHistoryModal').modal("show");
+    }
+</script>

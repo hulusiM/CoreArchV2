@@ -1,0 +1,210 @@
+﻿@using CoreArchV2.Core.Enum
+<div id="TenderDetail_FormId">
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Hazırlayan Kişi (*) :</label>
+                <select id="select-PreparedUserId"
+                        tabindex="2"
+                        table-description="Gönderen Kişi"
+                        table-param="PreparedUserId"
+                        class="select2-container select2-selection--single" required>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Gönderilen Kişi (*) :</label>
+                <select id="SentUserId"
+                        class="select-search"
+                        table-param="SentUserId"
+                        table-id="comboBox-SentUserId"
+                        table-model-url="@*/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TenderInstitutionPersonType)*@"
+                        table-tool-type="comboBox"
+                        tabindex="2"
+                        table-description="Gönderilen Kişi"
+                        data-option-label="Kişi Seçiniz" required>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Fatura Tarihi :</label>
+                <input table-param="InvoiceDate" tabindex="7" type="date" class="form-control">
+            </div>
+            <div class="col-md-4">
+                <label>Teklif Tarihi (*):</label>
+                <input table-param="TenderDate" tabindex="7"
+                       table-description="Teklif Tarihi" type="date" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label>Para Birimi :</label>
+                <select id="MoneyTypeId"
+                        class="select-search"
+                        table-param="MoneyTypeId"
+                        table-id="comboBox-MoneyTypeId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.MoneyType)"
+                        table-tool-type="comboBox"
+                        tabindex="2"
+                        table-description="Para Birimi"
+                        data-option-label="Para Birimi Seçiniz">
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Teklif Bedeli (*):</label>
+                <input id="TenderPrice" table-param="TenderPrice" tabindex="9" type="text" class="form-control moneyCurrency"
+                       autocomplete="off" table-description="Teklif Bedeli" placeholder="Teklif bedeli giriniz" required>
+            </div>
+            <div class="col-md-4">
+                <label>Satış Maliyeti (*):</label>
+                <input id="SellingCost" table-param="SellingCost" tabindex="9" type="text" class="form-control moneyCurrency"
+                       autocomplete="off" table-description="Satış Maliyeti" placeholder="Satış maliyeti giriniz" required>
+            </div>
+            <div class="col-md-4">
+                <label>Kazanç :</label>
+                <input id="gainCost" tabindex="9" type="text" class="form-control moneyCurrency" placeholder="Kazanç" disabled>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Döviz Kur (TL Cinsinden) (*):</label>
+                <input id="ExchangePrice" table-param="ExchangePrice" tabindex="9" type="text" class="form-control moneyCurrency"
+                       autocomplete="off" table-description="Döviz Kuru Bedeli" placeholder="Döviz Kuru bedeli giriniz" required>
+            </div>
+            <div class="col-md-4">
+                <label>Fatura Bedeli :</label>
+                <input id="InvoicePrice" table-param="InvoicePrice" tabindex="9" type="text" class="form-control moneyCurrency"
+                       autocomplete="off" placeholder="Fatura bedeli giriniz">
+            </div>
+
+            <div class="col-md-4">
+                <label>Evrak No :</label>
+                <input table-param="DocumentNo" tabindex="9" type="text" class="form-control"
+                       autocomplete="off" placeholder="Evrak numarası giriniz">
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Açıklama</label>
+        <textarea rows="3" cols="5" table-param="Description" tabindex="11" class="form-control" placeholder="Açıklama"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">Belge :</label>
+        <div class="file-loading">
+            <input id="imageUploadForm" tabindex="14" type="file" multiple>
+        </div>
+        <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+    </div>
+
+    @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+
+    <div class="row">
+        <div class="col-sm-4 col-md-6">
+        </div>
+        <div class="col-sm-4 col-md-3">
+            <button type="button" tabindex="4" class="btn btn-danger full-width" onclick="funcCancelModal('#TenderDetail_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+        </div>
+        <div class="col-sm-4 col-md-3">
+            <button tabindex="3" type="submit" class="btn btn-primary full-width" onclick="funcSaveTenderDetail()"><i class="fa fa-check"></i> Kaydet</button>
+        </div>
+    </div>
+</div>
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script>
+    $('#select-PreparedUserId').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+
+<script>
+    function funcSaveTenderDetail() {
+        var model = FormGetAllValue("#TenderDetail_FormId [table-param]");
+        if (model != null) {
+            var newModel = {};
+            var files = $('#imageUploadForm').fileinput('getFileList');
+            var formData = new FormData();
+            for (var i = 0; i != files.length; i++)
+                formData.append("files", files[i]);
+
+            newModel = FormDataAppendModelValue(formData, "#TenderDetail_FormId [table-param]");
+            newModel.append("TenderId", $('#tender_Id').val());
+            sendAjxFormFileUpload(newModel,
+                '/Tender/InsertTenderDetail',
+                function (e) {
+                    if (e.IsSuccess) {
+                        if (model.Id > 0)
+                            ShowMessage("success", "Bilgi", "Düzenleme başarılı");
+                        else {
+                            ShowMessage("success", "Bilgi", "Kayıt başarıyla eklendi");
+                        }
+                        $('#EditInsertModal').modal("hide");
+                    } else {
+                        if (e == 'NotAuthorizationCore') {
+                            var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                            ShowMessage("error", "Yetkisiz İşlem", message);
+                        } else
+                            ShowMessage("error", "Bilgi", e.Message);
+                    }
+                },
+                'POST');
+        }
+    }
+
+    $('#TenderDetail_toggle').click(function () {
+        if (historyButtonsActive) {
+            FormAllInputsClearNoCloseModal("#TenderDetail_FormId [table-param]");
+            setImage(null, null);
+        } else {
+            $('.nav-tabs a[href="#TenderInsert_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için teklif seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+    $("#TenderPrice").on('change onkeyup paste input',
+        function () {
+            var tenderPrice = $('#TenderPrice').val().replaceAll(',', '');
+            var sellingCost = $('#SellingCost').val().replaceAll(',', '');
+
+            if (tenderPrice == "") tenderPrice = 0;
+            if (sellingCost == "") sellingCost = 0;
+            var totalAmountDiscount = tenderPrice - sellingCost;
+            $('#gainCost').val(formatMoney(totalAmountDiscount));
+        });
+
+    $("#SellingCost").on('change onkeyup paste input',
+        function () {
+            var tenderPrice = $('#TenderPrice').val().replaceAll(',', '');
+            var sellingCost = $('#SellingCost').val().replaceAll(',', '');
+
+            if (tenderPrice == "") tenderPrice = 0;
+            if (sellingCost == "") sellingCost = 0;
+            var totalAmountDiscount = tenderPrice - sellingCost;
+            $('#gainCost').val(formatMoney(totalAmountDiscount));
+        });
+
+</script>

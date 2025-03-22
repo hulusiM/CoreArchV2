@@ -1,0 +1,40 @@
+﻿<div class="row">
+    <div class="panel panel-body border-top-teal">
+        <ul id="tenderHistoryUl" class="list-feed media-list">
+        </ul>
+    </div>
+</div>
+
+<script>
+    function funcTenderHistory() {
+        $('#tenderHistoryUl li').remove();
+        var tenderId = $('#tender_Id').val();
+        if (tenderId > 0) {
+            var model = { tenderId: tenderId };
+            sendAjxForm(model,
+                "/Tender/GetByIdTenderHistory",
+                function (e) {
+                    var result = "";
+                    if (e.length > 0) {
+                        for (var i = 0; i < e.length; i++) {
+                            result += '<li class="media"><div class="media-body">';
+                            result += "<strong>" +
+                                e[i].ProjectTypeName +
+                                "</strong> projesi <strong>" +
+                                ConvertJSONDateFormatISO(e[i].TransactionDate) +
+                                "</strong> tarihinde <strong>" +
+                                e[i].NameSurname +
+                                "</strong> kullanıcı tarafından " +
+                                e[i].StateName +
+                                "</div></li>";
+                        }
+                    } else
+                        result = '<li class="media"><div class="media-body">İhale/Satış ile ilgili herhangi bir hareket bulunamadı.</div></li>';
+
+                    $('#tenderHistoryUl').append(result);
+                },
+                'GET');
+        }
+    }
+
+</script>

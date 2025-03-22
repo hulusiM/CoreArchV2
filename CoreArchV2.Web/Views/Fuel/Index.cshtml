@@ -1,0 +1,540 @@
+﻿@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Araç Yönetimi / Yakıt Tanımları')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Araç Yakıt Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="excelModalOpen()"><i class="icon-file-excel position-left"></i> Excel'den Aktar</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                <i class="icon-mul position-left"></i>
+                Toplu İşlemler
+                <span class="caret"></span>
+            </a>
+
+            <ul class="dropdown-menu dropdown-menu-right">
+                <li> <a onclick="GetPublishFuelList()"><i class="icon-bell3 position-left" style="color:magenta"></i> Yayına Al</a></li>
+                <li><a onclick="GetPassiveFuelList()"><i class="icon-bell-cross position-left" style="color:red"></i> Yayından Kaldır</a></li>
+                <li> <a onclick="GetDeleteFuelList()"><i class="icon-trash position-left" style="color:red"></i> Toplu Sil</a></li>
+            </ul>
+        </li>
+        <li>
+            <a onclick="FuelModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-vehicleId"
+                                tabindex="1"
+                                table-param="vehicleId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="FuelStationId2"
+                                class="select-search"
+                                tabindex="2"
+                                table-param="FuelStationId"
+                                table-id="comboBox-FuelStationId2"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.FuelStationIdType)"
+                                table-tool-type="comboBox"
+                                table-description="İstasyon"
+                                data-option-label="İstasyon Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <input id="TransactionDate" table-param="TransactionDate" tabindex="3" class="form-control" type="month">
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableFuel"
+                           table-id="dataTable-Fuel"
+                           table-model-url="/Fuel/FuelLogGetAll"
+                           table-DatabaseName="/Fuel"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="Plate" style="text-align: center;">
+                                    Plaka
+                                </th>
+                                <th data-value="TransactionDate" data-type="datetime" style="text-align: center;">
+                                    Tarih
+                                </th>
+                                <th data-value="FuelStationName" style="text-align: center;">
+                                    İstasyon Adı
+                                </th>
+                                <th data-value="TotalAmount" data-type="money" style="text-align: center;">
+                                    Tutar
+                                </th>
+                                <th data-value="Km" data-type="decimal" style="text-align: center;">
+                                    Km
+                                </th>
+                                <th data-value="DiscountPercent" style="text-align: center;">
+                                    İskonto
+                                </th>
+                                <th data-value="TotalAmountDiscount" data-type="money" style="text-align: center;">
+                                    Genel Toplam
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Araç Yakıt Bilgileri</h6>
+            </div>
+            <div class="modal-body">
+                <div id="Fuel_FormId">
+                    <input type="text" id="fuelVehicleId" table-param="Id" hidden />
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <label>Araç (*) :</label>
+                                <select id="select-vehicleId2"
+                                        tabindex="1"
+                                        table-param="VehicleId"
+                                        table-description="Araç"
+                                        class="select2-container select2-selection--single" required>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label>Tedarikçi Firma (*) :</label>
+                                <select id="FuelStationId"
+                                        class="select-search"
+                                        tabindex="2"
+                                        table-param="FuelStationId"
+                                        table-id="comboBox-FuelStationId"
+                                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.FuelStationIdType)"
+                                        table-tool-type="comboBox"
+                                        table-description="Tedarikçi Firma"
+                                        data-option-label="Tedarikçi Firma Seçiniz" required>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Tarih (*):</label>
+                                <input id="TransactionDateFuel" table-param="TransactionDate" tabindex="3" class="form-control" type="date" placeholder="Tarih seçiniz" table-description="Tarih" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label>Mesafe (Km) :</label>
+                                <input id="Km" table-param="Km" tabindex="3" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="Mesafe (Km) giriniz">
+                            </div>
+                            <div class="col-md-3">
+                                <label>Yakıt Litre :</label>
+                                <input id="Liter" table-param="Liter" tabindex="3" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="Yakıt Litre giriniz">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <label>Tutar (*) :</label>
+                                <input id="Amount" table-param="TotalAmount" tabindex="4" type="text" class="form-control moneyCurrency" autocomplete="off" table-description="Tutar" placeholder="Tutar giriniz" required>
+                            </div>
+                            <div class="col-sm-4">
+                                <label>İskonto :</label>
+                                <input id="DiscountPercent" table-param="DiscountPercent" tabindex="5" type="text" class="form-control moneyCurrency5Places" autocomplete="off" table-description="İskonto Tutarı" placeholder="Yüzdelik İskonto giriniz">
+                            </div>
+                            <div class="col-sm-4">
+                                <label>Net Tutar (İskonto Düşülmüş) :</label>
+                                <input id="TotalAmountDiscount" type="text" class="form-control" placeholder="İskonto düşülmüş tutar" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label">Açıklama</label>
+                        <textarea rows="5" cols="5" id="Description" table-param="Description" tabindex="6" class="form-control" placeholder="Açıklama"></textarea>
+                    </div>
+                </div>
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="8" class="btn btn-danger full-width" onclick="funcCancelModal('#Fuel_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-4 col-md-3">
+                    <button id="vehicleSaveId" tabindex="7" type="submit" class="btn btn-primary full-width" onclick="funcSaveFuel()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="PublishFuelModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Yakıt Bilgileri Yayın</h6>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div id="PublishFuel_FormId" class="row" style="max-height: 300px; min-height: 100px; overflow: scroll;">
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#PublishFuel_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-6">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="SetPublishFuelList('PublishFuel_FormId',@((int)FuelPublisher.Publish))"><i class="fa fa-check"></i> Yayına Al</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="PassiveFuelModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Yakıt Bilgileri Toplu Pasife Al</h6>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div id="PassiveFuel_FormId" class="row" style="max-height: 300px; min-height: 100px; overflow: scroll;">
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#PassiveFuel_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-6">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="SetPublishFuelList('PassiveFuel_FormId',@((int)FuelPublisher.DisabledPublish))"><i class="fa fa-check"></i> Yayından Kaldır</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="DeleteFuelModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-pink-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Yakıt Bilgileri Toplu Silme</h6>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div id="DeleteFuel_FormId" class="row" style="max-height: 300px; min-height: 100px; overflow: scroll;">
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#DeleteFuel_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-6">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="SetPublishFuelList('DeleteFuel_FormId',@((int)FuelPublisher.Delete))"><i class="fa fa-check"></i> Toplu Sil</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleFuel/_FuelImportExcel.cshtml")
+
+<script>
+    $('#select-vehicleId').select2({
+        placeholder: 'Araç plaka giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-vehicleId2').select2({
+        dropdownParent: $('#EditInsertModal'),
+        placeholder: 'Araç Seçiniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    function FuelModalOpen() {
+        clearModal();
+        $('#EditInsertModal').modal("show");
+    }
+
+    //funcCustomDataTable(data.TireAllList, "dataTable-dataTableTireWarehouseInfo");
+    function SetPublishFuelList(id, publisher) {
+        var htmlTag = $("#" + id + ' [table-param]');
+        var model = new Array();
+        for (var i = 0; i < htmlTag.length; i++)
+            if ($('#' + htmlTag[i].id).is(':checked')) {
+                var date = $('#' + htmlTag[i].id).val() + '';
+                model[i] = date;
+            }
+
+        if (model.length > 0) {
+            sendAjxForm({ Dates: model, Publisher: publisher }, "/Fuel/SetPublishFuel",
+                function (e) {
+                    if (e == true) {
+                        if (publisher == @((int)FuelPublisher.Publish))
+                            GetPublishFuelList(true);
+                        else if(publisher == @((int)FuelPublisher.DisabledPublish))
+                            GetPassiveFuelList(true);
+                        else if (publisher ==@((int)FuelPublisher.Delete))
+                            GetDeleteFuelList();
+
+                        getNavbarMessages();
+                    } else
+                        ShowMessage("error", "Bilgi", "Hata oluştu");
+                }, 'POST');
+        } else
+            ShowMessage("info", "Bilgi", "Herhangi bir seçim yapılmadı");
+    }
+
+    function GetPublishFuelList(inModal = false) {
+        sendAjxForm({ publisher: @((int)FuelPublisher.DisabledPublish) }, "/Fuel/GetPublishFuel",
+            function (e) {
+                if (e.length > 0) {
+                    var result = "";
+                    for (var i = 0; i < e.length; i++)
+                        result += '<div class="checkbox"><label><input table-param="TransactionDate" value="' + e[i].DateName + '" id="chcbxT_' + i + '" type="checkbox">' + e[i].DateName + ' (' + e[i].ListCount + ' araç)</label></div>'
+
+                    $('#PublishFuel_FormId').html(result);
+                    $('#PublishFuelModal').modal("show");
+                } else {
+                    $('#PublishFuelModal').modal("hide");
+                    if (!inModal)
+                        ShowMessage("warning", "Bilgi", "Tüm yakıt bilgileri yayınlanmıştır");
+                }
+            }, 'GET');
+    }
+
+    function GetPassiveFuelList(inModal = false) {
+        sendAjxForm({ publisher: @((int)FuelPublisher.Publish) }, "/Fuel/GetPublishFuel",
+            function (e) {
+                if (e.length > 0) {
+                    var result = "";
+                    for (var i = 0; i < e.length; i++)
+                        result += '<div class="checkbox"><label><input table-param="TransactionDate" value="' + e[i].DateName + '" id="chcbxF_' + i + '" type="checkbox">' + e[i].DateName + ' (' + e[i].ListCount + ' araç)</label></div>'
+
+                    $('#PassiveFuel_FormId').html(result);
+                    $('#PassiveFuelModal').modal("show");
+                } else {
+                    $('#PassiveFuelModal').modal("hide");
+                    if (!inModal)
+                        ShowMessage("warning", "Bilgi", "Tüm yakıt bilgileri yayından kaldırılmıştır");
+                }
+            }, 'GET');
+    }
+
+    function GetDeleteFuelList() {
+        sendAjxForm({ publisher: @((int)FuelPublisher.Delete) }, "/Fuel/GetPublishFuel",
+            function (e) {
+                if (e.length > 0) {
+                    var result = "";
+                    for (var i = 0; i < e.length; i++)
+                        result += '<div class="checkbox"><label><input table-param="TransactionDate" value="' + e[i].DateName + '" id="chcbxA_' + i + '" type="checkbox">' + e[i].DateName + ' (' + e[i].ListCount + ' araç)</label></div>'
+
+                    $('#DeleteFuel_FormId').html(result);
+                    $('#DeleteFuelModal').modal("show");
+                } else {
+                    $('#DeleteFuelModal').modal("hide");
+                }
+            }, 'GET');
+    }
+
+    function clearModal() {
+        $('#fuelVehicleId').val('');
+        $('#select-vehicleId2').val('').change();
+        $('#Km').val('');
+        $('#Liter').val('');
+        $('#Amount').val('');
+        $('#Description').val('');
+        $('#TotalAmountDiscount').val('');
+        setTimeout(function () {
+            $('#select-vehicleId2').data('select2').open();
+        }, 500);
+    }
+
+    function funcSaveFuel() {
+        var model = FormGetAllValue('#Fuel_FormId [table-param]');
+        if (model != null) {
+            if (model.DiscountPercent == '') model.DiscountPercent = 0;
+            sendAjxForm(model, "/Fuel/InsertUpdate",
+                function (e) {
+                    if (e.IsSuccess == true) {
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı.");
+                        if (model.Id == "")
+                            clearModal();
+                    } else if (e.IsSuccess == false)
+                        ShowMessage("error", "Hata", e.Message);
+                }, 'POST');
+        }
+    }
+
+    $(document.body).on("change", "#select-vehicleId2", function () {
+        setTimeout(function () {
+            $("#Amount").focus();
+        }, 100);
+    });
+
+    $(document).on('keypress',
+        function (e) {
+            if (e.which == 13) {
+                funcSaveFuel();
+            }
+        });
+
+    function funcEditFuel(fuelId) {
+        sendAjxForm({ id: fuelId },
+            "/Fuel/GetById",
+            function (e) {
+                if (e.Id > 0) {
+                    $('#fuelVehicleId').val(e.Id);
+                    setVehicle(e.VehicleId, "select-vehicleId2");
+                    $('#FuelStationId').val(e.FuelStationId).change();
+                    $("#TransactionDateFuel").val(e.TransactionDate.split('T')[0]);
+                    $('#Km').val(formatMoney(e.Km));
+                    $('#Liter').val(formatMoney(e.Liter));
+                    $('#Amount').val(formatMoney(e.TotalAmount));
+                    $('#DiscountPercent').val(formatMoney(e.DiscountPercent, 5)).trigger('change');
+                    $('#Description').val(e.Description);
+                    $('#EditInsertModal').modal("show");
+                }
+            }, 'GET');
+    }
+
+    $("#Amount").on('change onkeyup paste input',
+        function () {
+            var amount = $('#Amount').val().replaceAll('.', '').replace(',', '.');
+            var discount = $('#DiscountPercent').val().replaceAll('.', '').replace(',', '.');
+
+            if (discount == "") discount = 0;
+            if (amount == "") amount = 0;
+            var totalAmountDiscount = amount - (amount * discount / 100);
+            $('#TotalAmountDiscount').val(formatMoney(totalAmountDiscount));
+        });
+
+    $("#DiscountPercent").on('change onkeyup paste input',
+        function () {
+            var amount = $('#Amount').val().replaceAll('.', '').replace(',', '.');
+            var discount = $('#DiscountPercent').val().replaceAll('.', '').replace(',', '.');
+
+            if (discount == "") discount = 0;
+            if (amount == "") amount = 0;
+            var totalAmountDiscount = amount - (amount * discount / 100);
+            $('#TotalAmountDiscount').val(formatMoney(totalAmountDiscount));
+        });
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Fuel/FuelLogGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

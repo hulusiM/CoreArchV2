@@ -1,0 +1,116 @@
+﻿<div class="panel-body" id="AllVehicleDataTable" style="display: none; margin-bottom: 5px;">
+    @*<button onclick="funcPrint()" type="button" class="btn btn-success"><i class="icon-printer position-left"></i> Yazdır</button>*@
+    <button onclick="vehiclePreview()" type="button" class="btn btn-link" style="margin: -12px 0px 4px 0px;"><i class="icon-reset position-left"></i> Sayfaya geri dön</button>
+    <div class="table-responsive" style="height: 65vh;" id="printDiv">
+        <table class="table datatable-button-print-columns" id="dataTableVehicleAllPreview" style="font-size: 11px; white-space: nowrap;" cellspacing="0" rules="all" border="1">
+            <thead>
+                <tr class="filters">
+                    <th class="bg-slate-300" style="text-align: center; width: 1%;">No</th>
+                    <th class="bg-success-300" data-value="EntityName" style="text-align: center;">
+                        Şirket
+                    </th>
+                    <th class="bg-success-300" data-value="Plate" style="text-align: center;">
+                        Plaka
+                    </th>
+                    <th class="bg-success-300" data-value="ChassisNo" style="text-align: center;">
+                        Şasi No
+                    </th>
+                    <th class="bg-success-300" data-value="EngineNo" style="text-align: center;">
+                        Motor No
+                    </th>
+                    <th class="bg-success-300" data-value="VehicleModelName" style="text-align: center;">
+                        Marka/Model
+                    </th>
+                    <th class="bg-success-300" data-value="LicenceSeri" style="text-align: center;">
+                        Lisans Seri
+                    </th>
+                    <th class="bg-success-300" data-value="LicenceNo" style="text-align: center;">
+                        Lisans No
+                    </th>
+                    <th class="bg-success-300" data-value="ModelYear" style="text-align: center;">
+                        Yıl
+                    </th>
+                    <th class="bg-success-300" data-value="UsageTypeName" style="text-align: center;">
+                        Kullanım Tipi
+                    </th>
+                    <th class="bg-success-300" data-value="FuelTypeName" style="text-align: center;">
+                        Yakıt Tipi
+                    </th>
+                    <th class="bg-success-300" data-value="FixtureName" style="text-align: center;">
+                        Demirbaş
+                    </th>
+                    <th class="bg-success-300" data-value="VehicleTypeName" style="text-align: center;">
+                        Araç Tipi
+                    </th>
+                    <th class="bg-success-300" data-value="UnitName" style="text-align: center;">
+                        Birim/Proje
+                    </th>
+                    <th class="bg-success-300" data-value="ArventoNo" style="text-align: center;">
+                        Arvento No
+                    </th>
+                    <th class="bg-success-300" data-value="IsTtsName" style="text-align: center;">
+                        TTS
+                    </th>
+                    <th class="bg-success-300" data-value="RentFirmName" style="text-align: center;">
+                        Kiralama Firma Adı
+                    </th>
+                    <th class="bg-success-300" data-value="ContractDateRange" style="text-align: center;">
+                        Sözleşme Tarihi
+                    </th>
+                    <th class="bg-success-300" data-value="DebitNameSurname" style="text-align: center;">
+                        Zimmetli Bilgileri
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="tBody" style="cursor: pointer;"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    var allDataVisible = false;
+
+    function vehiclePreview() {
+        if (!allDataVisible) {
+            sendAjxForm("",
+                "/Vehicle/GetAllVehicleList",
+                function(e) {
+                    funcCustomDataTableForExcel(e, "dataTableVehicleAllPreview");
+                    $('#dataTableMain').css("display", "none");
+                    $('#AllVehicleDataTable').css("display", "block");
+                    $('body').addClass("sidebar-xs");
+                },
+                "POST");
+            allDataVisible = true;
+        } else {
+            $('#dataTableMain').css("display", "block");
+            $('#AllVehicleDataTable').css("display", "none");
+            allDataVisible = false;
+            $('body').removeClass("sidebar-xs");
+        }
+    }
+    
+</script>
+
+<style id="table_style" type="text/css">
+    body {
+        font-family: Arial;
+        font-size: 10pt;
+    }
+
+    table {
+        border: 1px solid #ccc;
+        border-collapse: collapse;
+        overflow-y: auto;
+    }
+
+    table th {
+        background-color: #F7F7F7;
+        color: #333;
+    }
+
+    thead th {
+        position: sticky;
+        top: 0;
+    }
+</style>

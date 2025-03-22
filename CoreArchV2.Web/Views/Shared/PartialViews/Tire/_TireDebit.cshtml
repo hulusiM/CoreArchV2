@@ -1,0 +1,212 @@
+﻿
+@using CoreArchV2.Core.Enum
+<div id="TireDebit_FormId">
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+                <label>Araç (*) :</label>
+                <select id="select-Plate_td"
+                        tabindex="2"
+                        table-param="VehicleId"
+                        onchange="DebitTireInfo(this)"
+                        table-description="Araç"
+                        class="select2-container select2-selection--single" required>
+                </select>
+            </div>
+            <div class="col-sm-6">
+                <label>Lastik Adedi (*) :</label>
+                <input type="number" tabindex="5" table-param="TireCount" class="form-control" table-description="Lastik Adedi" required />
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-4">
+                <label>Depo (*):</label>
+                <select id="WareHouseId_td"
+                        class="select-search"
+                        table-param="WareHouseId"
+                        onchange="GetwareHouseInTireDimensions()"
+                        table-id="comboBox-WareHouseId_td"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.SupplierACar)"
+                        table-tool-type="comboBox"
+                        tabindex="1"
+                        table-description="Depo"
+                        data-option-label="Depo Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <label>Lastik Ebat (*) :</label>
+                <select id="DimensionTypeId_td"
+                        class="select-search"
+                        table-param="DimensionTypeId"
+                        onchange="GetWareHouseInTireType()"
+                        table-id="comboBox-DimensionTypeId_td"
+                        table-model-url=""
+                        table-tool-type="comboBox"
+                        tabindex="2"
+                        table-description="Lastik Ebat"
+                        data-option-label="Lastik Ebat Seçiniz" disabled required>
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <label>Kullanım Tipi (*) :</label>
+                <select id="TireTypeId_td"
+                        class="select-search"
+                        table-param="TireTypeId"
+                        table-id="comboBox-TireTypeId_td"
+                        table-model-url=""
+                        table-tool-type="comboBox"
+                        tabindex="3"
+                        table-description="Lastik Kullanım Tipi"
+                        data-option-label="Lastik Kullanım Tipi Seçiniz" disabled required>
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label">Açıklama</label>
+        <textarea rows="3" cols="5" table-param="Description" tabindex="6" class="form-control" placeholder="Açıklama"></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom: -14px;">
+        <div class="alert bg-orange-300 alert-styled-left">
+            <span class="text-semibold TireInfoSpan">---</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-4 col-md-4">
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <button tabindex="7" type="submit" class="btn btn-danger full-width" onclick="$('#TireDebitModal').modal('hide')"><i class="fa fa-check"></i> İptal</button>
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <button tabindex="7" type="submit" class="btn btn-primary full-width" onclick="funcSaveDebitTire()"><i class="fa fa-check"></i> Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function TireDebitOpenModal() {
+        FormAllInputsClearNoCloseModal("#TireDebit_FormId [table-param]");
+        $('.TireInfoSpan').html('---');
+        $('#TireDebitModal').modal("show");
+    }
+
+
+    function DebitTireInfo(valu) {
+        var vehicleId = $(valu).val();
+        if (vehicleId > 0) {
+            sendAjxForm({ VehicleId: vehicleId },
+                "/Tire/GetDebitTireInfo",
+                function (e) {
+                    if (e.Message != null) {
+                        //$('#WareHouse_target').removeAttr('disabled');
+                        $('.TireInfoSpan').html(e.Message);
+                        //var addMessage = "</br><b class='fa fa-warning faa-flash animated' style='color:Red;'></b> Araç üstündeki lastik depoya iade edilecekse <b style='color:brown;'>Hedef Depo</b> giriniz,aksi takdirde plakaya miktar kadar lastik eklenecektir.";
+                        //$('.TireInfoSpan').append(addMessage)
+                    }
+                    else {
+                        //$('#WareHouse_target').attr("disabled", "disabled");
+                        $('.TireInfoSpan').html('Depoya bağlı lastik kaydı bulunamadı');
+                    }
+                }, "GET");
+        }
+    }
+
+    function GetwareHouseInTireDimensions() {
+        var wareHouseId = $("#WareHouseId_td").val();
+        if (wareHouseId > 0) {
+            sendAjxForm({ WareHouseId: wareHouseId },
+                "/Combo/GetWareHouseEmptyTireCount",
+                function (e) {
+                    funcCustomComboBox(e, "DimensionTypeId_td", "Lastik Ebat Seçiniz");
+                    if (e.length == 0) {
+                        $('#DimensionTypeId_td').attr("disabled", "disabled");
+                        ShowMessage("info", "Bilgi", "Seçilen depoda lastik bulunamadı");
+                    } else
+                        $('#DimensionTypeId_td').removeAttr('disabled')
+
+                },
+                "GET");
+        }
+    }
+
+    function GetWareHouseInTireType() {
+        var wareHouseId = $("#WareHouseId_td").val();
+        var dimensionTypeId = $("#DimensionTypeId_td").val();
+        if (wareHouseId > 0 && dimensionTypeId > 0) {
+            sendAjxForm({ WareHouseId: wareHouseId, DimensionTypeId: dimensionTypeId },
+                "/Combo/GetWareHouseInTireTypeCount",
+                function (e) {
+                    funcCustomComboBox(e, "TireTypeId_td", "Kullanım Tipi Seçiniz");
+                    if (e.length == 0) {
+                        $('#TireTypeId_td').attr("disabled", "disabled");
+                        ShowMessage("info", "Bilgi", "Seçilen depoda lastik türü bulunamadı");
+                    } else
+                        $('#TireTypeId_td').removeAttr('disabled');
+                },
+                "GET");
+        }
+    }
+
+    function funcSaveDebitTire() {
+        var model = FormGetAllValue("#TireDebit_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model,
+                "/Tire/TireDebitInsert",
+                function (e) {
+                    if (e.IsSuccess == true) {
+                        FormAllInputsClearNoCloseModal("#TireDebit_FormId [table-param]");
+                        $('#DimensionTypeId_td').attr("disabled", "disabled");
+                        $('#TireTypeId_td').attr("disabled", "disabled");
+                        $('#TireDebitVehicleId').val($('#select-Plate_td').val());
+                        $('#TireDebitModal').modal("hide");
+                        ShowMessage("success", "Bilgi", "Kayıt Başarılı");
+                    } else if (!e.IsSuccess)
+                        ShowMessage("info", "Bilgi", e.Message);
+
+                },
+                'POST');
+        }
+    }
+    
+
+    @*function tireChangeType() {
+        var value = $('#TireChangeType_td').val();
+        if (value == @((int) TireChangeType.TireChange)) { //Lastik değişimi
+            $("#changeTypeDiv").show(500);
+            var addMessage = "</br><b class='fa fa-warning faa-flash animated' style='color:Red;'></b> Araç üstündeki lastik depoya iade edilecekse <b style='color:brown;'>Hedef Depo</b> giriniz,aksi takdirde plakaya miktar kadar lastik eklenecektir.";
+            $('.TireInfoSpan').append(addMessage)
+        } else if (value == @((int) TireChangeType.TireWareHouseReturn)) //Depoya iade
+        {
+            $('#WareHouse_target').removeAttr('disabled');
+            $("#changeTypeDiv").hide(500);
+        }
+    }
+
+
+
+
+    function DebitTireInfo2(vehicleId) {
+        if (vehicleId > 0) {
+            sendAjxForm({ VehicleId: vehicleId },
+                "/Tire/GetDebitTireInfo",
+                function (e) {
+                    if (e.length > 0) {
+                        $('#WareHouse_target').removeAttr('disabled');
+                        $('.TireInfoSpan').html(e[0].Message);
+                    }
+                    else {
+                        $('#WareHouse_target').attr("disabled", "disabled");
+                        $('.TireInfoSpan').html('Depoya bağlı lastik kaydı bulunamadı');
+                    }
+                }, "GET");
+        }
+    }*@
+
+</script>

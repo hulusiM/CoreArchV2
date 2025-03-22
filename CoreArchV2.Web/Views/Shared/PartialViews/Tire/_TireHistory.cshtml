@@ -1,0 +1,83 @@
+﻿@using CoreArchV2.Core.Enum
+<div class="table-responsive" style="font-size: 11px; height: 50vh; overflow: scroll;">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th class="text-center">Tarih</th>
+                <th class="text-center">Plaka</th>
+                <th class="text-center">Depo Adı</th>
+                <th class="text-center">Ebat</th>
+                <th class="text-center">Kullanım Tipi</th>
+                <th class="text-center">Adet</th>
+                <th class="text-center">Açıklama</th>
+                <th class="text-center">İşlem</th>
+            </tr>
+        </thead>
+        <tbody class="text-center" id="tireDebitHistoryListDiv">
+        </tbody>
+    </table>
+</div>
+<div class="form-group" style="margin-top: 5px;">
+    <div class="alert bg-info-300 alert-styled-left">
+        <span class="text-semibold TireInfoSpan">---</span>
+    </div>
+</div>
+<div class="row" style="margin-top: 10px;">
+    <div class="col-md-6">
+    </div>
+    <div class="col-md-6">
+        <button type="button" class="btn btn-danger full-width" onclick="$('#TireHistoryModal').modal('hide')"><i class="fa fa-times"></i> Ekranı Kapat</button>
+    </div>
+</div>
+
+<script>
+
+    function funcHistoryTire(vehicleId) {
+        $('.TireInfoSpan').html('---');
+        sendAjxForm({ vehicleId: vehicleId },
+            "/Tire/GetTireHistory",
+            function (e) {
+                if (e.length > 0) {
+                    setTireDebitHistory(e);
+                    $('#TireHistoryModal').modal("show");
+                }
+                else
+                    ShowMessage("info", "Bilgi", "Lastik işlem geçmişi bulunamadı");
+
+            }, "GET");
+    }
+
+    function setTireDebitHistory(data) {
+        $('#tireDebitHistoryListDiv tr').empty();
+        if (data.length > 0) {
+            var result = "";
+            for (var i = 0; i < data.length; i++) {
+                result += '<tr><td> ' +
+                    ConvertJSONDateFormatISO(data[i].CreatedDate) +
+                    ' </td>' +
+                    '<td> <span class="label bg-green-300 full-width">' +
+                    data[i].Plate +
+                    '</span> </td>' +
+                    '<td> ' +
+                    data[i].WareHouseName +
+                    ' </td>' +
+                    '<td> ' +
+                    data[i].DimensionTypeName +
+                    ' </td>' +
+                    '<td> ' +
+                    data[i].TireTypeName +
+                    ' </td>' +
+                    '<td> ' +
+                    data[i].TireCount + ' Adet' +
+                    ' </td>' +
+                    '<td> ' +
+                    (data[i].Description != null ? data[i].Description : '') +
+                    ' </td>' +
+                    '<td> ' +
+                    data[i].StatusName +
+                    ' </td></tr >';
+            }
+            $('#tireDebitHistoryListDiv').append(result);
+        }
+    }
+</script>

@@ -1,0 +1,137 @@
+﻿
+@using CoreArchV2.Core.Enum
+<div id="TireInertAt_FormId">
+    <input type="text" id="TireId" table-param="Id" hidden />
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-12">
+                <label>İşlem Türü :</label>
+                <select id="inertType_Inert"
+                        class="select-search"
+                        table-param="TireChangeType"
+                        table-id="comboBox-inertType_ti"
+                        table-model-url=""
+                        table-tool-type="comboBox"
+                        tabindex="1"
+                        table-description="İşlem Türü"
+                        data-option-label="İşlem Türü Seçiniz" required>
+                    <option value="1">Depodan </option>
+                    <option value="2">Araçtan </option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div id="InertTypeWareHouseDiv" class="col-sm-6">
+                <label>Depo :</label>
+                <select id="WareHouseId_Inert"
+                        class="select-search"
+                        table-param="WareHouseId"
+                        table-id="comboBox-WareHouseId_Inert"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.SupplierACar)"
+                        table-tool-type="comboBox"
+                        tabindex="1"
+                        data-option-label="Depo Seçiniz">
+                </select>
+            </div>
+            <div id="InertTypePlateDiv" class="col-sm-6">
+                <label>Plaka :</label>
+                <select id="select-Plate_Inert"
+                        tabindex="2"
+                        table-param="VehicleId"
+                        onchange="DebitTireInfo(this)"
+                        class="select2-container select2-selection--single">
+                </select>
+            </div>
+            <div class="col-sm-6">
+                <label>Adet (*) :</label>
+                <input type="number" tabindex="4" table-param="TireCount" class="form-control" table-description="Lastik Adet" required />
+            </div>
+
+        </div>
+    </div>
+    <div id="InertTypePlateDiv2" class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+                <label>Kullanım Tipi (*) :</label>
+                <select id="TireTypeId_Inert"
+                        class="select-search"
+                        table-param="TireTypeId"
+                        table-id="comboBox-TireTypeId_Inert"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TireTypeId)"
+                        table-tool-type="comboBox"
+                        tabindex="2"
+                        table-description="Lastik Kullanım Tipi"
+                        data-option-label="Lastik Kullanım Tipi Seçiniz">
+                </select>
+            </div>
+            <div class="col-sm-6">
+                <label>Lastik Ebat (*) :</label>
+                <select id="DimensionTypeId_Inert"
+                        class="select-search"
+                        table-param="DimensionTypeId"
+                        table-id="comboBox-DimensionTypeId_Inert"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.DimensionTypeId)"
+                        table-tool-type="comboBox"
+                        tabindex="3"
+                        table-description="Lastik Ebat"
+                        data-option-label="Lastik Ebat Seçiniz">
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="form-group" style="margin-bottom: -14px;">
+        <div class="alert bg-indigo-300 alert-styled-left">
+            <span class="text-semibold TireInfoSpan">---</span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4 col-md-4">
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <button type="button" tabindex="6" class="btn btn-danger full-width" onclick="funcCancelModal('#TireInertAt_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <button tabindex="5" type="submit" class="btn btn-primary full-width" onclick="funcSaveTireInsert()"><i class="fa fa-check"></i> Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function TireInertOpenModal() {
+        $('.TireInfoSpan').html('---');
+        FormAllInputsClearNoCloseModal("#TireInertAt_FormId [table-param]");
+        $('#inertType_Inert').val(1).trigger("change"); //default set select warehouse
+        $('#TireInertModal').modal("show");
+    }
+
+    function funcSaveTireInsert() {
+        var model = FormGetAllValue("#TireInertAt_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, "/Tire/SetTireInert",
+                function (e) {
+                    if (e.IsSuccess) {
+                        $('#TireInertModal').modal("hide");
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı");
+                    } else
+                        ShowMessage("info", "Bilgi", e.Message);
+
+                }, "POST");
+        }
+    }
+
+    $('#inertType_Inert').on('change', function () {
+        if (this.value == "2") { //plakadan
+            $("#InertTypeWareHouseDiv").attr("hidden", true);
+            $('#InertTypePlateDiv').removeAttr('hidden');
+            //$("#InertTypePlateDiv2").hide(500);
+        }
+        else { //depodan
+            $("#InertTypePlateDiv").attr("hidden", true);
+            $('#InertTypeWareHouseDiv').removeAttr('hidden');
+            //$("#InertTypePlateDiv2").show(500);
+        }
+    });
+</script>

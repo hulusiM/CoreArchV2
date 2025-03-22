@@ -1,0 +1,16 @@
+﻿<script>$('#broadCrumbDiv').text('Yönetici Genel Bilgi')</script>
+@{
+    Layout = "~/Views/Shared/_LayoutMananager.cshtml";
+}
+
+<script src="~/admin/js/pages/general_widgets_stats.js"></script>
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/DashboardManager/_Header.cshtml")
+@await Html.PartialAsync("~/Views/Shared/PartialViews/DashboardManager/_VehicleInfo.cshtml")
+
+
+<script>
+    $(document).ready(function () {
+        $(".sidebar-control").click();
+    });
+</script>

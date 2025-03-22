@@ -1,0 +1,204 @@
+﻿@using CoreArchV2.Core.Enum
+<div id="VehicleAmountFixModal" class="modal fade">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <h6 class="modal-title">Araç Tutar Detayları</h6>
+            </div>
+            <div class="modal-body">
+                <div id="VehicleAmountFix_FormId">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Tutar Tipi (*) :</label>
+                                <select id="VehicleAmountTypeId4"
+                                        class="select-search"
+                                        table-param="TypeId"
+                                        table-id="comboBox-VehicleAmountTypeId4"
+                                        table-model-url="/Combo/GetContractAmountType?fixtureTypeId=@((int) FixtureType.Ownership)"
+                                        table-tool-type="comboBox"
+                                        tabindex="2"
+                                        table-description="Tutar Tipi"
+                                        data-option-label="Tutar Tipi Seçiniz" required>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Tarih (*) :</label>
+                                <input id="AmountDateFix" table-param="Date" tabindex="1" type="date" class="form-control" table-description="Tarih" autocomplete="off" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Tutar (*) :</label>
+                                <input id="VehicleAmount" table-param="Amount" tabindex="3" type="text" class="form-control moneyCurrency" table-description="Tutar" autocomplete="off" placeholder="Tutar giriniz" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Extra Tutar :</label>
+                                <input id="ExtraAmount" table-param="ExtraAmount" tabindex="3" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="ExtraTutar giriniz">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="control-label">Açıklama</label>
+                                <textarea rows="2" cols="5" table-param="Description" tabindex="4" class="form-control" placeholder="Açıklama"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-6"></div>
+                        <div class="col-md-3">
+                            <button type="button" tabindex="6" class="btn btn-danger full-width" onclick="$('#VehicleAmountFixModal').modal('hide')"><i class="fa fa-times"></i> İptal</button>
+                        </div>
+                        <div class="col-md-3 vehicleActionButtons">
+                            <button onclick="SaveVehicleAmountFixture()" tabindex="5" type="button" class="btn btn-default btn-success full-width"><i class="icon-make-group position-left"></i> Kaydet</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="row">
+                        <div class="panel-group panel-group-control panel-group-control-right content-group-sm" style="text-align: center;">
+                            <div class="panel-heading bg-orange-300">
+                                <h6 class="panel-title">
+                                    <a data-toggle="collapse" data-parent="#accordion-controls" href="#accordion-controls-group1453" id="currentContractDateHeadFix">Detay</a>
+                                </h6>
+                            </div>
+                            <div id="accordion-controls-group1453" class="panel-collapse collapse">
+                                <div class="panel-body">
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="panel panel-body border-top-teal" style="height: 350px; overflow: scroll;">
+                                                <select id="VehicleAmountTypeId3"
+                                                        class="select-search"
+                                                        table-param="TypeId"
+                                                        table-id="comboBox-VehicleAmountTypeId3"
+                                                        table-model-url="/Combo/GetContractAmountType?fixtureTypeId=@((int) FixtureType.Ownership)"
+                                                        table-tool-type="comboBox"
+                                                        onchange="changeAmount()"
+                                                        table-description="Tutar Tipi"
+                                                        data-option-label="Tutar Tipi Seçiniz">
+                                                </select>
+                                                <table class="table-striped table-hover table-bordered table datatable-basic table-loader">
+                                                    <thead>
+                                                    <tr>
+                                                        <th style="text-align: center;">Tutar Tipi</th>
+                                                        <th style="text-align: center;">Tarih</th>
+                                                        <th style="text-align: center;">Açıklama</th>
+                                                        <th style="text-align: center;">Extra Tutar</th>
+                                                        <th style="text-align: center;">Tutar</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody id="vehicleAmountHistoryTableForFix">
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function vehicleFixAmountModal() {
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            FormAllInputsClearNoCloseModal("#VehicleAmountFix_FormId [table-param]");
+            getHistoryAmountFix();
+            $('#VehicleAmountFixModal').modal('show');
+        } else
+            ShowMessage("info", "Bilgi", "Araç eklendikten sonra bu ekranı kullanabilirsiniz");
+    }
+
+    function getHistoryAmountFix(amountTypeId = 0) {
+        var model = {};
+        var vehicleId = $('#vehicle_Id').val();
+        if (amountTypeId > 0)
+            model = { vehicleId: vehicleId, vehicleAmountTypeId: amountTypeId };
+        else
+            model = { vehicleId: vehicleId };
+
+        sendAjxForm(model,
+            "/Vehicle/GetByVehicleIdVehicleAmountHistory",
+            function(data) {
+                if (data != null) {
+                    $('#vehicleAmountHistoryTableForFix tr').remove();
+                    var result = "";
+                    var e = data.VehicleAmountList;
+                    for (var i = 0; i < e.length; i++) {
+                        result += "<tr style='text-align: center;'><td>" +
+                            "<span class='label bg-success-300  full-width'>" +
+                            e[i].VehicleAmountTypeName +
+                            "</span></td>" +
+                            "<td>" +
+                            ConvertJSONJustDateFormatISO(e[i].Date) +
+                            "</td>" +
+                            "<td>" +
+                            (e[i].Description != null ? e[i].Description : '') +
+                            "</td>" +
+                            "<td>" +
+                            (e[i].ExtraAmount != null ? formatMoney(e[i].ExtraAmount) : '-') +
+                            "</td>" +
+                            "<td>" +
+                            formatMoney(e[i].Amount) +
+                            " </td></tr>";
+                    }
+                    result += "<tr><td style='text-align:right;' colspan='5'>Toplam: " + formatMoney(totalAmount(e)) + " ₺</td></tr>";
+                    $('#vehicleAmountHistoryTableForFix').append(result);
+                } else
+                    ShowMessage("info", "Bilgi", "Geçmiş kayıt bulunamadı");
+
+            },
+            'GET');
+    }
+
+    function changeAmount() {
+        getHistoryAmountFix($('#VehicleAmountTypeId3').val());
+    }
+
+    function totalAmount(data) {
+        var toplam = 0;
+        for (var i = 0; i < data.length; i++) {
+            if (data[i].ExtraAmount > 0)
+                toplam += parseFloat(data[i].Amount) + parseFloat(data[i].ExtraAmount);
+            else
+                toplam += parseFloat(data[i].Amount);
+        }
+        return toplam;
+    }
+
+    function SaveVehicleAmountFixture() {
+        var model = FormGetAllValue("#VehicleAmountFix_FormId [table-param]");
+        if (model != null) {
+            var mergeObject = $.extend(model, { VehicleId: $('#vehicle_Id').val() });
+            sendAjxForm(mergeObject,
+                "/Vehicle/InsertVehicleAmount",
+                function(e) {
+                    if (e.IsSuccess == true) {
+                        FormAllInputsClearNoCloseModal("#VehicleAmountFix_FormId [table-param]");
+                        getHistoryAmountFix();
+                        ShowMessage("success", "Bilgi", "Kayıt Başarılı");
+                    } else if (!e.IsSuccess)
+                        ShowMessage("info", "Bilgi", e.Message);
+
+                },
+                'POST');
+        }
+    }
+
+</script>

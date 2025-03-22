@@ -1,0 +1,245 @@
+﻿@model CoreArchV2.Dto.ELogisticsDto.EMaintenanceDto
+@using CoreArchV2.Core.Enum
+<div id="Maintenance_FormId">
+    <input type="text" table-param="Id" hidden />
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-3">
+                <label>Araç (*) :</label>
+                <select id="select-plate2"
+                        tabindex="1"
+                        table-param="VehicleId"
+                        table-description="Araç"
+                        class="select2-container select2-selection--single" required>
+                </select>
+
+            </div>
+            <div class="col-sm-3">
+                <label>Talep Eden Personel (*) :</label>
+                <select id="select-userId2"
+                        tabindex="2"
+                        table-param="RequestUserId"
+                        table-description="Talep Eden Personel"
+                        class="select2-container select2-selection--single" required>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <label>Tedarikçi Firma (*) :</label>
+                @{
+                    if (Model.IsHgsPage)
+                    {
+                        <select id="SupplierId"
+                            class="select-search"
+                            table-param="SupplierId"
+                            table-id="comboBox-SupplierId_"
+                            table-model-url="/Combo/GetByLookUpListId?lookUpId=@((int) Supplier.Ptt)"
+                            table-tool-type="comboBox"
+                            tabindex="3"
+                            table-description="Tedarikçi Firma"
+                            data-option-label="Tedarikçi Firma Seçiniz" required>
+                        </select>
+                    }
+                    else
+                    {
+                        <select id="SupplierId"
+                            class="select-search"
+                            table-param="SupplierId"
+                            table-id="comboBox-SupplierId_"
+                            table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.SupplierACar)"
+                            table-tool-type="comboBox"
+                            tabindex="3"
+                            table-description="Tedarikçi Firma"
+                            data-option-label="Tedarikçi Firma Seçiniz" required>
+                        </select>
+                    }
+                }
+            </div>
+            <div class="col-sm-3">
+                <label>İşlem Tipi (*) :</label>
+                <select id="MaintenanceTypeIds"
+                        class="select-search"
+                        multiple="multiple"
+                        tabindex="4"
+                        table-param="MaintenanceTypeIds"
+                        table-id="comboBox-MaintenanceTypeIds"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.MaintenancetType)"
+                        table-tool-type="comboBox"
+                        table-description="Bakım/Onarım Tipi"
+                        data-option-label="" required>
+                </select>
+            </div>
+        </div>
+    </div>
+    @{
+        if (!Model.IsHgsPage)
+        {
+            <div class="form-group">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <label>Km :</label>
+                        <input table-param="LastKm" type="number" tabindex="5" class="form-control" table-description="Km">
+                    </div>
+                    <div class="col-sm-3">
+                        <label>Fatura No :</label>
+                        <input table-param="InvoiceNo" type="text" tabindex="6" class="form-control">
+                    </div>
+                    <div class="col-sm-3">
+                        <label>Servise Giriş Tarihi :</label>
+                        <input table-param="ServiceStartDate" tabindex="7" type="date" class="form-control">
+                    </div>
+                    <div class="col-sm-3">
+                        <label>Servisten Çıkış Tarihi :</label>
+                        <input table-param="ServiceEndDate" tabindex="8" type="date" class="form-control">
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-6">
+                <label>Fatura Tutarı (*) :</label>
+                <input id="TotalAmount" table-param="TotalAmount" tabindex="9" type="text" class="form-control moneyCurrency" autocomplete="off" table-description="Tutar" placeholder="Tutar giriniz" required>
+            </div>
+            <div class="col-md-4">
+                <label>Fatura Tarihi (*) :</label>
+                <input id="InvoiceDate" table-param="InvoiceDate" tabindex="10" class="form-control" type="date" table-description="Fatura Tarihi" placeholder="Tarih seçiniz" required>
+            </div>
+            <div class="col-md-2">
+                <label>Kullanıcı Hatası :</label>
+                <button onclick="userFixSection()" type="button" class="btn btn-success full-width"><i class="icon-add"></i> Tutar Ekle</button>
+            </div>
+        </div>
+    </div>
+    <div id="div_userFault" class="form-group" style="padding: 15px;background-color: antiquewhite; display: none;">
+        <div class="row">
+            <div class="col-md-6">
+                <label>Kullanıcı Hata Tutarı :</label>
+                <input table-param="UserFaultAmount" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="Kullanıcı Hata Tutarı giriniz">
+            </div>
+            <div class="col-md-6">
+                <label>Açıklama:</label>
+                <input table-param="UserFaultDescription" class="form-control" placeholder="Açıklama" />
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Açıklama</label>
+        <textarea rows="3" cols="5" table-param="Description" tabindex="11" class="form-control" placeholder="Açıklama"></textarea>
+    </div>
+</div>
+
+<div class="form-group">
+    <label class="control-label">Fatura Yükle :</label>
+    <div class="file-loading">
+        <input id="imageUploadForm" type="file" multiple>
+    </div>
+    <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+
+<div class="row">
+    <div class="col-sm-4 col-md-6">
+    </div>
+    <div class="col-sm-4 col-md-3">
+        <button type="button" tabindex="29" class="btn btn-danger full-width" onclick="funcCancelModal('#Maintenance_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+    </div>
+    <div class="col-sm-4 col-md-3">
+        <button id="vehicleId" tabindex="28" type="submit" class="btn btn-primary full-width" onclick="funcSaveMaintenance()"><i class="fa fa-check"></i> Kaydet</button>
+    </div>
+</div>
+
+<script>
+    //Modal kapandığında
+    $('#EditInsertModal').on('hidden.bs.modal', function () {
+        $("#div_userFault").slideUp("slow");
+        $('#userFaultAmount_span').html('');
+    });
+    function userFixSection() {
+        if (!$('#div_userFault').is(':visible'))
+            $("#div_userFault").slideDown("slow");
+        else
+            $("#div_userFault").slideUp("slow");
+    }
+
+    function funcEditMaintenance(maintenanceId) {
+        $('#MaintenanceInsert_toggle').click();
+        sendAjxForm({ id: maintenanceId },
+            '/Maintenance/GetById',
+            function (e) {
+                if (e.Id > 0) {
+                    var formId = '#Maintenance_FormId [table-param]';
+                    var model = {
+                        selector: formId,
+                        data: e
+                    };
+                    FormSetAllValue(model);
+                    setUser(e.RequestUserId, "select-userId2");
+                    setVehicle(e.VehicleId, "select-plate2");
+                    historyButtonsActive = true;
+                    if (e.UserFaultAmount > 0)
+                        $('#userFaultAmount_span').html("Kullanıcıya yansıtılan ücret: " + formatMoney(e.UserFaultAmount) + " ₺");
+                    if (e.files.length > 0) {
+                        var arr = new Array();
+                        var deleteObj = [];
+                        for (var i = 0; i < e.files.length; i++) {
+                            var imgUrl = "/uploads/logistics/" + e.files[i].Name;
+                            var type = e.files[i].Extention + '';
+                            if (e.files[i].Extention == 'doc' || e.files[i].Extention == 'docx') {
+                                type = "office";
+                                arr[i] = e.files[i].Name.split("-")[1];
+                            } else
+                                arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                            deleteObj[i] = {
+                                type: type,
+                                size: e.files[i].FileSize,
+                                caption: e.files[i].Name,
+                                url: "/File/FileDeleteLogistics",
+                                key: e.files[i].Id
+                            };
+                        }
+                        setImage(arr, deleteObj);
+                    } else
+                        setImage(null, null);
+
+                    $('#EditInsertModal').modal("show");
+                    $('#vehicleTire_span').html(e.TireInfo);
+                }
+            }, 'GET');
+    }
+
+    //Maintenance table insert
+    function funcSaveMaintenance() {
+        var model = FormGetAllValue("#Maintenance_FormId [table-param]");
+        if (model != null) {
+            var newModel = {};
+            var files = $('#imageUploadForm').fileinput('getFileList');
+            var formData = new FormData();
+            for (var i = 0; i != files.length; i++)
+                formData.append("files", files[i]);
+
+            newModel = FormDataAppendModelValue(formData, "#Maintenance_FormId [table-param]");
+            sendAjxFormFileUpload(newModel,
+                '/Maintenance/InsertUpdate',
+                function (e) {
+                    if (e.IsSuccess) {
+                        if (model.Id > 0)
+                            ShowMessage("success", "Bilgi", "Düzenleme başarılı");
+                        else {
+                            GetAllLoadTable('/Maintenance/MaintenanceGetAll');
+                            ShowMessage("success", "Bilgi", "Kayıt başarıyla eklendi");
+                        }
+                        $('#EditInsertModal').modal("hide");
+                    } else {
+                        if (e == 'NotAuthorizationCore') {
+                            var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                            ShowMessage("error", "Yetkisiz İşlem", message);
+                        } else
+                            ShowMessage("error", "Hata", e.Message);
+                    }
+                }, 'POST');
+        }
+    }
+</script>

@@ -1,0 +1,194 @@
+﻿
+@using CoreArchV2.Core.Enum
+<script src="~/admin/amcharts4/core.js"></script>
+<script src="~/admin/amcharts4/charts.js"></script>
+<script src="~/admin/amcharts4/themes/animated.js"></script>
+
+<!-- Header Dashboard -->
+<div class="row">
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h5 id="totalTire" class="no-margin text-semibold">---</h5>
+                    <span class="text-uppercase text-size-mini text-success-600">Toplam Lastik</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-color-sampler icon-2x text-success-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h5 id="vehicleDebitTire" class="no-margin text-semibold">---</h5>
+                    <span class="text-uppercase text-size-mini text-success-600">Araca Takılı</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-car2 icon-2x text-indigo-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h5 id="tireEmptyWareHouse" class="no-margin text-semibold">---</h5>
+                    <span class="text-uppercase text-size-mini text-success-600">Kullanıma Hazır</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-shield-check icon-2x text-blue-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h5 id="inertTire" class="no-margin text-semibold">---</h5>
+                    <span class="text-uppercase text-size-mini text-success-600">Atıl</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-library2 icon-2x text-danger-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Header Dashboard -->
+
+<div class="row">
+    <div class="col-md-4">
+        <select id="WareHouseId_Report"
+                class="select-search"
+                table-param="WareHouseId"
+                table-id="comboBox-WareHouseId_Report"
+                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.SupplierACar)"
+                table-tool-type="comboBox"
+                tabindex="1"
+                onchange="loadDataChart()"
+                data-option-label="Depo Seçiniz">
+        </select>
+    </div>
+    <div class="col-md-4">
+        <select id="DimensionTypeId_Report"
+                class="select-search"
+                table-param="DimensionTypeId"
+                table-id="comboBox-DimensionTypeId_Report"
+                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.DimensionTypeId)"
+                table-tool-type="comboBox"
+                onchange="loadDataChart()"
+                tabindex="2"
+                data-option-label="Lastik Ebat Seçiniz">
+        </select>
+    </div>
+    <div class="col-md-4">
+        <select id="TireTypeId_Report"
+                class="select-search"
+                table-param="TireTypeId"
+                table-id="comboBox-TireTypeId_Report"
+                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TireTypeId)"
+                table-tool-type="comboBox"
+                onchange="loadDataChart()"
+                tabindex="3"
+                data-option-label="Lastik Kullanım Tipi Seçiniz">
+        </select>
+    </div>
+</div>
+
+<div class="row" style="margin-top: 5px;">
+    <div class="col-md-12">
+        <div class="col-md-6">
+            <div class="table-responsive">
+                <div class="">
+                    <div id="chart" style="height: 400px; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div style="height: 400px; overflow: scroll;">
+                <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                       id="dataTableDebitFuelCompare"
+                       table-id="dataTable-dataTableTireWarehouseInfo"
+                       table-model-url=""
+                       table-DatabaseName="/Tire"
+                       table-tool-type="dataTable">
+                    <thead>
+                        <tr class="filters">
+                            <th style="text-align: center; width: 1%;">No</th>
+                            <th data-value="WareHouseName" style="text-align: center;">
+                                Depo Adı
+                            </th>
+                            <th data-value="TireTypeName" style="text-align: center;">
+                                Tür
+                            </th>
+                            <th data-value="DimensionTypeName" style="text-align: center;">
+                                Ebat
+                            </th>
+                            <th data-value="TireCount" style="text-align: center;">
+                                Adet
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/jsamchart/chartutility.js"></script>
+<script>
+    function TireChartOpenModal() {
+        loadDataChart();
+        $('#TireChartModal').modal("show");
+    }
+
+    function loadDataChart(val) {
+        var model = {
+            WareHouseId: $('#WareHouseId_Report').val(),
+            DimensionTypeId: $('#DimensionTypeId_Report').val(),
+            TireTypeId: $('#TireTypeId_Report').val()
+        };
+        sendAjxForm(model, "/Tire/GetTireReport", function (data) {
+            $('#totalTire').text(data.AllCount + " Adet");
+            $('#vehicleDebitTire').text(data.DebitCount + " Adet");
+            $('#tireEmptyWareHouse').text(data.EmptyCount + " Adet");
+            $('#inertTire').text(data.InertCount + " Adet");
+            chart_tire(data.TireList);
+
+            funcCustomDataTable(data.TireAllList, "dataTable-dataTableTireWarehouseInfo");
+            if (data.TireList.length == 0)
+                ShowMessage("info", "Bilgi", "Lastik kaydı bulunamadı");
+        }, "GET");
+    }
+
+    function chart_tire(data) {
+        am4core.useTheme(am4themes_animated);
+        var chart = am4core.create("chart", am4charts.PieChart);
+        chart.data = data;
+
+        var pieSeries = chart.series.push(new am4charts.PieSeries());
+        pieSeries.dataFields.value = "TireCount";
+        pieSeries.dataFields.category = "WareHouseName";
+        pieSeries.slices.template.stroke = am4core.color("#e3e3e3");
+        pieSeries.slices.template.strokeWidth = 2;
+        pieSeries.slices.template.strokeOpacity = 1;
+
+        pieSeries.hiddenState.properties.opacity = 1;
+        pieSeries.hiddenState.properties.endAngle = -90;
+        pieSeries.hiddenState.properties.startAngle = -90;
+    }
+</script>
+

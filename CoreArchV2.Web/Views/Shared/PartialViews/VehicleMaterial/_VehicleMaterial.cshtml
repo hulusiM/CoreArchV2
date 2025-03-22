@@ -1,0 +1,76 @@
+﻿@using CoreArchV2.Core.Enum
+<div id="VehicleMaterialModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <h6 class="modal-title">Araç Ekipman</h6>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <div class="row">
+                        <label>Araç Ekipman :</label>
+                        <select id="VehicleMaterials"
+                                multiple="multiple"
+                                tabindex="6"
+                                class="select-search"
+                                table-param="VehicleMaterials"
+                                table-id="comboBox-VehicleMaterials"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.VehicleMaterialType)"
+                                table-tool-type="comboBox"
+                                table-description="Araç ekipman"
+                                data-option-label="" required>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer" style="margin-top: 0px;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button type="button" onclick="$('#VehicleMaterialModal').modal('hide')" class="btn btn-danger full-width">Ekranı Kapat</button>
+                    </div>
+                    <div class="col-md-6 vehicleActionButtons">
+                        <button type="submit" class="btn btn-primary full-width" onclick="saveVehicleMaterial()"><i class="fa fa-check"></i> Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function saveVehicleMaterial() {
+        var vehicleId = $('#vehicle_Id').val();
+        var materials = $('#VehicleMaterials').val();
+        var model = {
+            VehicleId: vehicleId,
+            Materials: materials
+        };
+
+        sendAjxForm(model,
+            "/Vehicle/InsertVehicleMaterial",
+            function(e) {
+                if (e.IsSuccess == true) {
+                    $('#VehicleMaterialModal').modal("hide");
+                    ShowMessage("success", "Bilgi", "Kayıt başarılı");
+                } else
+                    ShowMessage("error", "Hata", e.Message);
+
+            },
+            'POST');
+    }
+
+    function funcEditVehicleMaterial() {
+        var vehicleId = $('#vehicle_Id').val();
+        sendAjxForm({ vehicleId: vehicleId },
+            "/Vehicle/GetByIdVehicleMaterial",
+            function(e) {
+                $('#VehicleMaterials').val('').trigger('change');
+                if (e.length > 0)
+                    $('#VehicleMaterials').val(e).trigger('change');
+                $('#VehicleMaterialModal').modal("show");
+            },
+            'GET');
+    }
+</script>

@@ -1,0 +1,102 @@
+﻿@using CoreArchV2.Core.Enum.TripVehicle
+<div id="TripAddCityModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Göreve Şehir/Adres Ekle</h6>
+            </div>
+            <div class="modal-body">
+                <div id="TripAddress_FormId">
+                    <input id="forAddCityTripId" type="text" table-param="Id" hidden />
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label>Şehir/Bölge (*) :</label>
+                                <select id="AddCityId"
+                                        tabindex="3"
+                                        class="select-search"
+                                        table-param="StartCityId"
+                                        table-id="comboBox-AddCityId"
+                                        table-model-url="/Combo/GetCityAndDistrictCmbx"
+                                        table-tool-type="comboBox"
+                                        table-description="Şehir/Bölge"
+                                        data-option-label="Şehir/Bölge Seçiniz" required>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label>İşlem Tipi (*):</label>
+                                <select id="tripTypeAddress" table-param="Type" class="select-search" table-description="Görev Tipi" onchange="funcChangeTripType()" required>
+                                    <option value="@((int)TripType.Mission)">Görev</option>
+                                    <option value="@((int)TripType.OffDuty)">Görev Dışı</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <label>Kullanılan Km :</label>
+                                <input id="tripAddressKm" table-param="StartKm" tabindex="4" type="text" min="0" class="form-control moneyCurrency" autocomplete="off" placeholder="Kullanılan km değerini giriniz" table-description="Anlık km değeri" disabled>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Açıklama</label>
+                        <textarea rows="3" cols="5" table-param="Description" tabindex="13" class="form-control" placeholder="Açıklama"></textarea>
+                    </div>
+                </div>
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#TripAddress_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="funcAddCityTrip()"><i class="fa fa-check"></i> Adres Ekle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function funcAddCityTrip() {
+        var model = FormGetAllValue("#TripAddress_FormId [table-param]");
+        if (model != null) {
+            if (model.Type == @((int)TripType.OffDuty) && model.StartKm == "") {
+                ShowMessage("info", "Bilgi", "Görev dışı kullanımda <b>km</b> alanı girilmesi zorunludur");
+                return;
+            }
+            sendAjxForm(model, "/Trip/TripAddCity",
+                function (e) {
+                    if (e.IsSuccess) {
+                        $('#TripAddCityModal').modal("hide");
+                        ShowMessage("success", "Bilgi", e.Message);
+                        funcFilterTable();
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+                }, 'POST');
+        }
+    }
+
+    function funcChangeTripType() {
+        var type = $('#tripTypeAddress').val();
+        if (type>0) {
+          if(type == @((int)TripType.OffDuty))
+              $('#tripAddressKm').prop("disabled", false);
+          else
+              $('#tripAddressKm').val('').prop("disabled", true);
+        }
+    }
+
+    function funcAddCityForTrip(tripId) {
+        FormAllInputsClearNoCloseModal('#TripAddress_FormId [table-param]');
+        $('#tripTypeAddress').val(@((int)TripType.Mission)).change();
+        $('#TripAddCityModal').modal("show");
+        $('#forAddCityTripId').val(tripId);
+    }
+</script>

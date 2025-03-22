@@ -1,0 +1,206 @@
+﻿@using Microsoft.AspNetCore.Http
+@using CoreArchV2.Core.Enum
+
+<div class="row" style="margin: 6px -20px -5px -29px;">
+    <div class="col-lg-4">
+        <!-- Progress counters -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="panel text-center">
+                    <div class="panel-body">
+                        <div class="heading-elements">
+                            <ul class="icons-list">
+                                <li><a data-action="reload"></a></li>
+                            </ul>
+                        </div>
+                        <div class="content-group-sm svg-center position-relative" id="mostFuelProject"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel text-center">
+                    <div class="panel-body">
+                        <div class="heading-elements">
+                            <ul class="icons-list">
+                                <li><a data-action="reload"></a></li>
+                            </ul>
+                        </div>
+                        <div class="content-group-sm svg-center position-relative" id="mostFuelPlate"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel text-center">
+                    <div class="panel-body">
+                        <div class="heading-elements">
+                            <ul class="icons-list">
+                                <li><a data-action="reload"></a></li>
+                            </ul>
+                        </div>
+                        <div class="content-group-sm svg-center position-relative" id="mostMaintenanceProject"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel text-center">
+                    <div class="panel-body">
+                        <div class="heading-elements">
+                            <ul class="icons-list">
+                                <li><a data-action="reload"></a></li>
+                            </ul>
+                        </div>
+                        <div class="content-group-sm svg-center position-relative" id="mostMaintenancePlate"></div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-md-6">
+                <div class="panel text-center">
+                    <div class="panel-body">
+                        <div class="heading-elements">
+                            <ul class="icons-list">
+                                <li><a data-action="reload"></a></li>
+                            </ul>
+                        </div>
+                        <div class="content-group-sm svg-center position-relative" id="mostVehicleCostProject"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="panel text-center">
+                    <div class="panel-body">
+                        <div class="heading-elements">
+                            <ul class="icons-list">
+                                <li><a data-action="reload"></a></li>
+                            </ul>
+                        </div>
+                        <div class="content-group-sm svg-center position-relative" id="mostVehicleCostPlate"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- /progress counters -->
+    </div>
+    <div class="col-lg-8">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-12">
+                        <!-- Donut with details -->
+                        <div class="panel panel-body text-center">
+                            <h6 class="text-semibold no-margin-bottom mt-5">Araç Sayıları</h6>
+                            <div class="text-size-small text-muted content-group-sm">Müdürlük Bazında</div>
+
+                            <div class="svg-center" id="unitCarCount"></div>
+                        </div>
+                        <!-- /donut with details -->
+                    </div>
+                    <div class="col-md-12">
+                        <!-- Basic animated pie -->
+                        <div class="panel panel-body text-center">
+                            <h6 class="text-semibold no-margin-bottom mt-5">Kullanım Amacı</h6>
+
+                            <div class="svg-center" id="usageCarCount"></div>
+                        </div>
+                        <!-- /basic animated pie -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-body text-center">
+                            <h6 class="text-semibold no-margin-bottom mt-5">Mülkiyet Araç Satış</h6>
+
+                            <div class="svg-center" id="fixCarAmount"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <!-- Basic animated pie -->
+                        <div class="panel panel-body text-center">
+                            <h6 class="text-semibold no-margin-bottom mt-5">Araç Sayıları</h6>
+
+                            <div class="svg-center" id="fixRentCarCount"></div>
+                        </div>
+                        <!-- /basic animated pie -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        activeVehicle();
+        fixCarCost();
+        usageTypeVehicleCount();
+        managementVehicleCount();
+    });
+
+    //Müdürlük bazında araç sayısı
+    function managementVehicleCount() {
+        sendAjxForm("", "/Report/ManagementVehicleCount",
+            function (data) {
+                var arr = new Array();
+                for (var i = 0; i < data.length; i++) {
+                    arr.push({
+                        "status": data[i].UnitName,
+                        "icon": "<i class='status-mark border-blue-300 position-left'></i>",
+                        "value": data[i].Count,
+                        "color": "#29B6F6"
+                    });
+                }
+                donutWithDetails("#unitCarCount", arr, 'Araç');
+            }, "GET");
+    }
+
+    //Kullanım amacına göre araç sayısı
+    function usageTypeVehicleCount() {
+        sendAjxForm("", "/Report/UsageTypeVehicleCount",
+            function (data) {
+                var arr = new Array();
+                for (var i = 0; i < data.length; i++) {
+                    arr.push({
+                        "status": data[i].Name,
+                        "value": data[i].Count
+                    });
+                }
+                pieArcWithLegend("#usageCarCount", arr);
+            }, "GET");
+    }
+
+    //Araç sayıları
+    function activeVehicle() {
+        sendAjxForm("", "/Home/ActiveVehicleCount",
+            function (data) {
+                var arr = [];
+                arr.push({ "status": "Kullanılmayan Araç", "value": data.InPoolVehicle.length });
+                arr.push({ "status": "Kiralık Araç", "value": data.RentVehicle.length });
+                arr.push({ "status": "Mülkiyet Araç", "value": data.FixVehicle.length });
+                animatedPieWithLegend("#fixRentCarCount", arr, "count");
+            }, "GET");
+    }
+
+    //Satış tutarları
+    function fixCarCost() {
+        sendAjxForm("", "/Report/FixVehicleTotalAmount",
+            function (data) {
+                var arr = new Array();
+                for (var i = 0; i < data.length; i++) {
+                    arr.push({
+                        "status": data[i].Name,
+                        "value": data[i].Amount
+                    });
+                }
+                animatedPieWithLegend("#fixCarAmount", arr, "money");
+            }, "GET");
+    }
+</script>

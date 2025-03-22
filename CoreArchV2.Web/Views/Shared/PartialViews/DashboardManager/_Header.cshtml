@@ -1,0 +1,238 @@
+﻿
+<div class="row" style="margin: 6px -20px -5px -29px;">
+    <div class="col-lg-4">
+
+        <!-- Fuel -->
+        <div class="panel bg-success-300">
+            <div class="panel-body">
+                <div class="heading-elements">
+                    <ul class="icons-list">
+                        <li><a data-action="reload"></a></li>
+                    </ul>
+                </div>
+
+                <h6 id="fuelTitleLastMonth" title="Son Ay Verisi" class="no-margin">--- ₺</h6>
+                Aylık Yakıt Verileri
+            </div>
+
+            <div id="montlyFuelChart"></div>
+        </div>
+        <!-- /Fuel -->
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <!-- Maintanence -->
+        <div class="panel bg-blue-300">
+            <div class="panel-body">
+                <div class="heading-elements">
+                    <ul class="icons-list">
+                        <li><a data-action="reload"></a></li>
+                    </ul>
+                </div>
+
+                <h6 id="maintenanceTitleLastMonth" title="Son Ay Verisi" class="no-margin">--- ₺</h6>
+                Aylık Bakım/Onarım Verileri
+            </div>
+
+            <div id="montlyMaintenanceChart"></div>
+        </div>
+        <!-- /Maintanence -->
+
+    </div>
+
+   @* <div class="col-lg-3">
+
+        <!-- Cost -->
+        <div class="panel bg-orange-300">
+            <div class="panel-body">
+                <div class="heading-elements">
+                    <ul class="icons-list">
+                        <li><a data-action="reload"></a></li>
+                    </ul>
+                </div>
+
+                <h6 id="vehicleCostTitleLastMonth" title="Son Ay Verisi" class="no-margin">--- ₺</h6>
+                Aylık Kira Verileri
+            </div>
+
+            <div class="container-fluid">
+                <div id="montlyVehicleCostChart"></div>
+            </div>
+        </div>
+        <!-- /Cost -->
+
+    </div>*@
+
+    <div class="col-lg-4">
+
+        <!-- Hgs -->
+        <div class="panel bg-danger-300">
+            <div class="panel-body">
+                <div class="heading-elements">
+                    <ul class="icons-list">
+                        <li><a data-action="reload"></a></li>
+                    </ul>
+                </div>
+
+                <h6 id="hgsTitleLastMonth" title="Son Ay Verisi" class="no-margin">--- ₺</h6>
+                Aylık HGS Verileri
+            </div>
+
+            <div class="container-fluid">
+                <div id="montlyHGSChart"></div>
+            </div>
+        </div>
+        <!-- /Hgs -->
+
+    </div>
+</div>
+<!-- /quick stats boxes -->
+
+<script>
+    $(document).ready(function () {
+        //header
+        var start = moment().clone().startOf('month').subtract(5, 'months').format("YYYY-MM");
+        var start2 = moment().clone().startOf('month').subtract(2, 'months').format("YYYY-MM")
+        var end = moment().clone().startOf('month').add(1, 'months').format("YYYY-MM");
+        var model = {
+            StartDate: start,
+            EndDate: end
+        };
+        fuelChart(model);
+        fuelMaintenance(model);
+        fuelHGS(model);
+        //fuelVehicleCost({ StartDate: start2, EndDate: end });
+
+        //content box
+        var startContent = moment().clone().subtract(1, 'months').startOf('month').format("YYYY-MM");
+        var endContent = moment().clone().startOf('month').format("YYYY-MM");
+        var modelContent = {
+            StartDate: startContent,
+            EndDate: endContent
+        };
+        contentFuel(modelContent);
+        contentMaintenance(modelContent);
+        contentVehicleCost(modelContent);
+    });
+
+    //header chart
+    function fuelChart(model) {
+        sendAjxForm(model, "/Report/MontlyFuelTotalAmount", function (data) {
+            if (data.length > 0) {
+                $('#fuelTitleLastMonth').html(formatMoney(data[data.length - 1].DiscountAmount) + " ₺ <span style='font-size: 11px;color: darkgreen;font-weight: 500;'>(" + data[data.length - 1].FuelDate2 + ")</span>");
+
+                var arr = new Array();
+                for (var i = 0; i < data.length; i++) {
+                    arr.push({
+                        "date": ConvertJSONJustDateFormatISO2(data[i].FuelDate),
+                        "date2": data[i].FuelDate2,
+                        "alpha": data[i].DiscountAmount + ""
+                    });
+                }
+                dailyRevenue('#montlyFuelChart', arr, "<i class='icon-gas position-left'></i>");//Aylık yakıt
+            }
+        }, "GET");
+    }
+
+    function fuelMaintenance(model) {
+        sendAjxForm(model, "/Report/MontlyMaintenanceTotalAmount", function (data) {
+            if (data.length > 0) {
+                $('#maintenanceTitleLastMonth').html(formatMoney(data[data.length - 1].Amount) + " ₺ <span style='font-size: 11px;color: darkgreen;font-weight: 500;'>(" + data[data.length - 1].InvoiceDate2 + ")</span>");
+                var arr = new Array();
+                for (var i = 0; i < data.length; i++) {
+                    arr.push({
+                        "date": ConvertJSONJustDateFormatISO2(data[i].InvoiceDate),
+                        "date2": data[i].InvoiceDate2,
+                        "alpha": data[i].Amount + ""
+                    });
+                }
+                dailyRevenue('#montlyMaintenanceChart', arr, "<i class='icon-hammer-wrench position-left'></i>");//Aylık bakım/onarım
+            }
+        }, "GET");
+    }
+
+    function fuelVehicleCost(model) {
+        sendAjxForm(model, "/Report/MonthlyVehicleCost", function (data) {
+            if (data.length > 0) {
+                $('#vehicleCostTitleLastMonth').html(formatMoney(data[data.length - 1].DatesRangeCost) + " ₺ <span style='font-size: 11px;color: darkgreen;font-weight: 500;'>(" + data[data.length - 1].DateMonth + ")</span>");
+
+                var arr = new Array();
+                for (var i = 0; i < data.length; i++) {
+                    arr.push({
+                        "date": ConvertJSONJustDateFormatISO2(data[i].CostDate),
+                        "date2": data[i].DateMonth,
+                        "alpha": data[i].DatesRangeCost + ""
+                    });
+                }
+                dailyRevenue('#montlyVehicleCostChart', arr, "<i class='icon-store position-left'></i>");//Aylık kiralama
+            }
+        }, "GET");
+    }
+
+    function fuelHGS(model) {
+        sendAjxForm(model, "/Report/MonthlyHgsTotalAmount", function (data) {
+            if (data.length > 0) {
+                $('#hgsTitleLastMonth').html(formatMoney(data[data.length - 1].Amount) + " ₺ <span style='font-size: 11px;color: darkgreen;font-weight: 500;'>(" + data[data.length - 1].DateMonth + ")</span>");
+                var arr = new Array();
+                for (var i = 0; i < data.length; i++) {
+                    arr.push({
+                        "date": ConvertJSONJustDateFormatISO2(data[i].CostDate),
+                        "date2": data[i].DateMonth,
+                        "alpha": Math.floor(data[i].Amount) + ""
+                    });
+                }
+                dailyRevenue('#montlyHGSChart', arr, "<i class='icon-road position-left'></i>");//Aylık Hgs
+            }
+        }, "GET");
+    }
+
+    //content box
+
+    function contentFuel(model) {
+        sendAjxForm(model, "/Report/HeaderInfoFuel",
+            function (data) {
+                var unitName = data.MostProjectAmount.UnitName + " (" + data.DateMonth + ")";
+                var unitCost = formatMoney(data.MostProjectAmount.TotalAmount, 2) + " ₺";
+                var percentageTextU = "Projeler içindeki yüzdelik dilim (" + data.MostProjectAmount.UnitName + "/Tüm Projeler)";
+                progressCounter('#mostFuelProject', 38, 2, "#4CAF50", data.PercentageUnit, "icon-gas text-success-400", 'En Fazla Proje (Yakıt)', unitName, unitCost, percentageTextU)
+
+                var plate = data.MostPlateAmount.Plate + " (" + data.DateMonth + ")";
+                var plateCost = formatMoney(data.MostPlateAmount.TotalAmount, 2) + " ₺"
+                var percentageTextP = "Plakalar içindeki yüzdelik dilim (" + data.MostPlateAmount.Plate + "/Tüm Plakalar)";
+                progressCounter('#mostFuelPlate', 38, 2, "#2E7D32", data.PercentagePlate, "icon-gas text-success-400", 'En Fazla Plaka (Yakıt)', plate, plateCost, percentageTextP)
+            }, "GET");
+    }
+
+    function contentMaintenance(model) {
+        sendAjxForm(model, "/Report/HeaderInfoMaintenance",
+            function (data) {
+                var unitName = data.MostProjectAmount.UnitName + " (" + data.DateMonth + ")";
+                var unitCost = formatMoney(data.MostProjectAmount.TotalAmount, 2) + " ₺";
+                var percentageTextU = "Projeler içindeki yüzdelik dilim (" + data.MostProjectAmount.UnitName + "/Tüm Projeler)";
+                progressCounter('#mostMaintenanceProject', 38, 2, "#03A9F4", data.PercentageUnit, "icon-hammer-wrench text-blue-400", 'En Fazla Proje (Bakım)', unitName, unitCost, percentageTextU)
+
+                var plate = data.MostPlateAmount.Plate + " (" + data.DateMonth + ")";
+                var plateCost = formatMoney(data.MostPlateAmount.TotalAmount, 2) + " ₺"
+                var percentageTextP = "Plakalar içindeki yüzdelik dilim (" + data.MostPlateAmount.Plate + "/Tüm Plakalar)";
+                progressCounter('#mostMaintenancePlate', 38, 2, "#0277BD", data.PercentagePlate, "icon-hammer-wrench text-blue-400", 'En Fazla Plaka (Bakım)', plate, plateCost, percentageTextP)
+            }, "GET");
+    }
+
+    function contentVehicleCost(model) {
+        sendAjxForm(model, "/Report/HeaderInfoVehicleCost",
+            function (data) {
+                var unitName = data.MostProjectAmount.UnitName + " (" + data.DateMonth + ")";
+                var unitCost = formatMoney(data.MostProjectAmount.TotalAmount, 2) + " ₺";
+                var percentageTextU = "Projeler içindeki yüzdelik dilim (" + data.MostProjectAmount.UnitName + "/Tüm Projeler)";
+                progressCounter('#mostVehicleCostProject', 38, 2, "#26A69A", data.PercentageUnit, "icon-store text-teal-400", 'En Fazla Proje (Kira)', unitName, unitCost, percentageTextU)
+
+                var plate = data.MostPlateAmount.Plate + " (" + data.DateMonth + ")";
+                var plateCost = formatMoney(data.MostPlateAmount.TotalAmount, 2) + " ₺";
+                var percentageTextP = "Plakalar içindeki yüzdelik dilim (" + data.MostPlateAmount.Plate + "/Tüm Plakalar)";
+                progressCounter('#mostVehicleCostPlate', 38, 2, "#26A69A", data.PercentagePlate, "icon-store text-teal-400", 'En Fazla Plaka (Kira)', plate, plateCost, percentageTextP)
+            }, "GET");
+    }
+
+</script>

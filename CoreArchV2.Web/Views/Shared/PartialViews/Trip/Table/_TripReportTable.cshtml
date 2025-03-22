@@ -1,0 +1,107 @@
+﻿@using System.Web
+@model IEnumerable<CoreArchV2.Dto.ETripDto.ETripDto>
+
+@{
+    if (Model != null)
+    {
+        foreach (var parent in Model)
+        {
+            var counter = 1;
+            var uniqueId = Guid.NewGuid().ToString("N");
+            <div class="panel-group content-group-xs" id="accordion-@uniqueId">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h6 class="panel-title">
+                            @{
+                                <a data-toggle="collapse" data-parent="#accordion-@uniqueId" href="#accordion-group-@uniqueId" aria-expanded="true">@parent.UnitName <b style="color: red;">@parent.DebitPlateCount/@parent.OpenMissionList.Count</b> </a>
+                            }
+                        </h6>
+                    </div>
+                    <div id="accordion-group-@uniqueId" class="panel-collapse collapse" aria-expanded="true">
+                        <div class="panel-body" style="overflow-x: scroll">
+                            <table class="table-striped table-hover table table-xxs datatable-basic"
+                           style="font-size: 11px;"
+                           id="dataTabledataTableTrip-@uniqueId"
+                           table-id="dataTable-dataTableTrip-@uniqueId"
+                           table-model-url=""
+                           table-DatabaseName="/Trip"
+                           table-tool-type="dataTable">
+                                <thead>
+                                    <tr class="filters">
+                                        <th style="text-align: center;">S.No</th>
+                                        <th data-value="Plate" style="text-align: center;">
+                                            Plaka
+                                        </th>
+                                        <th data-value="MissionName" style="text-align: center;">
+                                            Görev Adı/Adres
+                                        </th>
+                                        <th data-value="StartCityName" style="text-align: center;">
+                                            Başlangıç İl
+                                        </th>
+                                        <th data-value="EndCityName" style="text-align: center;">
+                                            Varış İl
+                                        </th>
+                                        <th data-value="StartDate" style="text-align: center;">
+                                            Baş.Tar.
+                                        </th>
+                                        <th data-value="EndDate" style="text-align: center;">
+                                            Bit.Tar.
+                                        </th>
+                                        <th data-value="ButtonEditDelete" style="text-align: center;">
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody style="text-align: center">
+                                    @{
+                                        <div class="col-md-12">
+                                            <div class="content-group">
+                                                <p>Görev plaka listeleri</p>
+                                                <ul class="list-group">
+                                                    <li class="list-group-header">Görev açan</li>
+                                                    <li class="list-group-item list-group-item-success">@Html.Raw(parent.OpenPlateSplit)</li>
+
+                                                    <li class="list-group-header">Görev açmayan</li>
+                                                    <li class="list-group-item list-group-item-info">@Html.Raw(parent.NotOpenPlateSplit)</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        foreach (var item in parent.PlateList)
+                                        {
+                                            uniqueId = Guid.NewGuid().ToString("N");
+                                            <tr id="RowTr_@uniqueId">
+                                                <td>@counter</td>
+                                                <td>@item.Plate</td>
+                                                <td>@item.MissionName</td>
+                                                <td>@item.StartCityName</td>
+                                                <td>@item.EndCityName</td>
+                                                <td>@item.StartDate.ToString("dd-MM-yyyy HH:mm")</td>
+                                                <td>@item.EndDate.Value.ToString("dd-MM-yyyy HH:mm")</td>
+                                                <td><a onclick="funcEditTrip(@item.Id);"><i class="icon-pencil5"></i></a></td>
+                                            </tr>
+                                            counter++;
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+<style>
+
+    .select2-selection--single:not([class*=bg-]) {
+        height: 31px;
+    }
+
+    .moneyCurrency {
+        height: 31px;
+    }
+</style>
+
+<script src="~/admin/js/moneyformat/money.js"></script>
+

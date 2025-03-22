@@ -1,0 +1,109 @@
+﻿
+@using CoreArchV2.Core.Enum
+<div id="TireDebitReturn_FormId">
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-6">
+                <label>Araç (*) :</label>
+                <select id="select-Plate_r"
+                        tabindex="1"
+                        table-param="VehicleId"
+                        onchange="DebitTireInfo(this)"
+                        table-description="Araç"
+                        class="select2-container select2-selection--single" required>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label>Lastik Adedi (*) :</label>
+                <input type="number" tabindex="2" table-param="TireCount" class="form-control" table-description="Lastik Adedi" required />
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>İade Edilecek Depo (*) :</label>
+                <select id="WareHouseId_r2"
+                        class="select-search"
+                        tabindex="3"
+                        table-param="TargetWareHouseId"
+                        table-id="comboBox-WareHouseId_r2"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.SupplierACar)"
+                        table-tool-type="comboBox"
+                        table-description="Hedef Depo"
+                        data-option-label="Depo Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Kullanım Tipi (*) :</label>
+                <select id="TireTypeId_r"
+                        class="select-search"
+                        table-param="TireTypeId"
+                        table-id="comboBox-TireTypeId_r"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TireTypeId)"
+                        table-tool-type="comboBox"
+                        tabindex="5"
+                        table-description="Lastik Kullanım Tipi"
+                        data-option-label="Lastik Kullanım Tipi Seçiniz">
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Lastik Ebat (*) :</label>
+                <select id="DimensionTypeId_r"
+                        class="select-search"
+                        table-param="DimensionTypeId"
+                        onchange="GetWareHouseInTireType()"
+                        table-id="comboBox-DimensionTypeId_r"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.DimensionTypeId)"
+                        table-tool-type="comboBox"
+                        tabindex="4"
+                        table-description="Lastik Ebat"
+                        data-option-label="Lastik Ebat Seçiniz">
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label">Açıklama</label>
+        <textarea rows="3" cols="6" table-param="Description" tabindex="6" class="form-control" placeholder="Açıklama"></textarea>
+    </div>
+
+    <div class="form-group" style="margin-bottom: -14px;">
+        <div class="alert bg-orange-300 alert-styled-left">
+            <span class="text-semibold TireInfoSpan">---</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-4 col-md-4">
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <button tabindex="8" type="submit" class="btn btn-danger full-width" onclick="$('#TireDebitReturnModal').modal('hide')"><i class="fa fa-check"></i> İptal</button>
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <button tabindex="7" type="submit" class="btn btn-primary full-width" onclick="funcSaveTireReturnTire()"><i class="fa fa-check"></i> Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function TireDebitReturnOpenModal() {
+        $('.TireInfoSpan').html('---');
+        FormAllInputsClearNoCloseModal("#TireDebitReturn_FormId [table-param]");
+        $('#TireDebitReturnModal').modal("show");
+    }
+
+    function funcSaveTireReturnTire() {
+        var model = FormGetAllValue("#TireDebitReturn_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model,
+                "/Tire/TireReturn", function (e) {
+                    if (e.IsSuccess) {
+                        $('#TireDebitReturnModal').modal("hide");
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı");
+                    } else
+                        ShowMessage("info", "Bilgi", e.Message);
+                }, 'POST');
+        }
+    }
+</script>

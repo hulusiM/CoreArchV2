@@ -1,0 +1,120 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration _config
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="iso-8859-9">
+    <meta name="http-equiv" content="Content-type: text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1254">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <noscript>Please,run javascript!!</noscript>
+    <title>@_config["FirmSetting:DisplayName"]</title>
+    <link href="~/login/css/style.css" rel="stylesheet" />
+    <script src="~/admin/js/core/libraries/jquery.min.js"></script>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            @*<h1>@SharedLocalizer.GetLocalizedHtmlString("LoginWelcome")</h1>*@
+            <h1>Hoşgeldiniz</h1>
+            <form class="form">
+                <input type="text" id="mobilePhone" autocomplete="off" placeholder="Telefon Numarası" tabindex="1" />
+                <input type="password" id="pass" placeholder="Şifre" tabindex="2" />
+                <a onclick="loadComponentView()" id="login-button">Giriş Yap</a>
+            </form>
+        </div>
+
+        <ul class="bg-bubbles">
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+            <li></li>
+        </ul>
+    </div>
+    <script language="javascript">
+        window.addEventListener("load",
+            function () {
+                $('#mobilePhone').focus();
+            });
+        $(document).on('keypress',
+            function (e) {
+                if (e.which == 13) {
+                    loadComponentView();
+                }
+            });
+
+        var errorLoginCount = 0;
+        function loadComponentView() {
+            var url = new URL(window.location.href);
+            var redirectToUrl = url.searchParams.get("redirectUrl");
+            var username = $('#mobilePhone').val();
+            var password = $('#pass').val();
+            var model = {
+                mobilePhone: username,
+                pass: password,
+                redirectUrl: redirectToUrl
+            };
+            if (username != "" && password != "") {
+                $.ajax({
+                    url: window.location.origin + "/Login/LoginCheck",
+                    type: "POST",
+                    dataType: "json",
+                    async: true,
+                    success: function (result) {
+                        if (errorLoginCount > 2) {
+                            toastr_mes("info", "Bilgi", "Şifre 3 kere hatalı girildi. Sayfayı yenileyip tekrar deneyiniz");
+                            $('#login-button').remove();
+                        }
+                        else if (result.LoginMessage == "") {
+                            $('form').fadeOut(500);
+                            $('.wrapper').addClass('form-success');
+                            setTimeout(function () { window.location = result.RedirectUrl; }, 1000);
+                        } else {
+                            toastr_mes("warning", "Bilgi", result.LoginMessage);
+                            errorLoginCount++;
+                        }
+                    },
+                    data: model,
+                    error: function (err) {
+                        toastr_mes("warning", "Bilgi", "Hata oluştu");
+                    }
+                });
+            } else
+                toastr_mes("warning", "Bilgi", "Zorunlu alanları doldurunuz");
+        };
+
+        function toastr_mes(messageType, title, content) {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toast-bottom-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "500",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+            Command: toastr[messageType](content, title);
+        }
+    </script>
+
+    <link href="~/admin/Toastr/toastr.css" rel="stylesheet" />
+    <script src="~/admin/Toastr/toastr.js"></script>
+</body>
+</html>

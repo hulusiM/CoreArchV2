@@ -1,0 +1,113 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+}
+
+<div class="form-group">
+    <label class="control-label">Belge :</label>
+    <div class="file-loading">
+        <input id="imageUploadForm" tabindex="1" type="file" multiple>
+    </div>
+    <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+</div>
+<div class="form-group vehicleActionButtons">
+    <div class="row">
+        <div class="col-md-6">
+        </div>
+        <div class="col-md-6">
+            <button onclick="FileUploadVehicle()" tabindex="2" type="button" class="btn btn-default btn-success full-width"><i class="icon-make-group position-left"></i> Dosya Yükle</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#VehicleFile1_toggle').click(function () {
+        getVehicleFilesList();
+    });
+
+    $('#VehicleFile_toggle').click(function () {
+        if (historyButtonsActive) {
+            $("#VehicleFile1_toggle").click();
+            getVehicleFilesList();
+        } else {
+            $('.nav-tabs a[href="#Vehicle_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için araç seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+    function getVehicleFilesList() {
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            var model = { vehicleId: vehicleId };
+            sendAjxForm(model,
+                "/Vehicle/GetByVehicleIdFileList",
+                function (e) {
+                    if (e.files.length > 0) {
+                        var arr = new Array();
+                        var deleteObj = [];
+                        for (var i = 0; i < e.files.length; i++) {
+                            var imgUrl = "/uploads/logistics/" + e.files[i].Name;
+                            var type = e.files[i].Extention + '';
+                            if (e.files[i].Extention == 'doc' || e.files[i].Extention == 'docx') {
+                                type = "office";
+                                arr[i] = e.files[i].Name.split("-")[1];
+                            } else
+                                arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                            deleteObj[i] = {
+                                type: type,
+                                size: e.files[i].FileSize,
+                                caption: e.files[i].Name,
+                                url: "/File/FileDeleteLogistics",
+                                key: e.files[i].Id
+                            };
+                        }
+                        setImage(arr, deleteObj);
+                        if (!e.Status) {
+                            $('.file-caption-main').css("display", "none");
+                            $('.kv-file-remove').css("display", "none");
+                        }
+                    } else
+                        setImage(null, null);
+
+
+                    if (!@isAdmin) {
+                        $('.kv-file-remove').css("display", "none")
+                        $('.file-caption-main').css("display", "none")
+                    }
+                },
+                'GET');
+        }
+    }
+
+    function FileUploadVehicle() {
+        var vehicleId = $('#vehicle_Id').val();
+        var files = $('#imageUploadForm').fileinput('getFileList');
+        var formData = new FormData();
+        for (var i = 0; i != files.length; i++)
+            formData.append("files", files[i]);
+
+        if (files.length > 0) {
+            var url = '/Vehicle/VehicleFileInsert?vehicleId=' + vehicleId;
+            sendAjxFormFileUpload(formData,
+                url,
+                function (e) {
+                    if (e.IsSuccess) {
+                        getVehicleFilesList();
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı");
+                    } else {
+                        if (e == 'NotAuthorizationCore') {
+                            var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                            ShowMessage("error", "Yetkisiz İşlem", message);
+                        } else
+                            ShowMessage("error", "Hata", e.Message);
+                    }
+                },
+                'POST');
+        } else
+            ShowMessage("info", "Bilgi", "Lütfen dosya seçiniz");
+    }
+
+</script>

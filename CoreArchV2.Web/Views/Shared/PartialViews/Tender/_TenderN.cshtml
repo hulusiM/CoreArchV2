@@ -1,0 +1,342 @@
+﻿@using CoreArchV2.Core.Enum
+<script type="text/javascript" src="~/admin/tender/script.js"></script>
+<link href="~/admin/tender/style.css" rel="stylesheet" />
+
+<div id="tenderDetailForPrint">
+
+    <header id="tender_header">
+        <span>
+            @*<img src="~/admin/images/logo.png" />*@
+        </span>
+        <address>
+            <p style="font-weight: bold;">--- SAN.TİC.LTD.ŞTİ.</p>
+            <p>Adres<br>No:-- --/--</p>
+            <p>Tel (0422) --- (Pbx)</p>
+            <p>Fax (0422) ---</p>
+            <p>----.net</p>
+        </address>
+
+        <customerInfo>
+            <p style="font-weight: bold;">Müşteri Bilgileri</p>
+            <div id="institutionNameContactListDiv">
+                <p>-- ---</p>
+                <p>-- --</p>
+                <p>-- --</p>
+            </div>
+        </customerInfo>
+    </header>
+    <article>
+        <address>
+            <p id="TenderDetail_ProjectName">----</p>
+        </address>
+        <table class="meta tender_table">
+            <tr>
+                <th>Teklif No:</th>
+                <td id="TenderSalesNumber" style="font-weight: bold; text-decoration: underline;">-----</td>
+            </tr>
+            <tr>
+                <th><span>Tarih:</span></th>
+                <td><span id="tenderDetailPageTenderDate" style="font-weight: bold;"></span></td>
+            </tr>
+        </table>
+        <table id="tenderDetailTable" class="inventory tender_table">
+            <thead>
+                <tr>
+                    <th style="width: 3%;"><span>Firma</span></th>
+                    <th style="width: 30%;"><span>Ürün Adı (*)</span></th>
+                    <th><span>Stok Kodu</span></th>
+                    <th style="width: 6%;"><span>Miktar (*)</span></th>
+                    <th style="width: 5%;"><span>Birim (*)</span></th>
+                    <th><span>Fiyat</span></th>
+                    <th><span>Toplam</span></th>
+                    <th style="width: 12%;"><span>Müdürlük</span></th>
+                    @*<th><span contenteditable>Müdürlük Açıklama</span></th>*@
+                    <th><span>Son Fiyat</span></th>
+                    <th style="width: 5%;"><span>Kopyala</span></th>
+                    @*<th style="width: 3%;"><span>Belge</span></th>*@
+                    <th style="width: 5%;"><span>İş Arttırımı</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @*<tr>
+                    <td><a class="cut">-</a>
+                    <span contenteditable>
+                    <select id="TypeId"
+                    class="select-search"
+                    table-param="TypeId"
+                    table-id="comboBox-TypeId"
+                    table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TenderStageType)"
+                    table-tool-type="comboBox"
+                    data-option-label="Teklif Türü Seçiniz">
+                    </select>
+                    </span>
+                    </td>
+                    <td><span contenteditable>Kamera 3x zoom</span></td>
+                    <td><span data-prefix>₺</span><span contenteditable>150.00</span></td>
+                    <td><span contenteditable>4</span></td>
+                    <td><span data-prefix>₺</span><span>600.00</span></td>
+                    <td><span data-prefix>₺</span><span>600.00</span></td>
+                    </tr>*@
+            </tbody>
+        </table>
+        <a id="tenderDetailAddRow">+</a>
+        <table class="balance tender_table">
+            @*<tr>
+                <th><span contenteditable>Toplam</span></th>
+                <td><span data-prefix>₺</span><span>600.00</span></td>
+                </tr>
+                <tr>
+                <th><span contenteditable>Kdv Oranı</span></th>
+                <td><span data-prefix></span><span contenteditable>%18</span></td>
+                </tr>*@
+            <tr>
+                <th><span contenteditable>Genel Toplam (Kdv Hariç)</span></th>
+                <td id="tenderDetailTotal">--.---,--₺</td>
+            </tr>
+        </table>
+    </article>
+    <aside>
+        <h1><span>Önemli Bilgilendirme</span></h1>
+        <div id="footerInfoText" contenteditable>
+            <p>* Fiyatlara %18 KDV dahil değildir.</p>
+            <p>* Teklifimizin geçerlilik süresi 30 gündür.</p>
+            <p>* Teklifimizin kabul görmesi halinde kaşe ve imzalı olarak tarafımıza bildirilmesi gerekmektedir.</p>
+            <p>* Satışını yapmış olduğumuz cihazlar ve ürünler üretim hatalarına karşı 2 yıl garantilidir.</p>
+            <p>* Tekliflerimizde sipariş aşamasında mutlaka stok teyidi alınız.</p>
+            <p>* Döviz bazındaki fiyat tekliflerimizde fatura tarihindeki T.C.M.B efektif satış döviz kuru geçerlidir.</p>
+        </div>
+    </aside>
+
+</div>
+<div class="form-group">
+    <div class="row">
+        <div class="col-sm-6">
+        </div>
+        <div class="col-sm-1">
+            <button tabindex="4" type="submit" class="btn btn-success full-width" onclick="tenderDetailForwardButtonCheck()"><i class="fa fa-arrow-left"></i> Önceki</button>
+        </div>
+        <div class="col-sm-4">
+            <button tabindex="3" type="submit" class="btn btn-primary full-width" onclick="funcSaveUpdateTenderDetail()"><i class="fa fa-arrow-right"></i> Kaydet ve Devam Et</button>
+        </div>
+        <div class="col-sm-1">
+            <button tabindex="4" type="submit" class="btn btn-success full-width" onclick="tenderDetailNextButtonCheck()"><i class="fa fa-arrow-right"></i> Sonraki</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function funcSaveUpdateTenderDetail() {
+        var tenderId = $('#tender_Id').val();
+        var footerInfoText = $('#footerInfoText').html();
+        var rows = $('#tenderDetailTable tbody')[0].children;
+        if (rows.length > 0) {
+            var tenderDetailModel = new Array();
+            for (var i = 0; i < rows.length; i++) {
+                var idNo = rows[i].id.split("_")[1];
+                var productName = $('#productName_' + idNo).val();
+                var piece = $('#inputPiece_' + idNo).val();
+                var unitTypeId = $('#comboUnitType_' + idNo).val();
+                if (productName != "" && piece > 0 && (unitTypeId != '0')) {
+                    tenderDetailModel.push({
+                        Id: $('#id_' + idNo).val(), //id
+                        IsPrint: $('#checkboxFirm_' + idNo).prop('checked'), //firma
+                        ProductName: productName, //ürün adı
+                        StockCode: $('#Stock_' + idNo).val(), //stok no
+                        Piece: piece, //adet
+                        UnitTypeId: unitTypeId, //birim
+                        ProductPrice: $('#inputPrice_' + idNo).val(), //fiyat
+                        UnitId: $('#comboUnit_' + idNo).val(), //müdürlük
+                        SellingCost: $('#inputLastTotal_' + idNo).val(), //son fiyat
+                        JobIncrease: $('#checkboxJobIncrease_' + idNo).prop('checked') //iş arttrımı
+                    });
+                }
+                else {
+                    ShowMessage("info", "Bilgi", "Zorunlu alanları doldurunuz");
+                    var trId = '#tr_' + idNo;
+                    $(trId).css("background-color", "#ffd07b");
+                    setTimeout(function () { $(trId).css("background-color", "white") }, 2000);
+                    return;
+                }
+            }
+            var model = {
+                TenderId: tenderId,
+                Tender: { FooterInfo: footerInfoText },
+                TenderDetailList: tenderDetailModel
+            }
+            sendAjxForm(model, '/Tender/InsertTenderDetail',
+                function (e) {
+                    if (e.IsSuccess) {
+                        funcSetTenderDetail();
+                        ShowMessage("success", "Bilgi", e.Message);
+                    } else
+                        ShowMessage("error", "Bilgi", e.Message);
+                }, 'POST');
+
+        } else
+            ShowMessage("warning", "Bilgi", "Teklif detay bilgileri girilmedi");
+    }
+
+    function funcSetTenderDetail() {
+        tableRow = 0;
+        $("#tenderDetailTable tbody tr").remove();
+        var tenderId = $('#tender_Id').val();
+        sendAjxForm({ tenderId: tenderId }, '/Tender/GetTenderDetail',
+            function (e) {
+                var tender = e.Tender;
+                setTenderInfo(tender);
+                setTenderDetail(e.TenderDetailList, e.TotalAmountTenderDetail);
+                setTenderDetailContact(tender.InstitutionName, e.ContactList);
+            }, 'GET');
+    }
+
+    function setTenderInfo(tender) {
+        $('#TenderDetail_ProjectName').html(tender.Name);
+        $('#TenderSalesNumber').html(tender.SalesNumber);
+        $('#tenderDetailPageTenderDate').html(ConvertJSONJustDateFormatISONoBackgroundColor(tender.TenderDate));
+    }
+
+    function setTenderDetail(e, total) {
+        if (e.length > 0) {
+            for (var i = 0; i < e.length; i++) {
+                var emptyColumn = document.createElement('tr');
+                emptyColumn.setAttribute("id", ("tr_" + i));
+                var isPrint = '', jobIncrease = '';
+                if (e[i].IsPrint) isPrint = 'checked';
+                if (e[i].JobIncrease) jobIncrease = 'checked';
+
+                emptyColumn.innerHTML = '<td><a class="cut">-</a><input id="id_' + i + '" value="' + e[i].Id + '" hidden/><input id="checkboxFirm_' + i + '" type="checkbox" ' + isPrint + '></td>' + /*firma*/
+                    '<td><input id="productName_' + i + '" value="' + e[i].ProductName + '" autocomplete="off" type="text" class="form-control input-TenderDetail"></td>' + /*ürün adı*/
+                    '<td><input id="Stock_' + i + '" value="' + e[i].StockCode + '" autocomplete="off" type="text" class="form-control input-TenderDetail"></td>' + /*stok kodu*/
+                    '<td><input id="inputPiece_' + i + '" value="' + e[i].Piece + '" autocomplete="off" type="text" onkeyup="updateNumber(this)" class="form-control input-TenderDetail text-center"/></td>' + /*miktar*/
+                    '<td style="text-align: inherit;"><select style="width: 100%;border: 1px solid white;" id="comboUnitType_' + i + '"></select></td>' + /*birim*/
+                    '<td><input id="inputPrice_' + i + '" value="' + (parseInt(e[i].ProductPrice) > 0 ? formatMoney(e[i].ProductPrice) : '') + '" autocomplete="off" type="text" onkeyup="updateNumber(this)" class="form-control input-TenderDetail text-center"/></td>' + /*fiyat*/
+                    '<td><input id="inputTotal_' + i + '" value="' + (parseInt(e[i].TotalProductPrice) > 0 ? formatMoney(e[i].TotalProductPrice) : '') + '" type="text" onkeyup="updateNumber(this)" class="form-control input-TenderDetail text-center" disabled/></td>' + /*toplam*/
+                    '<td><select id="comboUnit_' + i + '" style="width: 100%;border: 1px solid white;"></select></td>' + /*Müdürlük*/
+                    '<td><input id="inputLastTotal_' + i + '" autocomplete="off" value="' + (e[i].SellingCost ?? "") + '" onkeyup="updateNumber(this)" type="text" class="form-control input-TenderDetail text-center"/></td>' + /*Son fiyat*/
+                    '<td><button id="getLastPrice_' + i + '" onclick="setLastPrice(' + i + ')" type="button" class="btn border-warning text-warning-600 btn-flat btn-icon"><i class="icon-copy3"></i></button></td>' + /*fiyat kopyala*/
+                    '<td><input id="checkboxJobIncrease_' + i + '" type="checkbox" ' + jobIncrease + '></td>'; /*iş arttırımı*/
+
+                document.querySelector('.tender_table.inventory tbody').appendChild(emptyColumn);
+                comboUnitType(('comboUnitType_' + i), e[i].UnitTypeId);
+                comboUnit(('comboUnit_' + i), e[i].UnitId);
+                tableRow++;
+
+            }
+            $('#tenderDetailTotal').html(formatMoney(total) + "₺");
+        }
+    }
+
+    function setLastPrice(id) {
+        var val = $("#inputPrice_" + id).val();
+        if (val.replaceAll('.','').replace(',','.') > 0)
+            $("#inputLastTotal_" + id).val(val);
+        else
+            ShowMessage("info", "Bilgi", "İlgili satırın fiyat bilgisi boş görünüyor.");
+    }
+
+    function setTenderDetailContact(institutionName, contactList) {
+        var result = "<p>" + (institutionName ?? "Taslak aşamasında") + "</p>";
+        result += "<p><b>İlgili:</b></p>";
+        if (contactList.length > 0)
+            for (var i = 0; i < contactList.length; i++)
+                result += "<p><b>Sayın:</b> " + contactList[i].Name + "</p>";
+
+        $('#institutionNameContactListDiv').html(result);
+    }
+
+    function tenderDetailForwardButtonCheck() {
+        var rows = $('#tenderDetailTable tbody')[0].children;
+        if (rows.length > 0 && isNewRows()) {
+            findNewRowWarning();
+            swal({
+                    title: "Emin misiniz ?",
+                    text: "Önceki adıma geçince değişiklikler kaybolacaktır!",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#EF5350",
+                    confirmButtonText: "Evet, Devam Et!",
+                    cancelButtonText: "Hayır, Sayfada Kal!",
+                    closeOnConfirm: false,
+                    closeOnCancel: false
+                },
+                function (isConfirm) {
+                    if (isConfirm) {
+                        $(".cancel").click();
+                        $(".confirm").click();
+                        $('#stepy-head-1').click();
+                    } else {
+                        swal({
+                            title: "İsteğiniz üzere iptal Edildi",
+                            text: "Kayıtlar güvende",
+                            confirmButtonColor: "#2196F3",
+                            type: "info"
+                        });
+                    }
+                });
+        } else
+            $('#stepy-head-1').click();
+    }
+
+    function tenderDetailNextButtonCheck() {
+        var rows = $('#tenderDetailTable tbody')[0].children;
+        if (rows.length > 0 && pageFormChanged) {
+            formChangedWarning();
+            swal({
+                    title: "Emin misiniz ?",
+                    text: "Sayfada değişiklik tespit edildi Sonraki adıma geçince değişiklikler kaybolacaktır!",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#EF5350",
+                    confirmButtonText: "Evet, Devam Et!",
+                    cancelButtonText: "Hayır, Sayfada Kal!",
+                    closeOnConfirm: false,
+                    closeOnCancel: false
+                },
+                function (isConfirm) {
+                    if (isConfirm) {
+                        $(".cancel").click();
+                        $(".confirm").click();
+                        $('#stepy-head-3').click();
+                    } else {
+                        swal({
+                            title: "İsteğiniz üzere iptal Edildi",
+                            text: "Kayıtlar güvende",
+                            confirmButtonColor: "#2196F3",
+                            type: "info"
+                        });
+
+                    }
+                });
+        } else
+            $('#stepy-head-3').click();
+    }
+
+    function formChangedWarning() {
+        var rows = $('#tenderDetailTable tbody')[0].children;
+        for (var i = 0; i < rows.length; i++) {
+            var id = rows[i].id.split("_")[1];
+            if ($('#id_' + id).val() == "0") {
+                var trId = '#tr_' + id;
+                $(trId).css("background-color", "rgb(248 249 167)");
+                setTimeout(function () { $(trId).css({ "background-color": "white", "transition": "background 10s" }) }, 150);
+                $('#tenderDetailTotal').css("transition", "");
+            }
+        }
+    }
+
+    var pageFormChanged = false;
+    $("#tenderDetailTable").on("input",
+        function () {
+            pageFormChanged = true;
+        });
+
+
+    function exportExcel(tenderId) {
+        window.location = '/Export/TenderInfo?TenderId=' + tenderId;
+
+        //$('#loadingEffect').css("display", "flex");
+        //setTimeout(function () {
+        //    $('#loadingEffect').css("display", "none");
+        //}, 3000);
+    }
+</script>

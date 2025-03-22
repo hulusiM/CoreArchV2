@@ -1,0 +1,417 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+<script>$('#broadCrumbDiv').text('Yönetici Raporları / Araç Genel Gider Raporu')</script>
+<script src="~/admin/amcharts4/core.js"></script>
+<script src="~/admin/amcharts4/charts.js"></script>
+<script src="~/admin/amcharts4/themes/animated.js"></script>
+<script src="~/admin/amcharts4/themes/dark.js"></script>
+@{
+    var unitId = HttpContextAccessor.HttpContext.Session.GetInt32("UnitId");
+    var parentUnitId = HttpContextAccessor.HttpContext.Session.GetInt32("ParentUnitId");
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+}
+
+<!-- Header Dashboard -->
+<div class="row" style="margin: 4px -20px -4px -29px;">
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-slate-800 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="totalLastMonth" style="font-size: 14px;">---</h3>
+                    <span class="text-size-mini" id="head_4">Bakım-Onarım Toplam/Kullanıcı Hatası</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-hammer-wrench icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-slate-700 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin text-size-mini" id="mostProjectLastMonth" style="font-size: 11px;">---</h3>
+                    <span class="text-size-mini" id="head_2">En Fazla Proje/Kullanıcı Hatası</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-film2 icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-slate-600 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="mostPlate" style="font-size: 15px;">---</h3>
+                    <span class="text-size-mini" id="head_1">En Fazla Plaka/Kullanıcı Hatası</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-car icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body bg-slate has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="vehicleCount" style="font-size: 15px;">---</h3>
+                    <span class="text-size-mini" id="head_3">Toplam/Bakım Adedi</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-car2 icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Header Dashboard -->
+<!-- Content Dashboard-->
+<div class="breadcrumb-line breadcrumb-line-component bg-grey-600" style="margin: 0px -11px -4px -19px; color: #fff;">
+    <ul class="breadcrumb">
+        <li id="contentHeadDiv">Araç Bakım/Onarım Raporu</li>
+    </ul>
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="hgsChart()"><i class="icon-road position-left"></i> HGS Raporu</a>
+        </li>
+        <li>
+            <a onclick="exportExcel()"><i class="icon-file-excel position-left"></i> Excel</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right" style="width: 326px;">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="mainPageParentUnitId"
+                                tabindex="1"
+                                table-param="ParentUnitId"
+                                onchange="changeParentUnitId(true)"
+                                class="select-search"
+                                table-id="comboBox-mainPageParentUnitId"
+                                table-model-url="/Combo/GetUnitJustParentCmbx"
+                                table-tool-type="comboBox"
+                                data-option-label="Müdürlük Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="mainPageUnitId"
+                                tabindex="2"
+                                table-param="UnitId"
+                                @*onchange="onchangeUnitId()"*@
+                                class="select-search"
+                                table-id="comboBox-mainPageUnitId"
+                                table-model-url=""
+                                table-tool-type="comboBox"
+                                data-option-label="Proje Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-Plate"
+                                tabindex="5"
+                                table-param="VehicleId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Baş.Tarihi</label>
+                        <input id="StartDate" table-param="StartDate" tabindex="3" class="form-control" type="date">
+                    </div>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Bit.Tarihi</label>
+                        <input id="EndDate" table-param="EndDate" tabindex="4" class="form-control" type="date">
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Min Tutar</label>
+                        <input table-param="MinAmount" tabindex="6" min="0"
+                               autocomplete="off" type="text" class="form-control" placeholder="Min Tutar">
+                    </div>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Max Tutar</label>
+                        <input table-param="MaxAmount" tabindex="7"
+                               autocomplete="off" type="text" class="form-control" placeholder="Max Tutar">
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="row" style="margin: 7px -20px 0 -29px;">
+    <div class="col-md-12">
+        <div class="table-responsive">
+            <div class="panel panel-flat">
+                <div id="chart2" style="height: 450px; width: 100%;background-color: #30303d; color: #fff;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin: 0px -20px 0 -29px;">
+    <div class="col-md-12">
+        <div class="table-responsive">
+            <div class="panel panel-flat">
+                <div id="chart5" style="height: 450px; width: 100%;background-color: #30303d; color: #fff;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin: 0px -20px 0 -29px;">
+    <div class="col-md-6">
+        <div class="table-responsive">
+            <div class="panel panel-flat">
+                <div id="chart1" style="height: 450px; width: 100%;background-color: #30303d; color: #fff;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="table-responsive">
+            <div class="panel panel-flat">
+                <div id="chart3" style="height: 450px; width: 100%;background-color: #30303d; color: #fff;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{
+    if (Convert.ToBoolean(isAdmin))
+    {
+        <div class="row" style="margin: 0px -20px 0 -29px;">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <div class="panel panel-flat">
+                        <div id="chart4" style="height: 600px; width: 100%;background-color: #30303d; color: #fff; padding: 40px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+@await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleMaintenance/_HgsModal.cshtml");
+<!-- Content Dashboard-->
+<script src="~/js/jsamchart/vehicleMaintenance.js"></script>
+<script src="~/js/jsamchart/chartutility.js"></script>
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-Plate').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+        $(".sidebar-control").click();
+        //$('.sidebar-category').addClass('bg-grey-600');
+        //$('.page-header').addClass('bg-grey-600');
+        //$('.breadcrumb-line').addClass('bg-grey-600');
+        //$('body').attr('style', 'background-color: #000 !important')
+        //$('.page-container').attr('style', 'background-color: #000 !important')
+        setStartEndDate();
+    });
+
+    function setStartEndDate() {
+        var end = moment().add(1, 'days');
+        var start = moment().subtract(2, 'months');//.startOf('year');
+        $('#StartDate').val(start.format("YYYY-MM-DD"));
+        $('#EndDate').val(end.format("YYYY-MM-DD"));
+
+        $('#StartDateHgs').val(start.format("YYYY-MM-DD"));
+        $('#EndDateHgs').val(end.format("YYYY-MM-DD"));
+
+        $('#contentHeadDiv').html("Araç Bakım/Onarım Raporu - (" + start.format("DD-MM-YYYY") + "/" + end.format("DD-MM-YYYY")+")");
+        if (@isAdmin != true)
+        {
+            $('#mainPageParentUnitId').val(@parentUnitId).trigger("change");
+            if (@unitId > 0) //Sadece proje yetkisi varsa sadece onu yükler
+                setTimeout(function() { setUnit(@unitId, "mainPageUnitId"); }, 500);
+            else
+                loadUnit(@parentUnitId);
+        }
+        loadCharts({ StartDate: start.format("YYYY-MM-DD"), EndDate: end.format("YYYY-MM-DD") });
+        setTimeout(function () {
+            var message = "Otomatik seçilen tarih aralığı </br><b style='color:black;'>" + start.format("ll") + " / " + end.format("ll") + "</b>";
+            ShowMessage("warning", "Bilgi", message);
+        }, 2000);
+    }
+
+    //Araç filtresi
+    //$('#select-Plate').on('select2:select',
+    //    function(e) {
+    //        var vehicleId = $('#select-Plate').val();
+    //        var model = {
+    //            VehicleId: vehicleId
+    //        };
+    //        loadCharts(model);
+    //    });
+
+    //Müdürlük filtresi
+    function changeParentUnitId(isFilter=false) {
+        var parentUnitId = $('#mainPageParentUnitId').val();
+        var model = {
+            ParentUnitId: parentUnitId
+        };
+        loadUnit(parentUnitId);
+        if (!isFilter)
+            loadCharts(model);
+    }
+
+    function loadUnit(parentUnitId) {
+        sendAjxForm({ parentId: parentUnitId },
+            "/Combo/GetUnitChildCmbx",
+            function (e) {
+                funcCustomComboBox(e, "mainPageUnitId", "Proje Seçiniz");
+            }, "GET");
+    }
+
+    function exportExcel() {
+        $('#loadingEffect').css("display", "flex");
+        setTimeout(function () {
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+            if (model != null) {}
+            window.location = insertParam('/Export/MaintenanceInfo', model);
+
+        $('#loadingEffect').css("display", "none");
+        }, 50);
+    }
+
+    function loadCharts(model) {
+        if (@isAdmin == true)
+            chart4_vehicleMain_Load(model);
+
+        chart1_vehicleMain_Load(model);
+        chart2_vehicleMain_Load(model);
+        headerInfo(model);
+        chart3_vehicleMain_Load(model);
+        chart5_vehicleMain_Load(model);
+    }
+
+    //Sayfa başlık raporu
+    function headerInfo(model) {
+        sendAjxForm(model,
+            "/Report/HeaderInfoMaintenance",
+            function (data) {
+                $('#mostPlate').text(data.MostPlateAmount.Plate + "-" + formatMoney(data.MostPlateAmount.TotalAmount, 2) + " ₺ /" + formatMoney(data.MostPlateAmount.UserFaultAmount, 2) + " ₺"); //en fazla bakım plaka
+                //$('#mostProjectLastMonth').text(data.MostProjectAmount.UnitName + "-" + formatMoney(data.MostProjectAmount.TotalAmount, 0) + " ₺"); //en fazla bakım proje
+                $('#vehicleCount').text(data.DebitVehicleCount + "/" + data.PlateCount); //araç sayısı
+                $('#totalLastMonth').text(formatMoney(data.TotalAmount, 2) + " ₺ /" + formatMoney(data.UserFaultAmount, 2) + " ₺"); //toplam tutar
+
+                //$('#head_1').text("En Fazla Plaka" + " (" + data.DateMonth + ")");
+                ////$('#head_2').text("En fazla proje" + " (" + data.DateMonth + ")");
+                //$('#head_3').text("Araç Sayısı" + " (" + data.DateMonth + ")");
+                //$('#head_4').text("Toplam Tutar" + " (" + data.DateMonth + ")");
+            }, "GET");
+    }
+
+    //Aylık bakım
+    function chart1_vehicleMain_Load(model) {
+        sendAjxForm(model,
+            "/Report/MontlyMaintenanceTotalAmount",
+            function(data) {
+                chart1_vehicleMain(data);
+            }, "GET");
+    }
+
+    //Plaka bazlı toplam tutar bakım
+    function chart2_vehicleMain_Load(model) {
+        var model2 = { IsTotalAmountForPlate: true }
+        var mergeObject = $.extend(model, model2);
+        sendAjxForm(mergeObject,
+            "/Report/VehicleMaintenanceTotalAmount",
+            function(data) {
+                chart2_vehicleMain(data);
+            }, "GET");
+    }
+
+    //Müdürlük bazında bakım
+    function chart3_vehicleMain_Load(model) {
+        sendAjxForm(model,
+            "/Report/ProjectMaintenanceTotalAmount",
+            function(data) {
+                if (data.length == 1 && data[0].Amount == 0) {
+                    chart3_vehicleMain(null);
+                    ShowMessage("info", "Bilgi", "Bakım/Onarım geçmişi bulunamadı")
+                } else {
+                    chart3_vehicleMain(data);
+                    $('#mostProjectLastMonth').text(data[data.length - 1].UnitName + "-" + formatMoney(data[data.length - 1].Amount, 2) + " ₺ /" + formatMoney(data[data.length - 1].UserFaultAmount, 2) + " ₺"); //en fazla bakım proje
+                }
+            }, "GET");
+    }
+
+    //Firma bazında bakım
+    function chart4_vehicleMain_Load(model) {
+        sendAjxForm(model,
+            "/Report/FirmVehicleMaintenanceTotalAmountAndCount",
+            function(data) {
+                chart4_vehicleMain(data);
+            }, "GET");
+    }
+
+    //plaka bazında tekil tutar bakım
+    function chart5_vehicleMain_Load(model) {
+        var model2 = { IsTotalAmountForPlate: false }
+        var mergeObject = $.extend(model, model2);
+        sendAjxForm(mergeObject,
+            "/Report/VehicleMaintenanceTotalAmount",
+            function (data) {
+                chart5_vehicleMain(data);
+            }, "GET");
+    }
+
+   //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+        loadCharts(model);
+
+        $('#contentHeadDiv').html("Araç Bakım/Onarım Raporu - (" + moment(model.StartDate).format("DD-MM-YYYY") + "/" + moment(model.EndDate).format("DD-MM-YYYY")+")");
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        setStartEndDate();
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

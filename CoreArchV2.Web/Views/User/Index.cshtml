@@ -1,0 +1,392 @@
+﻿@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Sistem Yönetimi / Kullanıcı Tanımları')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Kullanıcı Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="userModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-userId"
+                                tabindex="1"
+                                table-param="Id"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                 <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="mainPageParentUnitId"
+                                tabindex="3"
+                                onchange="changeGetUnitId()"
+                                class="select-search"
+                                table-id="comboBox-mainPageParentUnitId"
+                                table-model-url="/Combo/GetUnitJustParentCmbx"
+                                table-tool-type="comboBox"
+                                table-param="ParentUnitId"
+                                data-option-label="Müdürlük Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="mainPageUnitId"
+                                tabindex="4"
+                                class="select-search"
+                                table-id="comboBox-mainPageUnitId"
+                                table-model-url=""
+                                table-param="UnitId"
+                                table-tool-type="comboBox"
+                                data-option-label="Proje Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select table-param="Flag"
+                                class="select-search">
+                            <option value="0">Kullanıcı Tipi Seçiniz</option>
+                            <option value="@((int) Flag.User)">Kullanıcı</option>
+                            <option value="@((int) Flag.Manager)">Birim/Proje Müdürü</option>
+                        </select>
+                    </div>
+                </li>
+
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableUser"
+                           table-id="dataTable-User"
+                           table-model-url="/User/UserGetAll?ListCount=500"
+                           table-DatabaseName="/User"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="FullName" style="text-align: center;">
+                                    Adı Soyadı/Cep Telefonu
+                                </th>
+                                <th data-value="UnitName" style="text-align: center;">
+                                    Birim
+                                </th>
+                                <th data-value="Email" style="text-align: center;">
+                                    E-mail
+                                </th>
+                                <th data-value="StatusName" style="text-align: center;">
+                                    Kullanıcı Aktif?
+                                </th>
+                                <th data-value="MailSenderInfo" style="text-align: center;">
+                                    Tüm E-mail Trafiği
+                                </th>
+                                <th data-value="MailSenderVehicleOpInfo" style="text-align: center;">
+                                    Mesai İçi/Dışı E-mail Trafiği
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Kullanıcı Bilgileri</h6>
+            </div>
+            <div id="Personel_FormId" class="modal-body">
+                <input type="text" table-param="Id" hidden />
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Adı (*):</label>
+                            <input table-param="Name" tabindex="1" type="text" table-description="Adı" class="form-control" placeholder="Kullanıcı Adı Giriniz" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Soyadı (*):</label>
+                            <input table-param="Surname" tabindex="2" type="text" table-description="Soyadı" class="form-control" placeholder="Kullanıcı Soyadı Giriniz" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Kullanıcı Tipi (*) :</label>
+                            <select table-param="Flag"
+                                    class="select-search" required>
+                                <option value="@((int) Flag.User)">Kullanıcı</option>
+                                <option value="@((int) Flag.Manager)">Birim/Proje Müdürü</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Müdürlük/Proje :</label>
+                            <select id="userPageUnitId"
+                                    tabindex="3"
+                                    table-param="UnitId"
+                                    class="select-search"
+                                    table-id="comboBox-userPageUnitId"
+                                    table-model-url="/Combo/GetUnitAndParentCmbx"
+                                    table-tool-type="comboBox"
+                                    data-option-label="Müdürlük veya Proje Seçiniz">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Telefon :</label>
+                            <input class="form-control phone-format" table-param="MobilePhone" tabindex="6" type="text" table-description="Telefon" placeholder="Telefon Numarası Giriniz" required>
+                            <span class="help-block">Örnek: (532) 123-0000</span>
+                        </div>
+                        <div class="col-md-6">
+                            <label>E-Mail :</label>
+                            <input table-param="Email" tabindex="7" type="text" table-description="Email" placeholder="E-Mail Giriniz" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <hr />
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>T.c No :</label>
+                            <input table-param="PassportNo" tabindex="5" table-description="T.c Kimlik" type="text" placeholder="T.C. Kimlik Numarası Giriniz" class="form-control phone-number-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Kullanıcı Şifre :</label>
+                            <input table-param="Password" tabindex="5" table-description="Kullanıcı Şifre" placeholder="Şifre Giriniz" type="text" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label>Arvento Kullanıcı Adı :</label>
+                            <input table-param="ArventoUserName" tabindex="8" type="text" placeholder="Arvento Kullanıcı Adı Giriniz" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label>Arvento Şifre :</label>
+                            <input table-param="ArventoPassword" tabindex="9" type="text" placeholder="Arvento Kullanıcı Şifre Giriniz" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                @*<div class="row">
+                    <div class="col-md-12">
+                    <label>Doğum Tarihi :</label>
+                    <div class="input-group">
+                    <span class="input-group-addon"><i class="icon-calendar3"></i></span>
+                    <input table-param="BirthDate" type="text" class="form-control daterange-single" placeholder="@DateTime.Now.Date.ToString("dd/mm/yyyy")">
+                    </div>
+                    </div>
+                    </div>*@
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-3" style="margin-top: 10px;">
+                            <label>Aktif :</label>
+                            <div class="checkbox checkbox-switchery">
+                                <input table-param="Status"
+                                       id="IsStatus"
+                                       type="checkbox"
+                                       class="make-switch"
+                                       data-on-text="Aktif"
+                                       data-off-text="Pasif"
+                                       data-size="large" />
+                            </div>
+                        </div>
+                        <div class="col-md-3" style="margin-top: 10px;">
+                            <label>Admin :</label>
+                            <div class="checkbox checkbox-switchery">
+                                <input table-param="IsAdmin"
+                                       id="IsAdmin"
+                                       type="checkbox"
+                                       class="make-switch"
+                                       data-on-text="Aktif"
+                                       data-off-text="Pasif"
+                                       data-size="large" />
+                            </div>
+                        </div>
+                        <div class="col-md-3" style="margin-top: 10px;">
+                            <label>Tüm E-Mail Trafiği:</label>
+                            <div class="checkbox checkbox-switchery">
+                                <input table-param="IsSendMail"
+                                       id="IsSendMail"
+                                       type="checkbox"
+                                       class="make-switch"
+                                       data-on-text="Açık"
+                                       data-off-text="Kapalı"
+                                       data-size="large" />
+                            </div>
+                        </div>
+                        <div class="col-md-3" style="margin-top: 10px;">
+                            <label>Mesai İçi/Dışı E-Mail:</label>
+                            <div class="checkbox checkbox-switchery">
+                                <input table-param="IsSendMailVehicleOpReport"
+                                       id="IsSendMailVehicleOpReport"
+                                       type="checkbox"
+                                       class="make-switch"
+                                       data-on-text="Açık"
+                                       data-off-text="Kapalı"
+                                       data-size="large" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 0px;">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="col-md-6">
+                            </div>
+                            <div class="col-md-6">
+                                <button type="button" tabindex="9" class="btn btn-danger" onclick="funcCancelModal('#User_FormId [table-param]')">Ekranı Kapat</button>
+                                <button tabindex="8" type="submit" class="btn btn-primary" onclick="FuncSaveModel('#Personel_FormId [table-param]')"><i class="fa fa-check"></i> Kaydet</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-userId').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+      function changeGetUnitId() {
+        var parentUnitId = $('#mainPageParentUnitId').val();
+        sendAjxForm({ parentId: parentUnitId },
+            "/Combo/GetUnitChildCmbx",
+            function(e) {
+                funcCustomComboBox(e, "mainPageUnitId", "Proje Seçiniz");
+            }, "GET");
+    }
+    function funcEditUser(userId) {
+        sendAjxForm({ Id: userId },
+            "/User/GetById",
+            function(e) {
+                if (e.Id > 0) {
+                    var model = {
+                        selector: '#Personel_FormId [table-param]',
+                        data: e
+                    };
+
+                    FormSetAllValue(model);
+                    $('#IsAdmin').bootstrapSwitch('state', e.IsAdmin);
+                    $('#IsStatus').bootstrapSwitch('state', e.Status);
+                    $('#IsSendMail').bootstrapSwitch('state', e.IsSendMail);
+                    $('#EditInsertModal').modal("show");
+                } else
+                    ShowMessage("error", "Hata", "Hata oluştu!");
+
+            },'GET');
+    }
+
+    function userModalOpen() {
+        //$('.daterangepicker').css({ "z-index": 999999999999 });
+        $('#IsAdmin').bootstrapSwitch('state', false);
+        $('#IsSendMail').bootstrapSwitch('state', false);
+        FormAllInputsClearNoCloseModal('#Personel_FormId [table-param]');
+        $('#EditInsertModal').modal("show");
+    }
+
+    //Modal kapandığında
+    //$('#EditInsertModal').on('hidden.bs.modal', function () {
+
+    //});
+
+    ////Modal açıldığında
+    //$('#EditInsertModal').on('show.bs.modal', function (event) {
+
+    //});
+    //------------------------------------- Static Area Start ---------------------------------------//
+
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/User/UserGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>
+
+<style>
+    .bolden {
+        font-family: "Arial Black"
+    }
+</style>

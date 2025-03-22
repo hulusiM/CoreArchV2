@@ -1,0 +1,367 @@
+﻿<div class="panel-body" style="padding: 0px !important">
+    <div class="tabbable">
+        <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+            <li id="li_contract" class="active">
+                <a id="Contract_toggle" href="#_Contract" data-toggle="tab" style="color: green; font-family: initial; font-size: 14px;"><i class="icon-portfolio position-left wysiwyg-color-green"></i>Sözleşme Tarihi</a>
+            </li>
+            <li id="li_amount">
+                <a id="Amount_toggle" href="#_Amount" data-toggle="tab" style="color: green; font-family: initial; font-size: 14px;"><i class="icon-make-group position-left wysiwyg-color-green"></i>Tutar Bilgileri</a>
+            </li>
+            @* <li id="li_gain">
+            <a id="VehicleGain_toggle" href="#_VehicleGain" data-toggle="tab" style="color: green; font-family: initial; font-size: 14px;"><i class="icon-make-group position-left wysiwyg-color-green"></i>Araç Amortisman</a>
+            </li>*@
+        </ul>
+        <div class="tab-content" style="padding: 20px;">
+            <div class="tab-pane active" id="_Contract">
+                <div id="VehicleContract_FormId" class="row">
+                    <input table-param="VehicleId" hidden />
+                    <input id="lastContractId_" table-param="Id" hidden />
+                    <div class="form-group" style="margin-bottom: auto;">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label>Sözleşme Başlangıç Tarihi :</label>
+                                <input id="contractStartDate_" table-param="StartDate" tabindex="1" type="date" class="form-control">
+                            </div>
+                            <div class="col-sm-6">
+                                <label>Sözleşme Bitiş Tarihi :</label>
+                                <input id="contractEndDate_" table-param="EndDate" tabindex="2" type="date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-grup" style="margin-top: 10px;">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <label>Teslim Alınan Km Değeri :</label>
+                                <input id="contractFirstKm" type="text" autocomplete="off" table-param="FirstKm" tabindex="11" maxlength="6" placeholder="Teslim Alınan Km Değeri Giriniz" class="form-control moneyCurrency">
+                            </div>
+                            <div class="col-sm-4">
+                                <label>Söz. Sürecince Yapılacak Max Km Değeri :</label>
+                                <input id="contractMaxKmLimit" type="text" autocomplete="off" table-param="MaxKmLimit" tabindex="11" maxlength="6" placeholder="Söz. Sürecince Yapılacak Max Km Değeri Giriniz" class="form-control moneyCurrency">
+                            </div>
+                            <div class="col-sm-4">
+                                <label>Aracın Güncel Km Değeri :</label>
+                                <input id="vehicleLastKm" type="text" autocomplete="off" table-param="VehicleLastKm" tabindex="11" maxlength="6" placeholder="Aracın Güncel Km Değeri Giriniz" class="form-control moneyCurrency" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group vehicleActionButtons" style="margin-top: 20px;">
+                        <div class="row">
+                            <div class="col-md-3">
+                                @*<button onclick="clearContractDateForm()" type="button" class="btn btn-default btn-danger full-width"><i class="icon-trash-alt position-left"></i> Ekranı Temizle</button>*@
+                            </div>
+                            <div class="col-md-3">
+                                <button onclick="funcEditVehicleContract()" type="button" class="btn btn-default btn-success full-width"><i class="icon-pencil5 position-left"></i> Son Sözleşmeyi Düzenle</button>
+                            </div>
+                            <div class="col-md-3">
+                                <button onclick="funcDeleteVehicleContract()" type="button" class="btn btn-default btn-danger full-width"><i class="icon-trash-alt position-left"></i> Son Sözleşmeyi Sil</button>
+                            </div>
+                            <div class="col-md-3">
+                                <button onclick="SaveUpdateVehicleContractDate()" type="button" class="btn btn-default btn-primary full-width"><i class="icon-make-group position-left"></i> Kaydet</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: auto; margin-top: 5px;">
+                        <div class="panel-group panel-group-control panel-group-control-right content-group-sm" id="VehicleContractAccordionDiv">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="_Amount">
+                @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleAmount.cshtml")
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function funcEditVehicleContract() {
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            sendAjxForm({ vehicleId: vehicleId },
+                "/Vehicle/GetByIdVehicleIdContractDateAndAmount",
+                function (e) {
+                    if (e.length > 0) {
+                        var lastContract = e[0];
+
+                        //$('#lastContractId_').val(e[0].Id);//son sözleşme tarihi id değeri
+                        //$('#contractStartDate_').val(lastContract.StartDate.split('T')[0]);
+                        //$('#contractEndDate_').val(lastContract.EndDate.split('T')[0]);
+                        //$('#contractFirstKm').val(lastContract.EndDate.split('T')[0]);
+                        //$('#contractMaxKmLimit').val(lastContract.EndDate.split('T')[0]);
+                        //$('#vehicleLastKm').val(lastContract.EndDate.split('T')[0]);
+
+                        var model = {
+                            selector: '#VehicleContract_FormId [table-param]',
+                            data: e[0]
+                        };
+                        FormSetAllValue(model);
+
+                        ShowMessage("info", "Bilgi", "Sözleşme tarihleri düzenleme modu açık");
+                    } else
+                        ShowMessage("info", "Bilgi", "Sözleşme bilgisi bulunamadı");
+                }, 'GET');
+        }
+    }
+
+    function funcDeleteVehicleContract() {
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            var model = { vehicleId: vehicleId };
+            swal({
+                title: "Emin misiniz?",
+                text: "Bu kayıt silinecektir !",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#EF5350",
+                confirmButtonText: "Evet, Kaydı Sil!",
+                cancelButtonText: "Hayır, Kayıt Kalsın!",
+                closeOnConfirm: false,
+                closeOnCancel: false
+            },
+                function (isConfirm) {
+                    if (isConfirm) {
+                        sendAjxForm(model,
+                            "/Vehicle/DeleteVehicleContract",
+                            function (e) {
+                                if (e.IsSuccess == true) {
+                                    swal({
+                                        title: "Başarılı!",
+                                        text: "Kayıt silindi.",
+                                        confirmButtonColor: "#66BB6A",
+                                        type: "success"
+                                    });
+                                    ShowMessage("success", "Bilgi", "Silme Başarılı.");
+                                    setContractHistory();
+                                } else {
+                                    $(".cancel").click();
+                                    $(".confirm").click();
+                                    ShowMessage("warning", "Bilgi", e.Message);
+                                }
+                            },
+                            "POST");
+                    } else {
+                        swal({
+                            title: "İsteğiniz üzere iptal Edildi",
+                            text: "Kayıt güvende.",
+                            confirmButtonColor: "#2196F3",
+                            type: "error"
+                        });
+                    }
+                });
+        }
+    }
+
+    function SaveUpdateVehicleContractDate() {
+        var model = FormGetAllValue("#VehicleContract_FormId [table-param]");
+        if (model.EndDate == "" || model.StartDate == "")
+            ShowMessage("info", "Bilgi", "Tarihler boş geçilemez");
+        else {
+            var vehicleId = $('#vehicle_Id').val();
+            var model2 = { VehicleId: vehicleId };
+            var mergeObject = $.extend(model, model2);
+            sendAjxForm(mergeObject, "/Vehicle/InsertVehicleContract",
+                function (e) {
+                    if (e.IsSuccess == true) {
+                        ShowMessage("success", "Bilgi", e.Message);
+                        FormAllInputsClearNoCloseModal("#VehicleContract_FormId [table-param]");
+                        setContractHistory();
+                        //clearContractDateForm();
+                    } else
+                        ShowMessage("error", "Hata", e.Message, "10000");
+                }, 'POST');
+        }
+    }
+
+    function clearContractDateForm() {
+        $('#lastContractId_').val('');
+        $('#contractStartDate_').val('');
+        $('#contractEndDate_').val('');
+        $('#contractFirstKm').val('');
+        $('#contractMaxKmLimit').val('');
+        $('#vehicleLastKm').val('');
+    }
+
+    function setContractHistory() {
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            sendAjxForm({ vehicleId: vehicleId },
+                "/Vehicle/GetByIdVehicleIdContractDateAndAmount",
+                function (e) {
+                    if (e.length > 0) {
+                        $('#vehicleLastKm').val(e[0].VehicleLastKm);
+                        //$('#lastContractId_').val(e[0].Id);//son sözleşme tarihi id değeri
+                        setAccordionDiv(e);
+                    } else {
+                        ShowMessage("info", "Bilgi", "Araç üstünde sözleşme tarihi bulunamadı");
+                        $('#VehicleContractAccordionDiv').empty();
+                    }
+
+                    setTimeout(function () { $(".table").removeClass('table-loader').show() }, 2000);
+                }, 'GET');
+        }
+    }
+
+    function setAccordionDiv(data) {
+        var result = "";
+        for (var i = 0; i < data.length; i++) {
+            result += '<div class="panel">' +
+                '<div class="panel-heading bg-orange-300">' +
+                '   <h6 class="panel-title">' +
+                '       <a data-toggle="collapse" href="#accordion-controls-group-' +
+                i +
+                '">' +
+                ConvertJSONJustDateFormatISONoBackgroundColor(data[i].StartDate) +
+                ' / ' +
+                ConvertJSONJustDateFormatISONoBackgroundColor(data[i].EndDate) +
+                '</a>' +
+                '   </h6></div>' +
+                '<div id="accordion-controls-group-' +
+                i +
+                '" class="panel-collapse collapse">' +
+                '   <div class="panel-body" style="height: 350px; overflow: scroll;">';
+
+            result += setAccordionSubTableHead(data[i].VehicleAmountList);
+
+            result += '</div>' +
+                '</div></div>';
+        }
+        $('#VehicleContractAccordionDiv').empty();
+        $('#VehicleContractAccordionDiv').append(result);
+    }
+
+    function setAccordionSubTableHead(data) {
+        var result = '<table class="table-striped table-hover table-bordered table datatable-basic table-loader">' +
+            ' <thead>' +
+            ' <tr>' +
+            '     <th style="text-align: center;">Tutar Tipi</th>' +
+            '    <th style="text-align: center;">Söz. Tar.</th>' +
+            '    <th style="text-align: center;">Açıklama</th>' +
+            '    <th style="text-align: center;">Gider</th>' +
+            '    <th style="text-align: center;">Gelir</th>' +
+            '    <th style="text-align: center;">Güncel Gider</th>' +
+            '    <th style="text-align: center;">Güncel Gelir</th>' +
+            '    <th style="text-align: center;">Toplam Gider</th>' +
+            '    <th style="text-align: center;">Toplam Gelir</th>' +
+            '</tr></thead>' +
+            '<tbody>' +
+            setAccordionSubTableHeadTr(data) +
+            '</tbody></table>';
+
+        return result;
+    }
+
+    function setAccordionSubTableHeadTr(e) {
+        var result = "";
+        for (var i = 0; i < e.length; i++) {
+            result += "<tr style='text-align: center;'><td>" +
+                "<span class='label bg-success-300 full-width'>" +
+                e[i].VehicleAmountTypeName +
+                "</span></td>" +
+                "<td>" +
+                ConvertJSONJustDateFormatISO(e[i].StartDate) + " - " + ConvertJSONJustDateFormatISO(e[i].EndDate) + "<br/>" + (e[i].DeleteVehicleInfo ?? '') +
+                "</td>" +
+                "<td>" +
+                (e[i].Description != null ? e[i].Description : '') +
+                "</td>" +
+                "<td class='text-right'>" +
+                formatMoney(e[i].AmountExpense, 2) + " ₺" + //Gider
+                "</td>" +
+                "<td class='text-right'>" +
+                formatMoney(e[i].AmountIncome, 2) + " ₺" + //Gelir
+                "</td>" +
+                "<td class='text-right'>" +
+                formatMoney(e[i].TotalTodayExpense, 2) + " ₺" + //Güncel Gider
+                "</td>" +
+                "<td class='text-right'>" +
+                formatMoney(e[i].TotalTodayIncome, 2) + " ₺" + //Güncel Gelir
+                "</td>" +
+                "<td class='text-right'>" +
+                formatMoney(e[i].AllTotalExpense, 2) + " ₺" + //Top. Gider
+                "</td>" +
+                "<td class='text-right'>" +
+                formatMoney(e[i].AllTotalIncome, 2) + " ₺" + //Top. Gelir
+                "</td></tr>";
+        }
+
+        result += "<tr>";
+        result += "<td class='text-right' colspan='4'><span class='label bg-orange-300'><b style='color:black;'>Toplam: " + formatMoney(calcExpense(e)) + " ₺</b></span></td>";
+        result += "<td class='text-right' colspan='1'><span class='label bg-orange-300'><b style='color:black;'>Toplam: " + formatMoney(calcIncome(e)) + " ₺</b></span></td>";
+        result += "<td class='text-right' colspan='1'><span class='label bg-orange-300'><b style='color:black;'>Toplam: " + formatMoney(calcTotalExpense(e)) + " ₺</b></span></td>";
+        result += "<td class='text-right' colspan='1'><span class='label bg-orange-300'><b style='color:black;'>Toplam: " + formatMoney(calcTotalIncome(e)) + " ₺</b></span></td>";
+        result += "<td class='text-right' colspan='1'><span class='label bg-orange-300'><b style='color:black;'>Toplam: " + formatMoney(calcAllTotalExpense(e)) + " ₺</b></span></td>";
+        result += "<td class='text-right' colspan='1'><span class='label bg-orange-300'><b style='color:black;'>Toplam: " + formatMoney(calcAllTotalIncome(e)) + " ₺</b></span></td></tr>";
+
+        result += "<tr>";
+        result += "<td class='text-right' colspan='7'><span class='label bg-success-300'><b style='color:black;'>Fark Güncel Toplam : " + formatMoney(calcTotalIncome(e) - calcTotalExpense(e)) + " ₺</b></span></td>";
+        result += "<td class='text-right' colspan='2'><span class='label bg-success-300'><b style='color:black;'>Fark Genel Toplam : " + formatMoney(calcAllTotalIncome(e) - calcAllTotalExpense(e)) + " ₺</b></span></td></tr>";
+
+        return result;
+    }
+
+    $('#Amount_toggle').click(function () {
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            sendAjxForm({ vehicleId: vehicleId },
+                "/Vehicle/GetByIdVehicleIdContractDateAndAmount",
+                function (e) {
+                    if (e.length > 0) {
+                        clearContractDateForm();
+                        FormAllInputsClearNoCloseModal("#VehicleAmount_FormId [table-param]");
+                        getHistoryAmountRent();
+                    } else {
+                        $('.nav-tabs a[href="#_Contract"]').tab('show');
+                        ShowMessage("warning", "Uyarı", "Ekrana geçebilmek için araç sözleşme tarihi girilmesi gerekiyor");
+                        return false;
+                    }
+                }, 'GET');
+        }
+    });
+
+    //$('#VehicleGain_toggle').click(function () {
+    //    var vehicleId = $('#vehicle_Id').val();
+    //    if (vehicleId > 0) {
+    //        if (!isRentCarType) {
+    //            sendAjxForm({ vehicleId: vehicleId },
+    //                "/Vehicle/GetVehicleGain",
+    //                function (e) {
+    //                    if (e.length > 0) {
+
+    //                    } else {
+    //                        $('.nav-tabs a[href="#_Contract"]').tab('show');
+    //                        ShowMessage("warning", "Uyarı", "Ekrana geçebilmek için araç sözleşme tarihi girilmesi gerekiyor");
+    //                        return false;
+    //                    }
+    //                }, 'GET');
+    //        } else {
+    //            //$('.nav-tabs a[href="#_Contract"]').tab('show');
+    //            ShowMessage("warning", "Uyarı", "Bu ekran sadece mülkiyet araçlarda kullanılabilir");
+    //            return false;
+    //        }
+    //    }
+    //});
+
+    $('#VehicleContract_toggle').click(function () {
+        if (historyButtonsActive) {
+            //if (isRentCarType) {
+            //    $('.nav-tabs a[href="#_Contract"]').tab('show');
+            FormAllInputsClearNoCloseModal("#VehicleContract_FormId [table-param]");
+            setContractHistory();
+            //} else {
+            //    ShowMessage("info", "Uyarı", "Bu ekran kiralık araç seçildiğinde açılır");
+            //    return false;
+            //}
+        } else {
+            //$('.nav-tabs a[href="#Vehicle_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için araç seçmeniz gerekiyor");
+            return false;
+        }
+    });
+
+    $('#Contract_toggle').click(function () {
+        setContractHistory();
+    });
+</script>

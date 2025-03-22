@@ -1,0 +1,25 @@
+﻿
+
+<div class="panel-body" style="padding: 0px !important">
+    <div class="tabbable">
+        <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+            <li id="li_rent" class="active">
+                <a id="VehicleFile1_toggle" href="#VehicleFileSub1" data-toggle="tab" style="color: green; font-family: initial; font-size: 14px;"><i class="icon-files-empty2 position-left wysiwyg-color-green"></i>Belgeler</a>
+            </li>
+            <li id="li_fix">
+                <a id="VehicleFile2_toggle" href="#VehicleFileSub2" data-toggle="tab" style="color: green; font-family: initial; font-size: 14px;"><i class="icon-camera position-left wysiwyg-color-green"></i>Fotoğraflar</a>
+            </li>
+        </ul>
+        <div class="tab-content" style="padding: 20px;">
+            <input type="text" id="vehicle_Id" table-param="Id" hidden />
+            <div class="tab-pane active" id="VehicleFileSub1">
+                @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleFileSub1.cshtml")
+            </div>
+            <div class="tab-pane" id="VehicleFileSub2">
+                @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleFileSub2.cshtml")
+            </div>
+        </div>
+    </div>
+</div>
+
+

@@ -1,0 +1,110 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@using CoreArchV2.Core.Enum.NoticeVehicle.Notice
+@model IEnumerable<CoreArchV2.Dto.ENoticeVehicleDto.ENoticeUnitDto_.ENoticeUnitDto>
+@{
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+    var userId = HttpContextAccessor.HttpContext.Session.GetInt32("UserId");
+}
+
+
+<ul id="noticeHistoryUlLi" class="media-list" style="overflow: auto; height: 420px;">
+    @{
+        if (Model != null)
+        {
+            foreach (var item in Model)
+            {
+                if (item.State == (int)NoticeState.OpenNotice)
+                {
+                    <li class="media">
+                        <div class="media-left">
+                            <a href="#" class="btn border-success text-success btn-flat btn-icon btn-rounded btn-sm">
+                                <i class="icon-checkmark3"></i>
+                            </a>
+                        </div>
+
+                        <div class="media-body">
+                            <span class="label bg-green-300">@item.FromUnitName</span><br />
+                            @Html.Raw(@item.StateName)<br />
+                            Açıklama: @Html.Raw(@item.Description) <br />
+                            <div class="media-annotation"><b>@item.NameSurname</b> @item.CreatedDate.ToString("dd-MM-yyyy HH:mm")</div>
+                        </div>
+                        @{
+                            if (Convert.ToBoolean(isAdmin) || @item.CreatedUnitId == userId)//admin ve talep açan kişi görebilir
+                            {
+                                <div class="media-right" style="padding-right: 15px;">
+                                    <button onclick="historyNoticeVehicleList(@item.Id,@item.State,@item.CreatedBy)" type="button" class="btn btn-success btn-xs"><i class="icon-search4"></i></button>
+                                </div>
+                            }
+                        }
+                    </li>
+                    <hr style="margin: 30px;" />
+                }
+                else if (item.State == (int)NoticeState.SendUnit)
+                {
+                    <li class="media">
+                        <div class="media-left">
+                            <a href="#" class="btn border-primary text-primary btn-flat btn-icon btn-rounded btn-sm">
+                                <i class="icon-redo"></i>
+                            </a>
+                        </div>
+
+                        <div class="media-body">
+                            <span class="label bg-green-300">@item.FromUnitName</span><br />
+                            @Html.Raw(@item.StateName)<br />
+                            Açıklama: @Html.Raw(@item.Description) <br />
+                            <div class="media-annotation"><b>@item.NameSurname</b> @item.CreatedDate.ToString("dd-MM-yyyy HH:mm")</div>
+                        </div>
+                        <div class="media-right" style="padding-right: 15px;">
+                            <button onclick="historyNoticeVehicleList(@item.Id,@item.State,@item.CreatedBy)" type="button" class="btn btn-primary btn-xs"><i class="icon-search4"></i></button>
+                        </div>
+                    </li>
+                    <hr style="margin: 30px;" />
+                }
+                else if (item.State == (int)NoticeState.Closed)
+                {
+                    <li class="media">
+                        <div class="media-left">
+                            <a href="#" class="btn border-danger text-danger btn-flat btn-icon btn-rounded btn-sm">
+                                <i class="icon-close2"></i>
+                            </a>
+                        </div>
+
+                        <div class="media-body">
+                            <span class="label bg-green-300">@item.FromUnitName</span><br />
+                            Açıklama: @Html.Raw(@item.Description) <br />
+                            Not: Talep kapatılmıştır.<br />
+                            <div class="media-annotation"><b>@item.NameSurname</b> @item.CreatedDate.ToString("dd-MM-yyyy HH:mm")</div>
+                        </div>
+                        <div class="media-right" style="padding-right: 15px;">
+                            <button onclick="historyNoticeVehicleList(@item.Id,@item.State,@item.CreatedBy)" type="button" class="btn btn-success btn-xs"><i class="icon-search4"></i></button>
+                        </div>
+                    </li>
+                    <hr style="margin: 30px;" />
+                }
+                else
+                {
+                    <li class="media">
+                        <div class="media-left">
+                            <a href="#" class="btn border-primary text-primary btn-flat btn-icon btn-rounded btn-sm">
+                                <i class="icon-undo"></i>
+                            </a>
+                        </div>
+
+                        <div class="media-body">
+                            <span class="label bg-green-300">@item.FromUnitName</span><br />
+                            @Html.Raw(@item.StateName)<br />
+                            Açıklama: @Html.Raw(@item.Description) <br />
+                            <div class="media-annotation"><b>@item.NameSurname</b> @item.CreatedDate.ToString("dd-MM-yyyy HH:mm")</div>
+                        </div>
+                        <div class="media-right" style="padding-right: 15px;">
+                            <button onclick="historyNoticeVehicleList(@item.Id,@item.State,@item.CreatedBy)" type="button" class="btn btn-primary btn-xs"><i class="icon-search4"></i></button>
+                        </div>
+                    </li>
+                    <hr style="margin: 30px;" />
+                }
+            }
+        }
+    }
+</ul>
+

@@ -1,0 +1,289 @@
+﻿@using CoreArchV2.Core.Enum
+<div id="VehicleFixture_FormId" class="row">
+    <input type="text" table-param="FixtureTypeId" hidden/>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-3">
+                <label>Araç Plaka (*) :</label>
+                <input id="PlateFix"
+                       table-param="Plate"
+                       tabindex="1"
+                       class="form-control plateControl"
+                       autocomplete="off"
+                       table-description="Plaka No"
+                       type="text"
+                       placeholder="Plaka Giriniz" style="text-transform: uppercase" required>
+            </div>
+            <div class="col-sm-3">
+                <label>Motor No (*) :</label>
+                <input table-param="EngineNo"
+                       autocomplete="off" tabindex="2" table-description="Motor No" type="text" class="form-control" placeholder="Motor No Giriniz" required>
+            </div>
+            <div class="col-sm-3">
+                <label>Ruhsat Seri (*) :</label>
+                <input table-param="LicenceSeri"
+                       autocomplete="off" tabindex="3" table-description="Ruhsat Seri" type="text" class="form-control" placeholder="Ruhsat Seri Giriniz" required>
+            </div>
+            <div class="col-sm-3">
+                <label>Ruhsat No (*) :</label>
+                <input table-param="LicenceNo"
+                       autocomplete="off" tabindex="4" table-description="Ruhsat No" type="text" class="form-control" placeholder="Ruhsat No Giriniz" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-3">
+                <label>Araç Marka/Model (*) :</label>
+                <select id="BrandIdFix"
+                        tabindex="5"
+                        class="select-search"
+                        table-param="VehicleModelId"
+                        table-id="comboBox-BrandId"
+                        table-model-url="/Combo/GetBrandCmbx"
+                        table-tool-type="comboBox"
+                        table-description="Araç Marka"
+                        data-option-label="Marka Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <label>Araç Renk (*) :</label>
+                <select id="ColorId"
+                        tabindex="6"
+                        class="select-search"
+                        table-param="ColorId"
+                        table-id="comboBox-ColorId"
+                        table-model-url="/Combo/GetColorCmbx"
+                        table-tool-type="comboBox"
+                        table-description="Renk"
+                        data-option-label="Renk Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <label>Yakıt Tipi (*) :</label>
+                <select id="FuelTypeId"
+                        tabindex="7"
+                        table-param="FuelTypeId"
+                        class="select-search"
+                        table-id="comboBox-FuelTypeId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.FuelType)"
+                        table-tool-type="comboBox"
+                        table-description="Yakıt Tipi"
+                        data-option-label="Yakıt Tipi Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <label>Araç Türü (*) :</label>
+                <select id="VehicleTypeId"
+                        tabindex="8"
+                        table-param="VehicleTypeId"
+                        class="select-search"
+                        table-id="comboBox-VehicleTypeId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.VehicleType)"
+                        table-tool-type="comboBox"
+                        table-description="Araç Türü"
+                        data-option-label="Araç Türü Seçiniz" required>
+                </select>
+            </div>
+            @*<div class="col-sm-4">
+                    <label>Şehir (Çoklu Seçim) (*) :</label>
+                    <select id="CityId"
+                            multiple="multiple"
+                            tabindex="11"
+                            class="select-search"
+                            table-param="CityId"
+                            table-id="comboBox-CityId"
+                            table-model-url="/Combo/GetCityCmbx"
+                            table-tool-type="comboBox"
+                            table-description="Şehir"
+                            data-option-label="" required></select>
+                </div>*@
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-3">
+                <label>Vites Türü (*) :</label>
+                <select id="GearTypeId_Fix"
+                        class="select-search"
+                        table-param="GearTypeId"
+                        table-id="comboBox-GearTypeId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.GearType)"
+                        table-tool-type="comboBox"
+                        tabindex="9"
+                        table-description="Vites Türü"
+                        data-option-label="Vites Türü" required>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <label>Motor Silindir Hacmi (*) :</label>
+                <select id="EnginePowerId_Fix"
+                        class="select-search"
+                        table-param="EnginePowerId"
+                        table-id="comboBox-EnginePowerId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.EnginePowerType)"
+                        table-tool-type="comboBox"
+                        tabindex="9"
+                        table-description="Motor Silindir Hacmi"
+                        data-option-label="Motor Silindir Hacmi" required>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <label>Şasi No (*) :</label>
+                <input table-param="ChassisNo"
+                       autocomplete="off" tabindex="10" table-description="Şasi No" type="text" class="form-control" placeholder="Şasi No Giriniz" required>
+            </div>
+            <div class="col-sm-3">
+                <label>Model (*) :</label>
+                <input type="text"
+                       autocomplete="off" table-param="ModelYear" tabindex="11" maxlength="4" table-description="Araç Model" placeholder="Yıl giriniz (örn: 2010)" class="form-control" required>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-4">
+                <label>Araç Alım Bedel :</label>
+                <input id="VehicleFirstCost" table-param="VehicleFirstCost" tabindex="51" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="Araç alım bedeli giriniz">
+            </div>
+            <div class="col-sm-4">
+                <label>Araç Güncel Bedel :</label>
+                <input id="VehicleLastCost" table-param="VehicleLastCost" tabindex="51" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="Araç güncel bedeli giriniz">
+             </div>
+            <div class="col-sm-4">
+                <label>Arvento No :</label>
+                <input table-param="ArventoNo"
+                       autocomplete="off" tabindex="12" table-description="Arvento No" type="text" class="form-control" placeholder="Arvento No Giriniz">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-3" style="margin-top: 8px;">
+                <label>Max Hız Sınırı :</label>
+                <input table-param="MaxSpeed" min="0" autocomplete="off" tabindex="12" type="number" class="form-control" placeholder="Max Hız Sınırı Giriniz">
+            </div>
+            <div class="col-sm-2">
+                <label>Taşıt Tanıma Sistemi (*) :</label>
+                <div class="checkbox checkbox-switchery">
+                    <input table-param="IsTts"
+                           tabindex="13"
+                           id="IsTtsStatus"
+                           type="checkbox"
+                           class="make-switch"
+                           data-on-text="Var"
+                           data-off-text="Yok"
+                           data-size="large"/>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <label>HGS (*) :</label>
+                <div class="checkbox checkbox-switchery">
+                    <input table-param="IsHgs"
+                           tabindex="14"
+                           id="IsHgsStatus"
+                           type="checkbox"
+                           class="make-switch"
+                           data-on-text="Var"
+                           data-off-text="Yok"
+                           data-size="large"/>
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <label>Ortaklı Kiralık (*) :</label>
+                <div class="checkbox checkbox-switchery">
+                    <input table-param="IsPartnerShipRent"
+                           tabindex="10"
+                           id="IsPartnerShipRentStatusRent-Fix"
+                           type="checkbox"
+                           class="make-switch IsPartnerShipRent"
+                           data-on-text="Evet"
+                           data-off-text="Hayır"
+                           data-size="large" />
+                </div>
+            </div>
+            <div class="col-sm-2">
+                <label>Leasing (*) :</label>
+                <div class="checkbox checkbox-switchery">
+                    <input table-param="IsLeasing"
+                           tabindex="10"
+                           id="IsLeasingStatusRent-Fix"
+                           type="checkbox"
+                           class="make-switch IsLeasing"
+                           data-on-text="Var"
+                           data-off-text="Yok"
+                           data-size="large" />
+                </div>
+            </div>
+            <div class="col-sm-3">
+               @* <label>Araç Bedeli Tutar :</label><br/>
+                <button onclick="vehicleFixAmountModal()" type="button" class="btn btn-primary btn-rounded"><i class="icon-add"></i> Tutar Ekle/Detay Gör</button>*@
+            </div>
+        </div>
+    </div>
+    <div class="form-group vehicleActionButtons">
+        <div class="row">
+            <div class="col-md-6"></div>
+            <div class="col-md-3">
+                <button type="button" tabindex="16" class="btn btn-danger full-width" data-dismiss="modal"><i class="fa fa-times"></i> İptal</button>
+            </div>
+            <div class="col-md-3">
+                <button onclick="SaveUpdateVehicleFix()" tabindex="15" type="button" class="btn btn-default btn-success full-width"><i class="icon-make-group position-left"></i> Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleAmountFixModal.cshtml")
+
+<script>
+
+    var historyButtonsActive = false;
+
+    function SaveUpdateVehicleFix() {
+        var model = FormGetAllValue("#VehicleFixture_FormId [table-param]");
+        if (model != null) {
+            model.FixtureTypeId = @((int) FixtureType.Ownership);
+            var mergeObject = $.extend(model, { Id: $('#vehicle_Id').val() });
+            sendAjxForm(mergeObject,
+                "/Vehicle/InsertVehicle",
+                function(e) {
+                    if (e.IsSuccess == true) {
+                        $('#li_rent').addClass('invisible'); //kiralık araç tab gizle
+                        $('#li_fix').removeClass('invisible'); //demirbaş araç tab aç
+                        $('#vehicle_Id').val(e.Id);
+                        menuButtonActive();
+                        historyButtonsActive = true;
+                        ShowMessage("success", "Bilgi", e.Message);
+                        $('#debitUserHistoryUl li').remove();
+                        GetAllLoadTable('/Vehicle/VehicleGetAll');
+                    } else if (!e.IsSuccess) {
+                        ShowMessage("info", "Bilgi", e.Message);
+                    } else
+                        ShowMessage("error", "Hata", "Hata oluştu!");
+
+                },
+                'POST');
+        }
+    }
+
+    $("#PlateFix").on('change onkeyup paste input',
+        function() {
+            $(this).val($(this).val().replace(/\s/g, ""));
+            var plate = $('#PlateFix').val();
+            if (plate.length > 3 && !editButtonClick) {
+                sendAjxForm({ plate: plate },
+                    "/Vehicle/GetByPlate",
+                    function(e) {
+                        if (e != "")
+                            ShowMessage("info", "Bilgi", e);
+                    },
+                    'GET');
+            }
+        });
+
+</script>

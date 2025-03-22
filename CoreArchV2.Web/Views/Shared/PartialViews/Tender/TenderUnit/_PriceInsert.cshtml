@@ -1,0 +1,95 @@
+﻿<div class="form-group">
+    <div id="TenderDetailSingle_FormId" class="row">
+        <input type="text" id="tenderDetail" table-param="Id" hidden />
+        <div class="form-group">
+            <div class="row">
+                <div class="col-sm-6">
+                    <label>Ürün Adı :</label>
+                    <input table-param="ProductName" type="text" class="form-control" disabled>
+                </div>
+                <div class="col-sm-6">
+                    <label>Stok Kodu :</label>
+                    <input table-param="StockCode" type="text" class="form-control" disabled>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="row">
+                <div class="col-sm-3">
+                    <label>Miktar :</label>
+                    <input table-param="Piece" type="text" class="form-control" disabled>
+                </div>
+                <div class="col-sm-3">
+                    <label>Birim :</label>
+                    <input table-param="UnitTypeName" type="text" class="form-control" disabled>
+                </div>
+
+                <div class="col-sm-3">
+                    <label>Fiyat (*):</label>
+                    <input id="ProductPrice" table-param="ProductPrice" type="text" class="form-control moneyCurrency" >
+                </div>
+                <div class="col-sm-3">
+                    <label>Genel Toplam :</label>
+                    <input table-param="TotalProductPrice" type="text" class="form-control moneyCurrencyl" disabled>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Açıklama</label>
+            <textarea rows="3" cols="5" table-param="ProductDescription" tabindex="11" class="form-control" placeholder="Açıklama"></textarea>
+        </div>
+    </div>
+</div>
+<div class="form-group">
+    <label class="control-label">Dosya Yükle :</label>
+    <div class="file-loading">
+        <input id="imageUploadFormTenderDetailSingle" type="file" multiple>
+    </div>
+    <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+</div>
+
+<div class="form-group">
+    <div class="row">
+        <div class="col-sm-4 col-md-6">
+        </div>
+        <div class="col-sm-4 col-md-3">
+            <button type="button" tabindex="8" class="btn btn-danger full-width" onclick="$('#TenderDetailSingleModal').modal('hide');"><i class="fa fa-times"></i> İptal</button>
+        </div>
+
+        <div class="col-sm-4 col-md-3">
+            <button id="vehicleSaveId" tabindex="7" type="submit" class="btn btn-primary full-width" onclick="funcSaveTenderDetailSingle()"><i class="fa fa-check"></i> Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function funcSaveTenderDetailSingle() {
+        var model = FormGetAllValue("#TenderDetailSingle_FormId [table-param]");
+        if (model != null) {
+            var newModel = {};
+            var files = $('#imageUploadFormTenderDetailSingle').fileinput('getFileList');
+            var formData = new FormData();
+            for (var i = 0; i != files.length; i++)
+                formData.append("files", files[i]);
+
+            newModel = FormDataAppendModelValue(formData, "#TenderDetailSingle_FormId [table-param]");
+            sendAjxFormFileUpload(newModel,
+                '/Tender/InsertUpdateTenderDetailForUnit',
+                function (e) {
+                    funcFilterTable();
+                    if (e.IsSuccess) {
+                        funcUnitGetPrice(e.Id);
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı");
+                        $('#TenderDetailSingleModal').modal("hide");
+                    } else {
+                        if (e == 'NotAuthorizationCore') {
+                            var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                            ShowMessage("error", "Yetkisiz İşlem", message);
+                        } else
+                            ShowMessage("error", "Hata", e.Message);
+                    }
+                }, 'POST');
+        }
+    }
+</script>

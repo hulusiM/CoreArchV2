@@ -1,0 +1,79 @@
+﻿@using CoreArchV2.Core.Enum.TripVehicle
+<div class="row">
+    <ul id="tripHistoryUl" class="list-feed media-list" style="overflow-x: auto;height: 400px;">
+    </ul>
+</div>
+
+<script>
+    $('#TripHistory_toggle').click(function() {
+        setHistoryTripHistory();
+    });
+
+    function setHistoryTripHistory() {
+        $('#tripHistoryUl li').remove();
+        var tripId = $('#tripId').val();
+        if (tripId > 0) {
+            var model = { tripId: tripId };
+            sendAjxForm(model,
+                "/Trip/GetByTripIdHistory",
+                function(e) {
+                    if (e.length > 0) {
+                        var result = "";
+
+                        for (var i = 0; i < e.length; i++) {
+                            result += '<li class="media"><div class="media-body">';
+                            if (e[i].State == @((int) TripState.StartTrip)) {
+                                result += "<strong style='color: blueviolet;'>" + e[i].Plate + "</strong> plakalı araç ";
+                                result += "<strong>" + e[i].StartCityName + "</strong> şehrinden çıkış yapmıştır.<br/>";
+                                result += "<b>Birim/Proje Adı:</b> <span class='label bg-success-300'>" + e[i].UnitName + "</span></br>";
+                                result += "<b>Tipi:</b> <span class='label bg-orange-300'>" + e[i].TypeName + "</span></br>";
+                                result += "<b>Çıkış Tarihi:</b> " + ConvertJSONDateFormatISO(e[i].TransactionDate2);
+                                result += "</br><b>Sürücü :</b> " + e[i].NameSurname;
+                                result += "</br><b>Km:</b> " + formatMoney(e[i].StartKm, 0);
+                            } else if (e[i].State == @((int) TripState.EndTrip)) {
+                                result += "<strong>" + e[i].StartCityName + "</strong> şehrine giriş yapmıştır.<br/>";
+                                result += "<b>Varış Tarihi:</b> " + ConvertJSONDateFormatISO(e[i].TransactionDate2);
+                                result += "</br><b>Sürücü :</b> " + e[i].NameSurname;
+                                result += "</br><b>Km:</b> " + formatMoney(e[i].StartKm, 0);
+                            } else if (e[i].State == @((int) TripState.AddAddress)) {
+                                result += "<strong>" + e[i].StartCityName + "</strong> şehrine uğramıştır.<br/>";
+                                result += "<b>İşlem Tarihi:</b> " + ConvertJSONDateFormatISO(e[i].TransactionDate2) + "<br/>";
+                                result += "<b>Tipi:</b> <span class='label bg-orange-300'>" + e[i].LogTypeName + "</span></br>";
+                                if (e[i].LogType == @((int) TripType.OffDuty))
+                                    result += "<b>Görev Dışı Km: </b> <span class='label bg-orange-300'>" + e[i].StartKm + "</span></br>";
+                                result += "<strong>Açıklama:</strong> " + (e[i].Description == null ? "" : e[i].Description);
+                            } else if (e[i].State == @((int) TripState.ChangeKm)) {
+                                result += '<span class="activeTripCount badge bg-warning-800 faa-flash animated faa-slow">Aracın km değeri değiştirildi.</span><br/>';
+                                result += "<b>İşlem Yapılan Km: </b> " + e[i].StartKm + "<br/>";
+                                result += "<b>İşlem Tarihi: </b> " + ConvertJSONDateFormatISO(e[i].TransactionDate2) + "<br/>";
+                                result += "<strong>Gerekçesi: </strong> " + (e[i].Description == null ? "" : e[i].Description);
+                            } else if (e[i].State == @((int) TripState.AllowedForManager)) {
+                                result += '<span class="badge bg-success-800">Görev, yönetici tarafından onaylandı</span><br/>';
+                                result += "<b>Onaylayan: </b> " + e[i].CreatedNameSurname + "<br/>";
+                                result += "<b>İşlem Tarihi: </b> " + ConvertJSONDateFormatISO(e[i].TransactionDate2) + "<br/>";
+                                result += "<strong>Yönetici Açıklama:</strong> " + (e[i].Description == null ? "" : e[i].Description);
+                            } else if (e[i].State == @((int) TripState.NotAllowedForManager)) {
+                                result += '<span class="badge bg-warning-800 faa-flash animated faa-slow">Görev, yönetici tarafından iptal edildi</span><br/>';
+                                result += "<b>İptal Eden: </b> " + e[i].CreatedNameSurname + "<br/>";
+                                result += "<b>İşlem Tarihi: </b> " + e[i].StartDate + "<br/>";
+                                result += "<strong>Yönetici Açıklama:</strong> " + (e[i].Description == null ? "" : e[i].Description);
+                            }
+                            else if (e[i].State == 0) {
+                                result += "<strong style='color: orange;text-decoration: underline;'>Genel Bilgiler</strong><br/>";
+                                result += "<b>Görev illeri: </b><span class='label bg-orange-300'>" + e[i].StartCityName + "</span></br>";
+                                result += "<b>Tarihler:</b> " + ConvertJSONDateFormatISO(e[i].StartDate) + " - " + ConvertJSONDateFormatISO(e[i].EndDate);
+                                result += "</br><b>Toplam :</b> " + formatMoney(e[i].TotalKm, 0) + " Km";
+                                result += "</br><b>Aracın Güncel Km :</b> " + formatMoney(e[i].VehicleLastKm, 0);
+                            }
+
+                            result += '</div>';
+                            result += "<hr/></li>";
+                        }
+
+                        $('#tripHistoryUl').append(result);
+                    }
+                }, 'POST');
+        }
+    }
+
+</script>

@@ -1,0 +1,81 @@
+﻿<div id="filesModal" class="modal fade modal-fullscreen force-fullscreen" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Araç Bakım/Onarım Faturalar</h4>
+            </div>
+            <div class="modal-body">
+                <div id="myCarousel" class="carousel slide carousel-fit" data-ride="carousel">
+                    <!-- Indicators -->
+                    <ol id="corouselIndicator" class="carousel-indicators">
+                    </ol>
+
+                    <!-- Wrapper for slides -->
+                    <div id="carouseBody" class="carousel-inner">
+
+                    </div>
+
+                    <!-- Controls -->
+                    <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+                        <span class="glyphicon glyphicon-chevron-left"></span>
+                    </a>
+                    <a class="right carousel-control" href="#myCarousel" data-slide="next">
+                        <span class="glyphicon glyphicon-chevron-right"></span>
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Kapat</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<script>
+    function fileReadModal(incomingId, url) {
+        if (url == null)
+            url = tableName + "/GetById";
+        sendAjxForm({ id: incomingId },
+            url,
+            function(e) {
+                if (e.files.length > 0) {
+                    var data = e.files;
+                    var htmlIndicator = "";
+                    var htmlPic = "";
+                    for (var i = 0; i < data.length; i++) {
+                        var imgUrl = "/uploads/logistics/" + data[i].Name;
+                        if (i == 0) {
+                            htmlIndicator += '<li data-target="#myCarousel" data-slide-to="' + i + '" class="active"></li>';
+                            htmlPic += '<div class="item active">' +
+                                '<img src = "' +
+                                imgUrl +
+                                '" />' +
+                                '<div class="carousel-caption">' +
+                                '<p>' +
+                                data[i].Name +
+                                ' </p>' +
+                                '</div></div >';
+                        } else {
+                            htmlIndicator += '<li data-target="#myCarousel" data-slide-to="' + i + '"></li>';
+                            htmlPic += '<div class="item">' +
+                                '<img src = "' +
+                                imgUrl +
+                                '" />' +
+                                '<div class="carousel-caption">' +
+                                '<p>' +
+                                data[i].Name +
+                                ' </p>' +
+                                '</div></div >';
+                        }
+                    }
+                    $('#corouselIndicator').append(htmlIndicator);
+                    $('#carouseBody').append(htmlPic);
+                    $('#filesModal').modal("show");
+                }
+            },
+            'POST');
+    }
+
+</script>

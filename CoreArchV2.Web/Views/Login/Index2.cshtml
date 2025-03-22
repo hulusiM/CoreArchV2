@@ -1,0 +1,289 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration _config
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="iso-8859-9">
+    <meta name="http-equiv" content="Content-type: text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=windows-1254">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <noscript>Please,run javascript!!</noscript>
+    <title>@_config["FirmSetting:DisplayName"]</title>
+    <link href="~/login2/style.css" rel="stylesheet" />
+    <link href="~/login2/slider.css" rel="stylesheet" />
+    <script src="~/admin/js/core/libraries/jquery.min.js"></script>
+</head>
+<body id="bodyDiv">
+    <!--<ul class="nav">-->
+    @*<li onclick="showLogin()">Sisteme Giriş</li>*@
+    @*<li onclick="showSignup()">Sign up</li>*@
+    @*<li onclick="showForgotPassword()">Şifremi Unuttum</li>*@
+    @*<li onclick="showSubscribe()">Subscribe</li>*@
+    @*<li onclick="showContactUs()">İletişime Geçiniz</li>*@
+    <!--</ul>-->
+
+    <ul class='slideshow'>
+        <li>
+            @*<h3 class="animate-charcter">@_config["FirmSetting:DisplayName"]</h3>*@
+
+            <span>---</span>
+        </li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+        <li><span></span></li>
+    </ul>
+
+    <div class="wrapper">
+        <div class="rec-prism">
+            <div class="face face-top">
+                <div class="content">
+                    <h2>Subscribe</h2>
+                    <small>Enter your email so we can send you the latest updates!</small>
+                    <form onsubmit="event.preventDefault()">
+                        <div class="field-wrapper">
+                            <input type="text" name="email" placeholder="email">
+                            <label>e-mail</label>
+                        </div>
+                        <div class="field-wrapper">
+                            <input type="submit" onclick="showThankYou()">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @*Giriş Yap*@
+            <div class="face face-front">
+                <div class="content">
+                    <h3 id="headerBasaran" class="text-center">Portal</h3>
+                    <h2 class="text-center">Hoş Geldiniz</h2>
+                    <form onsubmit="event.preventDefault()">
+                        <div class="field-wrapper">
+                            <input type="text" id="mobilePhone" placeholder="Kullanıcı Adı" autocomplete="off" />
+                            <label>Kullanıcı Adı (Örn: 05321230000)</label>
+                        </div>
+                        <div class="field-wrapper">
+                            <input type="password" id="pass" placeholder="Şifre" autocomplete="off" />
+                            <label>Şifre</label>
+                        </div>
+                        <div class="field-wrapper">
+                            <input id="login-button" value="Giriş Yap" type="submit" onclick="loadComponentView()">
+                        </div>
+
+                        <span id="capsLockSpan" style="text-align: center;color: red; display: none;">Caps Lock Açık!</span>
+                        <span class="psw" onclick="showForgotPassword()">Şifremi Unuttum?</span>
+                        @*<span class="signup" onclick="showSignup()">Not a user?  Sign up</span>*@
+                    </form>
+                </div>
+            </div>
+            @*Parola sıfırlama*@
+            <div class="face face-back">
+                <div class="content">
+                    <h2 class="text-center">Parolanızı mı Unuttunuz?</h2>
+                    <small class="text-center">Size yeni parola gönderebilmemiz için sistemde kayıtlı olan <b><u>E-Mail</u></b> adresinizi giriniz .</small>
+                    <form onsubmit="event.preventDefault()">
+                        <div class="field-wrapper">
+                            <input type="text" id="forgetMail" placeholder="E-Mail" autocomplete="off" />
+                            <label>E-Mail</label>
+                        </div>
+                        <div class="field-wrapper">
+                            <input id="mail-button" type="submit" onclick="newPassGenerator()">
+                        </div>
+                        <span class="singin" onclick="showLogin()">Giriş Ekranına Dön ↩</span>
+                    </form>
+                </div>
+            </div>
+            @*Yeni parola gönderildi*@
+            <div class="face face-right">
+                <div class="content">
+                    <img style="width: 224px; margin: 82px 0 0 -5px;" src="~/admin/images/logo3.png" />
+                    @*<h2>İletişim</h2>
+                        <form onsubmit="event.preventDefault()">
+                        <div class="field-wrapper">
+                        <input type="text" name="name" placeholder="name">
+                        <label>Name</label>
+                        </div>
+                        <div class="field-wrapper">
+                        <input type="text" name="email" placeholder="email">
+                        <label>e-mail</label>
+                        </div>
+                        <div class="field-wrapper">
+                        <textarea placeholder="your message"></textarea>
+                        <label>your message</label>
+                        </div>
+                        <div class="field-wrapper">
+                        <input type="submit" onclick="showThankYou()">
+                        </div>
+                        </form>*@
+                </div>
+            </div>
+            @*iletişim*@
+            <div class="face face-left">
+                <div class="content">
+                    <h4 class="text-center">İşlem Başarılı</h4>
+                    <small class="text-center">Yeni şifreniz e-mail adresinize gönderildi, lütfen kontrol ediniz</small>
+                    <div class="sendMail-msg"></div>
+                    <span style="margin-top: 143px;" class="singin" onclick="showLogin()">Giriş Ekranına Dön ↩</span>
+
+                </div>
+            </div>
+            <div class="face face-bottom">
+                <div class="content">
+                    <div class="thank-you-msg">
+                        Giriş Başarılı!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <svg height="100" stroke="yellow" stroke-width="3" class="text-line" width="100%">
+        <text x="50%" dominant-baseline="middle" text-anchor="middle" y="50%">#ABC #Teknoloji</text>
+    </svg>
+
+    <script>
+        var errorMailCount = 0;
+        function newPassGenerator() {
+            var email = $('#forgetMail').val();
+            if (email.length > 0) {
+                $('#mail-button').attr("disabled", true).css("cursor", "wait").prop('value', 'Bekleyiniz ...');
+                $.ajax({
+                    url: window.location.origin + "/Login/GenerateNewPassword",
+                    type: "POST",
+                    dataType: "json",
+                    async: true,
+                    success: function (e) {
+                        $('#mail-button').attr("disabled", false).css("cursor", "pointer").prop('value', 'Gönder');
+                        if (errorMailCount > 2) {
+                            toastr_mes("info", "Bilgi", "Mail 3 kere hatalı girildi. Sayfayı yenileyip tekrar deneyiniz");
+                            $('#mail-button').remove();
+                        }
+                        if (e.IsSuccess) {
+                            setTimeout(function () { showSendMail(); }, 1000);
+                            setTimeout(function () { showLogin() }, 3000);
+                            toastr_mes("warning", "Bilgi", "Yeni şifreniz mail adresinize gönderildi");
+                        } else {
+                            toastr_mes("warning", "Bilgi", e.Message);
+                            errorMailCount++;
+                        }
+                    },
+                    data: { email: email },
+                    error: function (err) {
+                        toastr_mes("warning", "Bilgi", "Hata oluştu");
+                        $('#mail-button').attr("disabled", false).css("cursor", "pointer").prop('value', 'Gönder');
+                    }
+                });
+            } else
+                toastr_mes("warning", "Bilgi", "Lütfen E-Mail adresinizi giriniz");
+        }
+
+        var errorLoginCount = 0;
+        function loadComponentView() {
+            var url = new URL(window.location.href);
+            var redirectToUrl = url.searchParams.get("redirectUrl");
+            var username = $('#mobilePhone').val();
+            var password = $('#pass').val();
+            var model = {
+                mobilePhone: username,
+                pass: password,
+                redirectUrl: redirectToUrl
+            };
+            if (username != "" && password != "") {
+                $('#login-button').attr("disabled", true).css("cursor", "wait").prop('value', 'Bekleyiniz ...');
+                $.ajax({
+                    url: window.location.origin + "/Login/LoginCheck",
+                    type: "POST",
+                    dataType: "json",
+                    async: true,
+                    success: function (result) {
+                        $('#login-button').attr("disabled", false).css("cursor", "pointer").prop('value', 'Giriş Yap');
+                        if (errorLoginCount > 2) {
+                            toastr_mes("info", "Bilgi", "Şifre 3 kere hatalı girildi. Sayfayı yenileyip tekrar deneyiniz");
+                            $('#login-button').remove();
+                        } else if (result.LoginMessage == "") {
+                            showThankYou();
+                            setTimeout(function () { window.location = result.RedirectUrl; }, 1500);
+                        } else {
+                            toastr_mes("warning", "Bilgi", result.LoginMessage);
+                            errorLoginCount++;
+                        }
+                    },
+                    data: model,
+                    error: function (err) {
+                        toastr_mes("warning", "Bilgi", "Hata oluştu");
+                        $('#login-button').attr("disabled", false).css("cursor", "pointer").prop('value', 'Giriş Yap');
+                    }
+                });
+            } else
+                toastr_mes("warning", "Bilgi", "Zorunlu alanları doldurunuz");
+        };
+        
+        function toastr_mes(messageType, title, content) {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": false,
+                "progressBar": true,
+                "positionClass": "toast-bottom-right",
+                "preventDuplicates": false,
+                "onclick": null,
+                "showDuration": "500",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+            Command: toastr[messageType](content, title);
+        }
+
+        window.addEventListener("load",
+            function () {
+                $('#mobilePhone').focus();
+            });
+        //$(document).on('keypress',
+        //    function (e) {
+        //        if (e.which == 13) {
+        //            loadComponentView();
+        //        }
+        //    });
+
+        $(document).ready(function() {
+            catchCaps();
+        });
+
+        function catchCaps() {
+            var input = document.getElementById("bodyDiv");
+            var text = document.getElementById("capsLockSpan");
+            input.addEventListener("keyup", function(event) {
+                if (event.getModifierState("CapsLock")) 
+                    text.style.display = "block";
+                else 
+                    text.style.display = "none";
+            });
+        }
+        
+    </script>
+
+    <script src="~/login2/script.js"></script>
+    <link href="~/admin/Toastr/toastr.css" rel="stylesheet" />
+    <script src="~/admin/Toastr/toastr.js"></script>
+</body>
+</html>

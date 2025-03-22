@@ -1,0 +1,93 @@
+﻿<div id="VehicleExaminateDate_FormId" class="row">
+    <input id="VehicleExaminateDateId" table-param="Id" hidden/>
+    <input table-param="VehicleId" hidden/>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+                <label>K Belgesi Bitiş Tarihi :</label>
+                <input table-param="KDocumentEndDate" tabindex="1" type="date" class="form-control">
+            </div>
+            <div class="col-sm-6">
+                <label>Kasko Bitiş Tarihi :</label>
+                <input table-param="KaskoEndDate" tabindex="2" type="date" class="form-control">
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+                <label>Trafik Sigorta Bitiş Tarihi :</label>
+                <input table-param="TrafficEndDate" tabindex="3" type="date" class="form-control">
+            </div>
+            <div class="col-sm-6">
+                <label>Muayene Bitiş Tarihi :</label>
+                <input table-param="ExaminationEndDate" tabindex="4" type="date" class="form-control">
+            </div>
+        </div>
+    </div>
+    <div class="form-group vehicleActionButtons">
+        <div class="row">
+            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <button onclick="SaveUpdateVehicleExaminationDate()" type="button" class="btn btn-default btn-primary full-width"><i class="icon-make-group position-left"></i> Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function SaveUpdateVehicleExaminationDate() {
+        var id = $('#VehicleExaminateDateId').val();
+        var vehicleId = $('#vehicle_Id').val();
+        var model = FormGetAllValue("#VehicleExaminateDate_FormId [table-param]");
+        var vehicleId = $('#vehicle_Id').val();
+        var model2 = { Id: id, VehicleId: vehicleId };
+        var mergeObject = $.extend(model, model2);
+        if (model.ExaminationEndDate != "" || model.KDocumentEndDate != "" || model.KaskoEndDate != "" || model.TrafficEndDate != "") {
+            if (model != null) {
+                sendAjxForm(mergeObject,
+                    "/Vehicle/InsertVehicleExaminationDate",
+                    function(e) {
+                        if (e.IsSuccess == true) {
+                            if (e.Id > 0)
+                                $('#VehicleExaminateDateId').val(e.Id);
+                            ShowMessage("success", "Bilgi", "Tarih bilgileri başarıyla eklendi");
+                        } else
+                            ShowMessage("error", "Hata", "Hata oluştu!");
+
+                    },
+                    'POST');
+            }
+        } else
+            ShowMessage("warning", "Bilgi", "Herhangi bir tarih seçiniz");
+    }
+
+
+    $('#Examination_toggle').click(function() {
+        if (historyButtonsActive) {
+            FormAllInputsClearNoCloseModal("#VehicleExaminateDate_FormId [table-param]");
+            var vehicleId = $('#vehicle_Id').val();
+            if (vehicleId > 0) {
+                var model = { id: vehicleId };
+                sendAjxForm(model,
+                    "/Vehicle/GetByIdVehicleExaminationDate",
+                    function(e) {
+                        if (e != null) {
+                            var model = {
+                                selector: "#VehicleExaminateDate_FormId [table-param]",
+                                data: e
+                            };
+                            FormSetAllValue(model);
+                            $('#EditInsertModal').modal("show");
+                        }
+                    },
+                    'GET');
+            }
+        } else {
+            $('.nav-tabs a[href="#Vehicle_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için araç seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+</script>

@@ -1,0 +1,130 @@
+﻿<div id="EditInsertModal" class="modal fade" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-success-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 id="ModalTitleId" class="modal-title">Araç Bilgileri</h5>
+            </div>
+            <div class="form-body" style="padding: 14px;">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-flat">
+                            <div class="panel-body">
+                                <div class="tabbable tab-content-bordered">
+                                    <ul class="nav nav-tabs nav-tabs-highlight nav-justified">
+                                        <li id="liAttr_1" class="active">
+                                            <a id="Vehicle_toggle" href="#Vehicle_Info" data-toggle="tab"><i class="icon-truck position-left "></i>Araç Bilgileri</a>
+                                        </li>
+                                        <li id="liAttr_6">
+                                            <a id="VehicleContract_toggle" href="#Vehicle_Contract" data-toggle="tab"><i class="icon-quill2 position-left "></i>Sözleşme Bilgileri</a>
+                                        </li>
+                                        <li id="liAttr_2">
+                                            <a id="Examination_toggle" href="#Vehicle_Examination" data-toggle="tab"><i class="icon-ampersand position-left "></i>Belge Tarihleri</a>
+                                        </li>
+                                        <li id="liAttr_4">
+                                            <a id="VehicleFile_toggle" href="#Vehicle_File" data-toggle="tab"><i class="icon-file-download position-left "></i>Dosyalar</a>
+                                        </li>
+                                        <li id="liAttr_3">
+                                            <a id="Debit_toggle" href="#Vehicle_Debit" data-toggle="tab"><i class="icon-person position-left "></i>Zimmet Bilgileri</a>
+                                        </li>
+                                        <li id="liAttr_5">
+                                            <a id="DebitHistory_toggle" href="#Vehicle_DebitHistory" data-toggle="tab"><i class="icon-sort-time-desc position-left "></i>Zimmetli Geçmişi</a>
+                                        </li>
+                                        <li id="liAttr_7">
+                                            <a id="MaintenanceHistory2_toggle" href="#Vehicle_MaintenanceHistory" data-toggle="tab"><i class="icon-hammer-wrench position-left "></i>Bakım Geçmişi</a>
+                                        </li>
+
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div class="tab-pane has-padding active" id="Vehicle_Info">
+                                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_Vehicle.cshtml")
+                                        </div>
+                                        <div class="tab-pane has-padding" id="Vehicle_Contract">
+                                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleContract.cshtml")
+                                        </div>
+                                        <div class="tab-pane has-padding" id="Vehicle_Examination">
+                                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleExaminationDate.cshtml")
+                                        </div>
+                                        <div class="tab-pane has-padding" id="Vehicle_File">
+                                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleFile.cshtml")
+                                        </div>
+                                        <div class="tab-pane has-padding" id="Vehicle_Debit">
+                                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleDebit.cshtml")
+                                        </div>
+                                        <div class="tab-pane has-padding" id="Vehicle_DebitHistory">
+                                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleDebitHistory.cshtml")
+                                        </div>
+                                        <div class="tab-pane has-padding" id="Vehicle_MaintenanceHistory">
+                                            @await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleMaintenance/_MaintenanceHistory.cshtml")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+    function menuButtonPassive() {
+        document.getElementById("liAttr_2").classList.add('disabled');
+        document.getElementById("liAttr_3").classList.add('disabled');
+        document.getElementById("liAttr_4").classList.add('disabled');
+        document.getElementById("liAttr_5").classList.add('disabled');
+        document.getElementById("liAttr_6").classList.add('disabled');
+        document.getElementById("liAttr_7").classList.add('disabled');
+        editButtonClick = false;
+        historyButtonsActive = false;
+    }
+
+    function menuButtonActive() {
+        document.getElementById("liAttr_2").classList.remove('disabled');
+        document.getElementById("liAttr_3").classList.remove('disabled');
+        document.getElementById("liAttr_4").classList.remove('disabled');
+        document.getElementById("liAttr_5").classList.remove('disabled');
+        document.getElementById("liAttr_6").classList.remove('disabled');
+        document.getElementById("liAttr_7").classList.remove('disabled');
+        editButtonClick = true;
+        historyButtonsActive = true;
+    }
+
+    function clearPages() {
+        $('#Vehicle_toggle').click();
+        FormAllInputsClearNoCloseModal("#VehicleFixture_FormId [table-param]");
+        FormAllInputsClearNoCloseModal("#VehicleExaminateDate_FormId [table-param]");
+        FormAllInputsClearNoCloseModal("#VehicleDebit_FormId [table-param]");
+        FormAllInputsClearNoCloseModal("#VehicleRent_FormId [table-param]");
+        $('#debitUserHistoryUl li').remove();
+    }
+
+    function vehicleModalOpen() {
+        $('#ModalTitleId').html('Araç Bilgileri');
+        $('.select-search').val('').select2();
+        $('#vehicle_Id').val('');
+        $('#li_fix').removeClass('invisible');
+        $('#li_rent').removeClass('invisible');
+        vehicleRentPageActive = false;
+        vehicleFixturePageActive = false;
+        $('#VehicleRent_toggle').click();
+        $('#IsTtsStatus').bootstrapSwitch('state', false);
+        $('#IsHgsStatus').bootstrapSwitch('state', false);
+        $('#IsTtsStatusRent').bootstrapSwitch('state', false);
+        $('#IsHgsStatusRent').bootstrapSwitch('state', false);
+
+
+        $('.IsPartnerShipRent').bootstrapSwitch('state', false);
+        $('.IsLeasing').bootstrapSwitch('state', false);
+
+        $('#Vehicle_toggle').click();
+        clearPages();
+        menuButtonPassive();
+        $('#EditInsertModal').modal("show");
+    }
+
+</script>

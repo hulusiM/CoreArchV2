@@ -1,0 +1,264 @@
+﻿<script>$('#broadCrumbDiv').text('Sistem Yönetimi / Kullanıcı Rol Tanımları')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Kullanıcı-Rol Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="funcOpenRoleUserModal()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="UserId"
+                                tabindex="1"
+                                table-param="UserId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="UserRoleId3"
+                                tabindex="2"
+                                class="select"
+                                table-param="Name"
+                                table-id="comboBox-Role"
+                                table-model-url="/Combo/GetRoleCmbx"
+                                table-tool-type="comboBox"
+                                table-description="Rol Adı"
+                                data-option-label="Rol Adı Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class=" table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableUser"
+                           table-id="dataTable-UserRole"
+                           table-model-url="/UserRole/UserRoleGetAll"
+                           table-DatabaseName="/UserRole"
+                           table-tool-type="dataTable">
+
+                        <thead>
+                            <tr class="filters ">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="UserNameSurname" style="text-align: center; width: 20%;">
+                                    Adı Soyadı
+                                </th>
+                                <th data-value="RoleName" style="text-align: center; width: 20%;">
+                                    Rol Adı
+                                </th>
+                                <th data-value="HomePageName" style="text-align: center; width: 20%;">
+                                    Anasayfa Adı
+                                </th>
+                                <th data-value="CustomButton" style="text-align: center; width: 6%;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 id="ModalTitleId" class="modal-title"> Kullanıcı Rol Ekle</h5>
+            </div>
+            <div class="modal-body">
+                <div class="horizontal-form">
+                    <div id="UserRole_FormId" class="form-body">
+                        <input type="text" id="UserRoleId" table-param="Id" hidden />
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label>Kullanıcı (*) :</label>
+                                    <select id="UserId2" table-param="UserId2" class="select2-container select2-selection--single"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label>Rol (*) :</label>
+                                    <select id="UserRoleId2"
+                                            tabindex="2"
+                                            class="select"
+                                            table-param="UserRoleId2"
+                                            table-id="comboBox-Role"
+                                            table-model-url="/Combo/GetRoleCmbx"
+                                            table-tool-type="comboBox"
+                                            onchange="funcRoleChange()"
+                                            table-description="Rol Adı"
+                                            data-option-label="Rol Adı Seçiniz" required>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Anasayfa (*) :</label>
+                                    <select id="HomePageId"
+                                            tabindex="1"
+                                            class="select-search"
+                                            table-param="HomePageId"
+                                            table-id="comboBox-HomePageId"
+                                            table-model-url=""
+                                            table-tool-type="comboBox"
+                                            table-description="Anasayfa"
+                                            data-option-label="Anasayfa Seçiniz" required>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-6">
+                    <button type="button" class="btn btn-danger" onclick="funcCancelModal('#UserRole_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                    <button id="EditInsertButtonId" type="submit" class="btn btn-primary" onclick="funcSaveNewRole()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#UserId').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#UserId2').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    function funcSaveNewRole() {
+        var userId = parseInt($('#UserId2').val());
+        var roleId = parseInt($('#UserRoleId2').val());
+        var homePageId = parseInt($('#HomePageId').val());
+        if (Number.isInteger(userId) && Number.isInteger(roleId) && Number.isInteger(homePageId)) {
+            var model = {
+                UserId: userId,
+                RoleId: roleId,
+                HomePageId: homePageId
+            };
+            sendAjxForm(model, "/UserRole/Insert", function (e) {
+                if (e.IsSuccess)
+                    $('#EditInsertModal').modal('hide');
+
+                ShowMessage("info", "Bilgi", e.Message, 20000);
+            }, 'POST');
+        } else
+            ShowMessage("info", "Bilgi", "Rol ve Kullanıcı adı boş geçilemez");
+    }
+
+    function funcOpenRoleUserModal() {
+        $('#UserId2').val('').change();
+        $('#UserRoleId2').val('').change();
+        $('#HomePageId option:not(:first)').remove();
+        $('#EditInsertModal').modal('show');
+    }
+
+    function funcRoleChange() {
+        var roleId = $('#UserRoleId2').val();
+        if (roleId != "") {
+            sendAjxForm({ roleId: roleId }, "/UserRole/GetRoleWithHomePageList",
+                function (e) {
+                    funcCustomComboBox(e, "HomePageId", "Anasayfa Seçiniz");
+                }, 'POST');
+        } else
+            $('#HomePageId option:not(:first)').remove();
+
+    }
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == "")
+            incomingUrl = "/UserRole/UserRoleGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable(e) {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

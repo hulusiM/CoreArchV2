@@ -1,0 +1,601 @@
+﻿@using CoreArchV2.Core.Enum
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+}
+<script>$('#broadCrumbDiv').text('Görev İşlemleri')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Görev İşlemleri</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="newTripOpenModal()"><i class="icon-briefcase position-left"></i> Yeni Görev</a>
+        </li>
+        @{
+            if (Convert.ToBoolean(isAdmin))
+            {
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        <i class="icon-gear position-left"></i>
+                        İşlemler
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-right">
+                        <li>
+                            <a onclick="changeVehicleKm()"><i class="icon-car2 position-left"></i> Araç Km Değiştir</a>
+                        </li>
+                        <li>
+                            <a onclick="openTripReportModal()"><i class="icon-chart position-left"></i> Rapor</a>
+                        </li>
+                    </ul>
+                </li>
+            }
+        }
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="tripPageParentUnitId"
+                                tabindex="1"
+                                table-param="ParentUnitId"
+                                onchange="changeParentUnitId()"
+                                class="select-search"
+                                table-id="comboBox-tripPageParentUnitId"
+                                table-model-url="/Combo/GetUnitJustParentCmbx"
+                                table-tool-type="comboBox"
+                                data-option-label="Müdürlük Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="tripPageUnitId"
+                                tabindex="2"
+                                table-param="UnitId"
+                        @*onchange="onchangeUnitId()"*@
+                                class="select-search"
+                                table-id="comboBox-tripPageUnitId"
+                                table-model-url=""
+                                table-tool-type="comboBox"
+                                data-option-label="Proje Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="MissionState"
+                                tabindex="2"
+                                class="select-search"
+                                table-model-url=""
+                                table-tool-type="comboBox"
+                                data-option-label=""
+                                table-id="comboBox-MissionState"
+                                table-param="State">
+                            <option value="0">Görev Durumu Seçiniz</option>
+                            <option value="7">Açık</option>
+                            <option value="8">Kapalı</option>
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="ManagerAllowedType"
+                                tabindex="2"
+                                class="select-search"
+                                table-model-url=""
+                                table-tool-type="comboBox"
+                                data-option-label=""
+                                table-id="comboBox-ManagerAllowedType"
+                                table-param="ManagerAllowedType">
+                            <option value="0">Onay Durumu Seçiniz</option>
+                            <option value="1">Onaylı</option>
+                            <option value="2">Onaysız</option>
+                            <option value="3">Onay Bekliyor</option>
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-Plate_Filter"
+                                tabindex="2"
+                                table-param="VehicleId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-userId-filter"
+                                tabindex="2"
+                                table-param="DriverId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Baş.Tarihi</label>
+                        <input table-param="StartDate" tabindex="6" class="form-control" type="date" autocomplete="off">
+                    </div>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Bit.Tarihi</label>
+                        <input table-param="EndDate" tabindex="7" class="form-control" type="date" autocomplete="off">
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableTrip"
+                           table-id="dataTable-Trip"
+                           table-model-url="/Trip/TripGetAll"
+                           table-DatabaseName="/Trip"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="InsertDeviceType" style="text-align: center;">
+                                    Görev Cihaz
+                                </th>
+                                <th data-value="Plate" style="text-align: center;">
+                                    Plaka
+                                </th>
+                                <th data-value="ManagerAllowed" style="text-align: center;">
+                                    Yönetici Onay
+                                </th>
+                                <th data-value="MissionName" style="text-align: center;">
+                                    Görev Adı/Tipi
+                                </th>
+                                <th data-value="StartCityName" style="text-align: center;">
+                                    Başlangıç İl
+                                </th>
+                                <th data-value="EndCityName" style="text-align: center;">
+                                    Varış İl
+                                </th>
+                                <th data-value="StartDate" data-type="datetime" style="text-align: center;">
+                                    Baş.Tar.
+                                </th>
+                                <th data-value="EndDate" data-type="datetime" style="text-align: center;">
+                                    Bit.Tar.
+                                </th>
+                                <th data-value="UnitName" style="text-align: center;">
+                                    Birim Adı
+                                </th>
+                                <th data-value="StateName" style="text-align: center;">
+                                    Durum
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TripInsertEditModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Görev Bilgileri</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="tabbable tab-content-bordered">
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-justified">
+                                <li id="liAttr_1" class="active">
+                                    <a id="TripInsert_toggle" href="#trip_Insert" data-toggle="tab"><i class="icon-truck position-left "></i>Görev Bilgi Girişi</a>
+                                </li>
+                                <li id="liAttr_2">
+                                    <a id="TripHistory_toggle" href="#trip_History" data-toggle="tab"><i class="icon-history position-left "></i>İşlem Geçmişi</a>
+                                </li>
+                                <li id="liAttr_3">
+                                    <a id="TripHistoryMap_toggle" href="#trip_HistoryMap" data-toggle="tab"><i class="icon-map position-left "></i>Harita Geçmişi</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane has-padding active" id="trip_Insert">
+                                    @await Html.PartialAsync("~/Views/Shared/PartialViews/Trip/_TripInsert.cshtml")
+                                </div>
+                                <div class="tab-pane has-padding" id="trip_History">
+                                    @await Html.PartialAsync("~/Views/Shared/PartialViews/Trip/_TripHistory.cshtml")
+                                </div>
+                                <div class="tab-pane has-padding" id="trip_HistoryMap">
+                                    @await Html.PartialAsync("~/Views/Shared/PartialViews/Trip/_TripHistoryMap.cshtml")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="$('#TripInsertEditModal').modal('hide')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="funcSaveTrip()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TripCloseModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Görevi Kapat</h6>
+            </div>
+            <div class="modal-body">
+                <div id="TripClose_FormId">
+                    <input id="tripId-close" type="text" table-param="Id" hidden />
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <label>Araç :</label>
+                                <select id="select-vehicleId-close" class="select2-container select2-selection--single" disabled>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label>Çıkış Yeri :</label>
+                                <select id="StartCityId-close"
+                                        tabindex="3"
+                                        class="select-search"
+                                        table-id="comboBox-StartCityId"
+                                        table-model-url="/Combo/GetCityAndDistrictCmbx"
+                                        table-tool-type="comboBox"
+                                        table-description="Şehir/Bölge"
+                                        data-option-label="Şehir/Bölge Seçiniz" disabled>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label>Çıkış Km :</label>
+                                <input id="StartKm-close" tabindex="4" type="text" class="form-control moneyCurrency" autocomplete="off" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label>Varış Yeri (*):</label>
+                                <select id="EndCityId"
+                                        tabindex="1"
+                                        class="select-search"
+                                        table-param="EndCityId"
+                                        table-id="comboBox-EndCityId"
+                                        table-model-url="/Combo/GetCityAndDistrictCmbx"
+                                        table-tool-type="comboBox"
+                                        table-description="Şehir/Bölge"
+                                        data-option-label="Şehir/Bölge Seçiniz" required>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label>Varış Km (*) :</label>
+                                <input id="close-vehicleKm" table-param="EndKm" tabindex="2" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="Anlık km değerini giriniz" table-description="Anlık km değeri" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    @* <div class="form-group">
+                    <label class="control-label">Açıklama</label>
+                    <textarea rows="3" cols="5" table-param="Description" tabindex="13" class="form-control" placeholder="Açıklama"></textarea>
+                    </div>*@
+                </div>
+
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="$('#TripCloseModal').modal('hide')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="funcCloseTrip()"><i class="fa fa-check"></i> Görevi Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ul class="fab-menu fab-menu-fixed fab-menu-bottom-right" data-fab-toggle="click">
+    <li>
+        <a class="fab-menu-btn btn bg-teal-400 btn-float btn-rounded btn-icon">
+            <i class="fab-icon-open icon-bell-check"><span class="activeTripCount badge bg-orange-800 faa-flash animated faa-slow">0</span></i>
+            <i class="fab-icon-close icon-cross2"></i>
+        </a>
+
+        <ul class="fab-menu-inner">
+            <li>
+                <div data-fab-label="Görevi Kapat">
+                    <a id="closeTripFastMenu" class="btn btn-default btn-rounded btn-icon btn-float">
+                        <i class="icon-bubbles7"></i>
+                    </a>
+                    <span class="activeTripCount badge bg-orange-800 faa-flash animated faa-slow">0</span>
+                </div>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+@{
+    if (Convert.ToBoolean(isAdmin))
+    {
+        @await Html.PartialAsync("~/Views/Shared/PartialViews/Trip/_TripReport.cshtml")
+    }
+}
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Trip/_TripAddAddress.cshtml")
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Trip/_VehicleChangeKm.cshtml")
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleModal.cshtml")
+
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-Plate_Filter').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-vehicleId').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetAllActiveVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-vehicleId-close').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-userId-filter').select2({
+        placeholder: 'Görev Açan Kişi Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    $('#closeTripFastMenu').click(function () {
+        ActiveMissionControl(true, true);
+    });
+
+    function newTripOpenModal() {
+        FormAllInputsClearNoCloseModal('#Trip_FormId [table-param]');
+        document.getElementById("StartDate-mission").valueAsDate = new Date();
+        $('#select-vehicleId').prop("disabled", false);
+        $('#TripInsert_toggle').click();
+        $('#TripInsertEditModal').modal("show");
+    }
+
+    function funcSaveTrip() {
+        var model = FormGetAllValue("#Trip_FormId [table-param]");
+        if (model != null) {
+            model.StartKm = parseInt(model.StartKm);
+            sendAjxForm(model, "/Trip/TripInsertUpdate",
+                function (e) {
+                    if (e.IsSuccess) {
+                        $('#TripInsertEditModal').modal("hide");
+                        ShowMessage("success", "Bilgi", e.Message);
+                        funcFilterTable();
+                        ActiveMissionControl();
+                    } else
+                        ShowMessage("error", "Bilgi", e.Message);
+                }, 'GET');
+        }
+    }
+
+    function funcEditTrip(tripId) {
+        $('#TripInsert_toggle').click();
+        sendAjxForm({ id: tripId }, '/Trip/GetById',
+            function (e) {
+                if (e.Id > 0) {
+                    $('#select-vehicleId').prop("disabled", true);
+                    setVehicle(e.VehicleId, "select-vehicleId");
+                    if (e.IsPastRecord)
+                        $('#StartKm-Mission').prop("disabled", true);
+                    else
+                        $('#StartKm-Mission').prop("disabled", false);
+                    var formId = '#Trip_FormId [table-param]';
+                    var model = {
+                        selector: formId,
+                        data: e
+                    };
+                    FormSetAllValue(model);
+                    $('#TripInsertEditModal').modal("show");
+
+                    funcGetLastKm(e.VehicleId);
+                }
+            }, 'GET');
+    }
+
+
+    function ActiveMissionControl(isActionButton = false, isOpenModal = false) {
+        $('.activeTripCount').text("0");
+        sendAjxForm("", '/Trip/ActiveMissionControl',
+            function (e) {
+                if (e.Id > 0) {
+                    $('.activeTripCount').text("1");
+                    ShowMessage("info", "Bilgi", "Aktif görev bulundu");
+                    if (isOpenModal) {
+                        $('#StartKm-close').val(formatMoney(e.StartKm));
+                        $('#tripId-close').val(e.Id);
+                        $('#EndCityId').val('').change();
+                        $('#close-vehicleKm').val('');
+                        setVehicle(e.VehicleId, "select-vehicleId-close");
+                        $('#StartCityId-close').val(e.StartCityId).change();
+                        $('#TripCloseModal').modal("show");
+                    }
+                } else {
+                    if (isActionButton)
+                        ShowMessage("info", "Bilgi", "Aktif görev bulunamadı");
+                }
+            }, 'POST');
+    }
+
+    function changeParentUnitId() {
+        var parentUnitId = $('#tripPageParentUnitId').val();
+        var model = {
+            ParentUnitId: parentUnitId
+        };
+        loadUnit(parentUnitId);
+    }
+
+    function loadUnit(parentUnitId) {
+        sendAjxForm({ parentId: parentUnitId },
+            "/Combo/GetUnitChildCmbx",
+            function (e) {
+                funcCustomComboBox(e, "tripPageUnitId", "Proje Seçiniz");
+            }, "GET");
+    }
+
+    function funcCloseTrip() {
+        var model = FormGetAllValue("#TripClose_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, "/Trip/CloseTrip",
+                function (e) {
+                    if (e.IsSuccess) {
+                        $('#TripCloseModal').modal("hide");
+                        ShowMessage("success", "Bilgi", e.Message);
+                        funcFilterTable();
+                        ActiveMissionControl(true);
+                    } else
+                        ShowMessage("error", "Bilgi", e.Message);
+                }, 'POST');
+        }
+    }
+
+    function btnChangebgColor(tt) {
+        if ($(tt).hasClass('border-orange text-orange')) {
+            $(tt).removeClass('border-orange text-orange').addClass('border-primary text-primary');
+        } else {
+            $(tt).removeClass('border-primary text-primary').addClass('border-orange text-orange');
+        }
+    }
+
+    $(document).ready(function () {
+        var tripId = @ViewBag.TripIdForExternalData;
+        if (tripId > 0) {
+            funcAllowedTrip(tripId);
+            sendAjxForm({ Id: tripId }, "/Trip/TripGetAll?IsFilterMode=true", funcDataTable, "POST");
+        } else
+            ActiveMissionControl(false, true);
+
+    });
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Trip/TripGetAll?IsFilterMode=true";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

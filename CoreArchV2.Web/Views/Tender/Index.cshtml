@@ -1,0 +1,280 @@
+﻿@using CoreArchV2.Core.Enum
+@using CoreArchV2.Dto.ETenderDto
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Teklif/Satış Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="lookUpListOpenModal()"><i class="icon-ampersand position-left"></i> Parametre Ekle</a>
+        </li>
+        <li>
+            <a onclick="getNewSalesNumberWithOpenModal()"><i class="icon-make-group position-left"></i> Teklif/Satış Oluştur</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="ProjectId_Search"
+                                class="select-search"
+                                table-param="ProjectId"
+                                table-id="comboBox-ProjectId_Search"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TenderProjectType)"
+                                table-tool-type="comboBox"
+                                data-option-label="Proje Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableTender"
+                           table-id="dataTable-Tender"
+                           table-model-url="/Tender/TenderGetAll"
+                           table-DatabaseName="/Tender"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="SalesNumber" style="text-align: center;">
+                                    Satış Numarası
+                                </th>
+                                <th data-value="Name" style="text-align: center;">
+                                    Proje Adı
+                                </th>
+                                <th data-value="InstitutionName" style="text-align: center;">
+                                    Gönderilen Kurum
+                                </th>
+                                <th data-value="TenderStateName" style="text-align: center;">
+                                    Teklif Durum
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Teklif/Satış Ekranı</h6>
+            </div>
+            <div class="modal-body">
+                <!-- Basic setup -->
+                <div class="panel panel-white">
+                    <form class="stepy-clickable" action="#" novalidate>
+                        <fieldset title="1">
+                            <legend class="text-semibold">Teklif/Satış Oluştur</legend>
+                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/_Tender.cshtml")
+                        </fieldset>
+
+                        <fieldset title="2">
+                            <legend class="text-semibold">İletişim Bilgileri</legend>
+                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/_TenderContact.cshtml")
+                        </fieldset>
+
+                        <fieldset title="3">
+                            <legend class="text-semibold">Teklif/Satış Detay</legend>
+                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/_TenderN.cshtml")
+                        </fieldset>
+
+                        <fieldset title="4">
+                            <legend class="text-semibold">Teklif/Satış Birim İşlemleri</legend>
+                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/TenderUnit/_Price.cshtml")
+                        </fieldset>
+
+                        <fieldset title="5">
+                            <legend class="text-semibold">Teklif/Satış Süreç</legend>
+                            @await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/_TenderHistory.cshtml")
+                        </fieldset>
+
+                        <button type="submit" class="btn btn-primary stepy-finish">Submit <i class="icon-check position-right"></i></button>
+                    </form>
+                </div>
+                <!-- /basic setup -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_LookUplist.cshtml", new ELookUpListDto { SearchTypeName = "Tender" })
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/TenderUnit/_TenderDetailSingleModal.cshtml")
+
+<script>
+    function nextStepTender(tenderId){
+        sendAjxForm({tenderId:tenderId}, "/Tender/GetTenderStateCmbx", function(e){
+             swal({
+                    title: "<b style='color:red;'>Satış/İhale Durum Değiştir!</b>",
+                    text: "<select id='tenderStateCmbx' class='select-search' style='width: 100%;height: 190px;resize:vertical;'></select>",
+                    inputPlaceholder: "Bir şeyler yazınız ...",
+                    html: true,
+                    type: "warning",
+                    showCancelButton: true,
+                    cancelButtonColor: "#DD6B55",
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Durum Değiştir",
+                    cancelButtonText: "Ekranı Kapat",
+                    closeOnConfirm: false,
+                    closeOnCancel: true,
+                }, function (isConfirm) {
+                    if (isConfirm) {
+                        var message = $('#tenderStateCmbx').val();
+                        if (message != '') {
+                            sendAjxForm({ message: message }, "/Tender/SetTenderState",
+                                function (e) {
+                                    if (e.IsSuccess) {
+                                        swal({
+                                            title: "<b>Teklif/ihale'nin durumu değiştirildi <i style='margin-bottom: 5px;color:red;margin-left: 10px;' class='fa fa-space-shuttle faa-passing animated'></i></b>",
+                                            html: true,
+                                            customClass: 'swal-FastMessage',
+                                            text: "Teklif/ihalenin durumu değişti.Durumu geri almak için tıklayınız",
+                                            confirmButtonColor: "#2196F3",
+                                            confirmButtonText: "Kapat",
+                                            type: "success",
+                                        });
+                                    } else
+                                        ShowMessage("info", "Bilgi", "Hay aksi bir hata oluştu, tekrar deneyiniz");
+                                }, "POST");
+                        } else {
+                            ShowMessage("info", "Bilgi", "Lütfen durum seçiniz");
+                        }
+                    }
+                });
+            setTimeout(function(){funcCustomComboBox(e,"tenderStateCmbx","Teklif/Satış Durum Seçiniz");},100)
+        }, "GET");
+    }
+
+    $(function () {
+        $(".stepy-clickable").stepy({
+            titleClick: true,
+            next: function (index) {
+                $('.stepy-navigator').css("display", "none");
+                if (index != 0 && $('#tender_Id').val() == "") {
+                    ShowMessage("warning", "Bilgi", "Teklif/Satış oluşturmadan bu adıma geçilemez");
+                    return false;
+                }
+                stepFormControl(index);
+            },
+            back: function (index) {
+                stepFormControl(index);
+            },
+            finish: function () {
+                return false;
+            }
+        });
+    });
+
+    function stepFormControl(index) {
+        if (index == 1) {//Tender
+
+        } else if (index == 2) {//Contact
+            closeSlide();
+            funcSetContactList();
+        } else if (index == 3) {//TenderDetail
+            pageFormChanged = false;
+            funcSetTenderDetail();
+        } else if (index == 4) {//Tender Unit
+            var tenderId = $('#tender_Id').val();
+            if (tenderId > 0)
+                funcUnitGetPrice(tenderId, false);
+        } else if (index == 5) {//Tender History
+            funcTenderHistory();
+        }
+    }
+
+    function tenderModalOpen() {
+        clearButtons();
+        FormAllInputsClearNoCloseModal("#Tender_FormId [table-param]");
+        $('#IsWarranty').bootstrapSwitch('state', false);
+        $('#EditInsertModal').modal("show");
+    }
+
+    function clearButtons() {
+        setImageTender(null);
+        $('#stepy-head-0').click();
+        $('.stepy-navigator').css("display", "none");
+    }
+
+    function getNewSalesNumberWithOpenModal() {
+        sendAjxForm("", "/Tender/CreateNewSalesNumber", function (e) {
+            if (e.IsSuccess) {
+                tenderModalOpen();
+                ShowMessage("info", "Bilgi", ("Otomatik üretilen teklif numarası: <b>" + e.Message + "</b>"));
+                $('#SalesNumber').val(e.Message);
+                $('#TenderSalesNumber').html(e.Message);
+            } else
+                ShowMessage("warning", "Bilgi", e.Message);
+        }, "GET");
+    }
+
+    //not delete!!
+    $(document).on('keypress', function (e) {
+        if (e.which == 13) {//enter button
+
+        }
+    });
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Tender/TenderGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "GET");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

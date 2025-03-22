@@ -1,0 +1,16 @@
+﻿
+<div id="TenderDetailUnitModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Teklif/Satış Fiyat Araştırma Ekranı</h6>
+            </div>
+            <div class="modal-body">
+                @await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/TenderUnit/_Price.cshtml")
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Tender/TenderUnit/_TenderDetailSingleModal.cshtml")

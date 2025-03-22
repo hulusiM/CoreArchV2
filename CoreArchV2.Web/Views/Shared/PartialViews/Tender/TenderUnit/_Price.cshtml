@@ -1,0 +1,103 @@
+﻿<div class="panel panel-flat">
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-12">
+                <div style="height: 400px; overflow: scroll;">
+                    <table class="table"
+                           id="dataTableTenderDetailUnit"
+                           table-id="dataTable-dataTableTenderDetailUnit"
+                           table-model-url=""
+                           style="font-size: 11px;"
+                           table-DatabaseName="/Tender"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="UnitName" style="text-align: center;">
+                                    İlgili Birim
+                                </th>
+                                <th data-value="ProductName" style="text-align: center;">
+                                    Ürün Adı
+                                </th>
+                                <th data-value="StockCode" style="text-align: center;">
+                                    Stok Kodu
+                                </th>
+                                <th data-value="Piece" style="text-align: center;">
+                                    Miktar
+                                </th>
+                                <th data-value="UnitTypeName" style="text-align: center;">
+                                    Birim
+                                </th>
+                                <th data-value="ProductPriceInfo" style="text-align: center;">
+                                    Fiyat
+                                </th>
+                                <th data-value="CustomButton" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #dataTableTenderDetailUnit tbody tr {
+        height: 15px;
+    }
+</style>
+
+<script>
+    function funcUnitGetPrice(tenderId, openModal = true) {
+        sendAjxForm({ tenderId: tenderId }, '/Tender/GetTenderDetailForUnit',
+            function (e) {
+                funcCustomDataTableForExcel(e, "dataTableTenderDetailUnit");
+                if (openModal)
+                    $('#TenderDetailUnitModal').modal("show");
+            }, 'GET');
+    }
+
+
+    function funcOpenTenderDetailModal(tenderDetailId) {
+        $('#priceInsert_toggle').click();
+        sendAjxForm({ tenderDetailId: tenderDetailId },
+            '/Tender/GetTenderDetailByTenderDetailId',
+            function (e) {
+                if (e.Id > 0) {
+                    var model = {
+                        selector: '#TenderDetailSingle_FormId [table-param]',
+                        data: e
+                    };
+                    FormSetAllValue(model);
+                    if (e.files.length > 0) {
+                        var arr = new Array();
+                        var deleteObj = [];
+                        for (var i = 0; i < e.files.length; i++) {
+                            var imgUrl = "/uploads/tender/" + e.files[i].Name;
+                            var type = e.files[i].Extention + '';
+                            if (e.files[i].Extention == 'doc' || e.files[i].Extention == 'docx') {
+                                type = "office";
+                                arr[i] = e.files[i].Name.split("-")[1];
+                            } else
+                                arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                            deleteObj[i] = {
+                                type: type,
+                                size: e.files[i].FileSize,
+                                caption: e.files[i].Name,
+                                url: "/File/FileDeleteTender",
+                                key: e.files[i].Id
+                            };
+                        }
+                        setImageTender("imageUploadFormTenderDetailSingle", arr, deleteObj);
+                    } else
+                        setImageTender("imageUploadFormTenderDetailSingle", null, null);
+
+                    $('#ProductPrice').focus();
+                    $('#TenderDetailSingleModal').modal("show");
+                }
+            }, 'GET');
+    }
+</script>

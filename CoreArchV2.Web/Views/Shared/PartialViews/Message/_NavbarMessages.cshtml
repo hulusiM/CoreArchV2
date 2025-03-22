@@ -1,0 +1,88 @@
+﻿@using CoreArchV2.Core.Enum
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+        <i class="icon-bubbles4"></i>
+        <span class="visible-xs-inline-block position-right">Sistem Mesajları</span>
+        <span id="messageCountSpan" class="badge bg-warning-400">0</span>
+    </a>
+
+    <div class="dropdown-menu dropdown-content width-450" style="width: 1000% !important;">
+        <div class="dropdown-content-heading">
+            Sistem Mesajları
+        </div>
+        <ul id="messageListUl" class="media-list dropdown-content-body"></ul>
+        @*<div class="dropdown-content-footer">
+            <a href="#" data-popup="tooltip" title="All messages"><i class="icon-menu display-block"></i></a>
+            </div>*@
+    </div>
+</li>
+
+
+<script>
+    $(document).ready(function() {
+        getNavbarMessages();
+    });
+
+    function getNavbarMessages() {
+        var url = "/Utility/GetMessages?messageType=@((int) MessageType.Website)";
+        sendAjxForm("", url, function (e) {
+            $('#messageListUl li').remove();
+            var unReadMessage = 0;
+                if (e.length > 0) {
+                    var result = "";
+                    for (var i = 0; i < e.length; i++) {
+                        if (!e[i].UnRead)
+                            unReadMessage++;
+
+                        result += '<li id="li_' + e[i].Id+'" class="media">' +
+                            '<div class="media-left"><a onclick="messageReadAction(' + e[i].Id + ')"><i style="color:yellowgreen" class="icon-info22 icon-3x"></i></a></div>' +
+                            '<div class="media-body">';
+
+                        result += '<a onclick="messageReadAction(' + e[i].Id + ')" target="_blank" class="media-heading">';
+
+                        if (e[i].UnRead)
+                            result += '<i style="font-size:10px;margin-right: 5px;" class="icon-checkmark-circle"></i>';
+                        else
+                            result += '<i style="color:red;font-size:10px;margin-right: 5px;" class="icon-circle2"></i>';
+
+                        result += '<span class="text-semibold">' + e[i].Head + ' </span>';
+                        result += '<span class="media-annotation pull-right">' +
+                                ConvertJSONDateFormatISO(e[i].CreatedDate) +
+                                '</span></a>' +
+                                '<span class="text-muted">' +
+                                e[i].Description +
+                            '</span>' +
+                                '<a class="media-annotation pull-right" title="Mesajı Sil" style="color:red;" onclick="deleteMessage(' + e[i].Id + ')"><i class="icon-trash"></i></a>' +
+                                '<a class="media-annotation pull-right" title="Okundu olarak işaretle" style="color:blue;margin-right:3px;" onclick="messageReadAction(' + e[i].Id + ')"><i class="icon-mail-read"></i></a>' +
+                            '</div>';
+                        if (i < e.length-1)
+                            result += "<hr style='width=70%;'>";
+                        result += '</li>';
+                    }
+
+                    $('#messageListUl').append(result);
+            }
+            $('#messageCountSpan').text(unReadMessage);
+            }, 'GET');
+
+    }
+    function messageReadAction(messageId) {
+        sendAjxForm({ messageId: messageId }, "/Utility/MessageReadAndUnread",
+            function (e) {
+                if (e == true)
+                    getNavbarMessages();
+            }, 'POST');
+
+    }
+    function deleteMessage(messageId) {
+        sendAjxForm({ messageId: messageId }, "/Utility/MessageDelete",
+            function (e) {
+                if (e == true) {
+                    $('#li_' + messageId).slideUp("normal", function() {
+                        $(this).remove();
+                    });
+                    ShowMessage("success", "Bilgi", "Mesaj silinmiştir");
+                }
+            }, 'POST');
+    }
+</script>

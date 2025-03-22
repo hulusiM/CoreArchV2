@@ -1,0 +1,353 @@
+/* reset */
+
+
+/* content editable */
+
+*[contenteditable] {
+    border-radius: 0.25em;
+    min-width: 1em;
+    outline: 0;
+}
+
+*[contenteditable] {
+    cursor: pointer;
+}
+
+    *[contenteditable]:hover, *[contenteditable]:focus, td:hover *[contenteditable], td:focus *[contenteditable], img.hover {
+        background: #DEF;
+        box-shadow: 0 0 1em 0.5em #DEF;
+    }
+
+span[contenteditable] {
+    display: inline-block;
+}
+
+/* heading */
+
+h1 {
+    font: bold 100% sans-serif;
+    letter-spacing: 0.5em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* table */
+
+.tender_table {
+    font-size: 75%;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.tender_table {
+    border-collapse: separate;
+    border-spacing: 2px;
+}
+
+th, td {
+    border-width: 1px;
+    padding: 0.5em;
+    position: relative;
+    text-align: left;
+}
+
+th, td {
+    border-radius: 0.25em;
+    border-style: solid;
+}
+
+th {
+    background: #EEE;
+    border-color: #BBB;
+}
+
+td {
+    border-color: #DDD;
+}
+
+/* page */
+
+/* header */
+
+#tender_header {
+    /*margin: 0 0 3em;*/
+}
+
+
+    #tender_header:after {
+        clear: both;
+        content: "";
+        display: table;
+    }
+
+    #tender_header h1 {
+        background: #000;
+        border-radius: 0.25em;
+        color: #FFF;
+        margin: 0 0 1em;
+        padding: 0.5em 0;
+    }
+
+    #tender_header address {
+        float: left;
+        font-size: 11px;
+        font-style: normal;
+        line-height: 1.25;
+        /*margin: 20px 1em 1em 0;*/
+    }
+
+        #tender_header address p {
+            margin: 0 0 0 3em;
+        }
+
+    #tender_header customerInfo {
+        float: right;
+        font-size: 11px;
+        font-style: normal;
+        line-height: 1.25;
+        margin-right: 23%;
+        /*margin: 20px 1em 1em 0;*/
+    }
+
+        #tender_header customerInfo p {
+            margin: 0 0 0 3em;
+        }
+
+    #tender_header span, header img {
+        display: block;
+        float: left;
+    }
+
+    #tender_header span {
+        margin: 0 0 1em 1em;
+        max-height: 25%;
+        max-width: 60%;
+        position: relative;
+    }
+
+    #tender_header img {
+        max-height: 100%;
+        max-width: 100%;
+        height: 85px;
+    }
+
+    #tender_header input {
+        cursor: pointer;
+        -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+        height: 100%;
+        left: 0;
+        opacity: 0;
+        position: absolute;
+        top: 0;
+        width: 100%;
+    }
+
+/* article */
+
+article, article address, table.meta, table.inventory {
+    margin: 0 5px 3em;
+}
+
+    article:after {
+        clear: both;
+        content: "";
+        display: table;
+    }
+
+    article h1 {
+        clip: rect(0 0 0 0);
+        position: absolute;
+    }
+
+    article address {
+        float: left;
+        font-size: 125%;
+        font-weight: bold;
+    }
+
+/* table meta & balance */
+
+table.meta, table.balance {
+    float: right;
+    width: 34%;
+}
+
+    table.meta:after, table.balance:after {
+        clear: both;
+        content: "";
+        display: table;
+    }
+
+    /* table meta */
+
+    table.meta th {
+        width: 30%;
+    }
+
+    table.meta td {
+        width: 30%;
+    }
+
+/* table items */
+
+.tender_table.inventory {
+    clear: both;
+    width: 100%;
+}
+
+    .tender_table.inventory th {
+        font-weight: bold;
+        text-align: center;
+    }
+
+
+    .tender_table.inventory td:nth-child(1) { /*firma combobox*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(2) { /*Ürün Adý*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(3) { /*Birim*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(4) { /*Adet*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(5) { /*Fiyat*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(6) { /*Toplam*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(7) { /*Son Fiyat*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(8) { /*Müdürlük combox*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(9) { /*Belge button*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(10) { /*Açýklama*/
+        text-align: center;
+    }
+
+    .tender_table.inventory td:nth-child(10) { /*Açýklama*/
+        text-align: center;
+    }
+/* table balance */
+
+table.balance th, table.balance td {
+    width: 33%;
+}
+
+table.balance td {
+    text-align: right;
+}
+
+/* aside */
+
+aside h1 {
+    border: none;
+    border-width: 0 0 1px;
+    margin: 0 0 1em;
+}
+
+aside h1 {
+    border-color: #999;
+    border-bottom-style: solid;
+}
+
+/* javascript */
+
+#tenderDetailAddRow, .cut {
+    border-width: 1px;
+    display: block;
+    font-size: .8rem;
+    padding: 0.25em 0.5em;
+    float: left;
+    text-align: center;
+    width: 0.6em;
+}
+
+#tenderDetailAddRow, .cut {
+    background: #9AF;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    background-image: -moz-linear-gradient(#00ADEE 5%, #0078A5 100%);
+    background-image: -webkit-linear-gradient(#00ADEE 5%, #0078A5 100%);
+    border-radius: 0.5em;
+    border-color: #0076A3;
+    color: #FFF;
+    cursor: pointer;
+    font-weight: bold;
+    text-shadow: 0 -1px 2px rgba(0,0,0,0.333);
+    width: 20px;
+}
+
+#tenderDetailAddRow {
+    margin: -2.5em 0 0;
+}
+
+#tenderDetailAddRow:hover {
+        background: #00ADEE;
+    }
+
+.cut {
+    opacity: 0;
+    position: absolute;
+    top: 4px;
+    left: -2.5em;
+}
+
+.cut {
+    -webkit-transition: opacity 100ms ease-in;
+}
+
+tr:hover .cut {
+    opacity: 1;
+}
+
+@media print {
+    * {
+        -webkit-print-color-adjust: exact;
+    }
+
+    html {
+        background: none;
+        padding: 0;
+    }
+
+    body {
+        box-shadow: none;
+        margin: 0;
+    }
+
+    span:empty {
+        display: none;
+    }
+
+    #tenderDetailAddRow, .cut {
+        display: none;
+    }
+}
+
+@page {
+    margin: 0;
+}
+
+.input-TenderDetail {
+    width: 100%;
+    height: 20px;
+    border: 0;
+    outline: 0;
+    border-bottom: 1px solid #8e91bd;
+}

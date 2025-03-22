@@ -1,0 +1,309 @@
+﻿<script>$('#broadCrumbDiv').text('Bakım/Onarım Yönetimi / Araç Talep')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Araç Talep Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="vehicleReqModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-requestUserId"
+                                tabindex="1"
+                                table-param="RequestUserId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-Plate"
+                                tabindex="2"
+                                table-param="Plate"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableVehicleRequest"
+                           table-id="dataTable-VehicleRequest"
+                           table-model-url="/VehicleRequest/VehicleRequestGetAll"
+                           table-DatabaseName="/VehicleRequest"
+                           table-tool-type="dataTable">
+                        <thead>
+                        <tr class="filters">
+                            <th data-value="Id" hidden="hidden"></th>
+                            <th style="text-align: center; width: 1%;">No</th>
+                            <th data-value="Plate" style="text-align: center;">
+                                Plaka
+                            </th>
+                            <th data-value="StartDate" data-type="datetime" style="text-align: center;">
+                                Alınma Tarihi
+                            </th>
+                            <th data-value="EndDate" data-type="datetime" style="text-align: center;">
+                                Teslim Tarihi
+                            </th>
+                            <th data-value="RequestNameSurname" style="text-align: center;">
+                                Adı Soyadı
+                            </th>
+                            <th data-value="ButtonEditDelete"style="text-align: center;">
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade " data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 id="ModalTitleId" class="modal-title">Araç Talep</h5>
+            </div>
+            <div id="VehicleRequest_FormId" class="form-body" style="padding: 14px;">
+                <input type="text" table-param="Id" hidden/>
+
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <label>Müdürlük/Proje :</label>
+                            <select id="UnitId"
+                                    tabindex="1"
+                                    class="select-search"
+                                    table-param="UnitId"
+                                    table-id="comboBox-UnitId"
+                                    table-model-url="/Combo/GetUnitCmbx"
+                                    table-tool-type="comboBox"
+                                    data-option-label="Proje Seçiniz">
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label>Adı Soyadı :</label>
+                            <select id="select-requestUserId2"
+                                    tabindex="2"
+                                    table-param="RequestUserId"
+                                    class="select2-container select2-selection--single">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <label>Araç (*) :</label>
+                            <select id="VehicleId"
+                                    class="select-search"
+                                    table-param="VehicleId"
+                                    table-id="comboBox-VehicleId"
+                                    table-model-url="/Combo/GetVehicle2Cmbx"
+                                    table-tool-type="comboBox"
+                                    tabindex="3"
+                                    table-description="Araç"
+                                    data-option-label="Araç Seçiniz" required>
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label>Talep No :</label>
+                            <input table-param="RequestNo" tabindex="4" type="text" class="form-control" table-description="Talep No" placeholder="Talep numarası giriniz">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <label>Alış Tarihi (*) :</label>
+                            <input id="StartDate" table-param="StartDate" tabindex="5" type="datetime-local" class="form-control" table-description="Araç alış tarihi" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label>Teslim Tarihi (*) :</label>
+                            <input id="EndDate" table-param="EndDate" tabindex="6" type="datetime-local" class="form-control" table-description="Araç teslim tarihi" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Açıklama</label>
+                    <textarea rows="5" cols="5" tabindex="7" table-param="Description" class="form-control" placeholder="Açıklama"></textarea>
+                </div>
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="9" class="btn btn-danger full-width" onclick="funcCancelModal('#VehicleRequest_FormId  [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="8" type="submit" class="btn btn-primary full-width" onclick="funcSaveUpdateVehicleRequest()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-requestUserId').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-requestUserId2').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-Plate').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    function vehicleReqModalOpen() {
+        FormAllInputsClear("#VehicleRequest_FormId [table-param]");
+        $('#EditInsertModal').modal("show");
+    }
+
+    function funcSaveUpdateVehicleRequest() {
+        var model = FormGetAllValue("#VehicleRequest_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model,
+                '/VehicleRequest/InsertUpdate',
+                function(e) {
+                    if (e.IsSuccess && e.Id > 0) {
+                        if (model.Id > 0)
+                            ShowMessage("success", "Bilgi", "Düzenleme başarılı");
+                        else
+                            ShowMessage("success", "Bilgi", "Kayıt başarıyla eklendi");
+                    } else
+                        ShowMessage("error", "Hata", "Kayıt sırasında hata oluştu");
+
+                    $('#EditInsertModal').modal("hide");
+                    GetAllLoadTable('/VehicleRequest/VehicleRequestGetAll');
+                },
+                'POST');
+        }
+    }
+
+    function funcEditVehicleRequest(vehicleRequestId) {
+        sendAjxForm({ id: vehicleRequestId },
+            '/VehicleRequest/GetById',
+            function(e) {
+                if (e.Id > 0) {
+                    var formId = '#VehicleRequest_FormId [table-param]';
+                    var model = {
+                        selector: formId,
+                        data: e
+                    };
+                    FormSetAllValue(model);
+                    setUser(e.RequestUserId, "select-requestUserId2");
+                    $('#EditInsertModal').modal("show");
+                }
+            },
+            'GET');
+    }
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/VehicleRequest/VehicleRequestGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

@@ -1,0 +1,43 @@
+﻿<div class="row">
+    <div class="panel panel-body border-top-teal">
+        <ul id="tenderDetailPriceHistoryUl" class="list-feed media-list">
+        </ul>
+    </div>
+</div>
+
+<script>
+    function funcTenderDetailPriceHistory() {
+        $('#tenderDetailPriceHistoryUl li').remove();
+        var tenderDetailId = $('#tenderDetail').val();
+        if (tenderDetailId > 0) {
+            var model = { tenderDetailId: tenderDetailId };
+            sendAjxForm(model,
+                "/Tender/GetTenderDetailPriceHistory",
+                function (e) {
+                    var result = "";
+                    if (e.length > 0) {
+                        for (var i = 0; i < e.length; i++) {
+                            result += '<li class="media"><div class="media-body">';
+                            result += "<strong>" +
+                                e[i].ProductName +
+                                "</strong> için <strong>" +
+                                ConvertJSONDateFormatISO(e[i].CreatedDate) +
+                                "</strong> tarihinde <strong style='color: red;'>" +
+                                e[i].NameSurname +
+                                "</strong> kullanıcı tarafından <strong><u>" +
+                                formatMoney(e[i].ProductPrice) + "₺</u></strong> olarak güncellenmiştir." +
+                                "</div></li>";
+                        }
+                    } else
+                        result = '<li class="media"><div class="media-body">Herhangi bir hareket bulunamadı.</div></li>';
+
+                    $('#tenderDetailPriceHistoryUl').append(result);
+                },
+                'GET');
+        }
+    }
+
+    $('#tenderDetailPriceHistory_toggle').click(function () {
+        funcTenderDetailPriceHistory();
+    });
+</script>

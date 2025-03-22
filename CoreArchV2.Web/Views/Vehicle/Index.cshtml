@@ -1,0 +1,301 @@
+﻿@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Araç Yönetimi / Araç Tanımları')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Araç Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="vehicleModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li>
+            <a onclick="vehicleCostChangeModalOpen()"><i class="icon-coin-dollar position-left"></i> Araç Güncel Bedel Değiştir</a>
+        </li>
+        @*<li>
+        <a onclick="lookUpListOpenModal()"><i class="icon-ampersand position-left"></i> Parametre Ekle</a>
+        </li>*@
+        <li>
+            <a onclick="exportExcel()"><i class="icon-file-excel position-left"></i> Excel</a>
+        </li>
+        <li>
+            <a onclick="vehiclePreview()"><i class="icon-search4 position-left"></i> Tümünü Göster</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="mainPageParentUnitId"
+                                tabindex="3"
+                                onchange="changeGetUnitId()"
+                                class="select-search"
+                                table-id="comboBox-mainPageParentUnitId"
+                                table-model-url="/Combo/GetUnitJustParentCmbx"
+                                table-tool-type="comboBox"
+                                table-param="ParentUnitId"
+                                data-option-label="Müdürlük Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="mainPageUnitId"
+                                tabindex="4"
+                                class="select-search"
+                                table-id="comboBox-mainPageUnitId"
+                                table-model-url=""
+                                table-param="UnitId"
+                                table-tool-type="comboBox"
+                                data-option-label="Proje Seçiniz">
+                        </select>
+                    </div>
+                </li>
+
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-userId"
+                                tabindex="1"
+                                table-param="DebitUserId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-Plate"
+                                tabindex="2"
+                                table-param="VehicleId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="FirmTypeIdFilter"
+                                class="select-search"
+                                table-param="FirmTypeId"
+                                table-id="comboBox-FirmTypeIdFilter"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int)TypeList.RentACarFirm)"
+                                table-tool-type="comboBox"
+                                tabindex="3"
+                                data-option-label="Firma Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="UsageTypeIdFilter"
+                                tabindex="4"
+                                table-param="UsageTypeId"
+                                class="select-search"
+                                table-id="comboBox-UsageTypeIdFilter"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int)TypeList.UsageType)"
+                                table-tool-type="comboBox"
+                                data-option-label="Kullanım Amacı Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="FixtureTypeId2"
+                                tabindex="5"
+                                table-param="FixtureTypeId"
+                                class="select-search"
+                                table-id="comboBox-FixtureTypeId2"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int)TypeList.FixtureType)"
+                                table-tool-type="comboBox"
+                                data-option-label="Demirbaş Türü Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="StatusVehicle"
+                                table-param="Status2"
+                                class="select-search"
+                                table-id="comboBox-StatusVehicle"
+                                table-model-url=""
+                                table-tool-type="comboBox"
+                                data-option-label="">
+                            <option value="0">Aktif</option>
+                            <option value="1">Pasif</option>
+                            <option value="2">Hepsi</option>
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="GearTypeId_Filter"
+                                class="select-search"
+                                table-param="GearTypeId"
+                                table-id="comboBox-GearTypeId_Filter"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.GearType)"
+                                table-tool-type="comboBox"
+                                tabindex="9"
+                                data-option-label="Vites Türü">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body" id="dataTableMain">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableVehicle"
+                           table-id="dataTable-Vehicle"
+                           table-model-url="/Vehicle/VehicleGetAll"
+                           table-DatabaseName="/Vehicle"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="Plate" style="text-align: center;">
+                                    Plaka
+                                </th>
+                                <th data-value="StatusName" style="text-align: center;">
+                                    Durum
+                                </th>
+                                <th data-value="UnitName" style="text-align: center;">
+                                    Birim/Proje
+                                </th>
+                                <th data-value="FixtureName" style="text-align: center;">
+                                    Demirbaş
+                                </th>
+                                <th data-value="DebitNameSurname" style="text-align: center;">
+                                    Zimmetli Adı Soyadı
+                                </th>
+                                <th data-value="VehicleModelName" style="text-align: center;">
+                                    Marka/Model
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+        @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehiclePreview.cshtml")
+    </div>
+</div>
+
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleModal.cshtml")
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleBulkCostUpdateModal.cshtml")
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleFileSendMailModal.cshtml")
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_DeleteVehicleModal.cshtml")
+@*@await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_LookUplist.cshtml", new ELookUpListDto {SearchTypeName = "Vehicle"})*@
+<script>
+    function exportExcel() {
+        $('#loadingEffect').css("display", "flex");
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+        if (model != null)
+            window.location = insertParam('/Export/VehicleInfo', model);
+        setTimeout(function () {
+            $('#loadingEffect').css("display", "none");
+        }, 7000);
+    }
+
+    function changeGetUnitId() {
+        var parentUnitId = $('#mainPageParentUnitId').val();
+        sendAjxForm({ parentId: parentUnitId },
+            "/Combo/GetUnitChildCmbx",
+            function (e) {
+                funcCustomComboBox(e, "mainPageUnitId", "Proje Seçiniz");
+            }, "GET");
+    }
+
+    //$('#EditInsertModal').on('hidden.bs.modal', function () {
+    //    funcFilterTable();
+    //});
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Vehicle/VehicleGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>
+
+<script type="text/javascript">
+    $('#select-userId').select2({
+        placeholder: 'Zimmetli Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleDebitUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+
+    $('#select-Plate').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>

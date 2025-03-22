@@ -1,0 +1,175 @@
+﻿@using CoreArchV2.Core.Enum
+<div id="VehicleDelModal" class="modal fade">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Araç Silme/Transfer</h6>
+            </div>
+            <div class="modal-body">
+                <div id="vehicleDelete_FormId">
+                    <input id="deleteVehicleId" table-param="VehicleId" type="text" hidden/>
+                    <div class="form-group">
+                        <label>Silme Nedeni :</label>
+                        <select id="transferTypeId"
+                                class="select-search"
+                                table-param="TransferTypeId"
+                                table-id="comboBox-transferTypeId"
+                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.VehicleDeleteTypeId)"
+                                table-tool-type="comboBox"
+                                tabindex="1"
+                                onchange="transferTypeChange()"
+                                table-description="Silme Nedeni"
+                                data-option-label="Silme Nedeni Seçiniz" required>
+                        </select>
+                    </div>
+                    <div id="SaleCostDiv" class="form-group" style="display: none;">
+                        <label>Satış Geliri :</label>
+                        <input id="SalesCostVehicle" table-param="SalesCost" autocomplete="off" tabindex="2" type="text"
+                               class="form-control moneyCurrency" placeholder="Araç satış geliri">
+                    </div>
+                    <div id="DateDiv" class="form-group" style="display: none;">
+                        <label>Teslim Tarihi :</label>
+                        <input table-param="Date" type="date" class="form-control" placeholder="Teslim Tarihi Giriniz">
+                    </div>
+                    <div class="form-group">
+                        <div id="vehicleDebitUserDiv"></div>
+                        <label id="debitInfoLabel">Zimmetli Sona Erme Tarihi (*):</label>
+                        <input id="DebitVehicleEndDate" table-param="DebitVehicleEndDate" type="date" class="form-control" table-description="Zimmetli/Havuz Sona Erme Tarihi" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Açıklama</label>
+                        <textarea rows="3" cols="5" table-param="Description" tabindex="2" class="form-control" placeholder="Açıklama"></textarea>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Dosya Yükle :</label>
+                    <div class="file-loading">
+                        <input id="imageUploadFormDELETEVEHICLE" tabindex="3" type="file" multiple>
+                    </div>
+                    <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 0px;">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="5" class="btn btn-danger full-width" onclick="$('#VehicleDelModal').modal('hide')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="4" type="submit" class="btn btn-primary full-width" onclick="funcDeleteVehicleConfirm()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function transferTypeChange() {
+        var typeName = $('#transferTypeId option:selected').text();
+        if (typeName.toLowerCase() == "pert" || typeName.toLowerCase() == "satıldı")
+            $('#SaleCostDiv').css('display', 'block');
+        else if (typeName.toLowerCase() == "erken teslim" || typeName.toLowerCase() == "teslim edildi")
+            $('#DateDiv').css('display', 'block');
+        else {
+            $('#SaleCostDiv').css('display', 'none');
+            $('#SaleCostDiv').val('');
+            $('#DateDiv').css('display', 'none');
+        }
+    }
+
+    function funcDeleteVehicle(vehicleId) {
+        FormAllInputsClearNoCloseModal("#vehicleDelete_FormId [table-param]");
+        reloadFileZone("imageUploadFormDELETEVEHICLE");
+        $('#deleteVehicleId').val(vehicleId);
+        getDebitUser();
+        funcFilterTable();
+    }
+
+    function getDebitUser() {
+        var vehicleId = $('#deleteVehicleId').val();
+        if (vehicleId > 0) {
+            var model = { vehicleId: vehicleId };
+            sendAjxForm(model,
+                "/Vehicle/GetByIdVehicleDebit",
+                function(e) {
+                    $('#vehicleDebitUserDiv').empty();
+                    $('#debitInfoLabel').text("Zimmetli Sona Erme Tarihi: (*)");
+                    if (e == null) {
+                        ShowMessage("warning", "Bilgi", "Araç üzerine daha önce hiç zimmet atanmamış, atayıp öyle silmeyi deneyin");
+                    } else {
+                        if (e.LastStatus == @((int) DebitState.Debit)) {
+                            $('#vehicleDebitUserDiv').append('<span class="label bg-orange faa-vertical animated">Araç üzerinde zimmetli kullanıcı bulunuyor ! (Zimmetli : ' + e.DebitNameSurname + ')</span>');
+                        } else if (e.LastStatus == @((int) DebitState.Pool)) {
+                            $('#debitInfoLabel').text("Havuzdan Çıkış Tarihi: (*)");
+                            $('#vehicleDebitUserDiv').append('<span class="label bg-success faa-vertical animated">Araç havuzda</span>');
+                        } else if (e.LastStatus == @((int)DebitState.InService)) {
+                            $('#debitInfoLabel').text("Servisten Çıkış Tarihi: (*)");
+                            $('#vehicleDebitUserDiv').append('<span class="label bg-success faa-vertical animated">Araç serviste</span>');
+                        } else { //Silinmişse dataları yükle
+                            var formId = '#vehicleDelete_FormId [table-param]';
+                            var model = {
+                                selector: formId,
+                                data: e.VehicleTransfer
+                            };
+                            FormSetAllValue(model);
+                            if (e.DebitEndDate != null)
+                                $('#DebitVehicleEndDate').val(e.DebitEndDate.split('T')[0]);
+
+                            if (e.files.length > 0) {
+                                var arr = new Array();
+                                var deleteObj = [];
+                                for (var i = 0; i < e.files.length; i++) {
+                                    var imgUrl = "/uploads/logistics/" + e.files[i].Name;
+                                    arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                                    deleteObj[i] = {
+                                        type: e.files[i].Extention + '',
+                                        size: e.files[i].FileSize,
+                                        caption: e.files[i].Name,
+                                        url: "/File/FileDeleteLogistics",
+                                        key: e.files[i].Id
+                                    };
+                                }
+                                setImageDeleteVehicle(arr, deleteObj);
+                            } else
+                                setImageDeleteVehicle(null, null);
+                        }
+                        $('#VehicleDelModal').modal('show');
+                    }
+                },
+                'GET');
+        }
+    }
+
+    function funcDeleteVehicleConfirm() {
+        var model = FormGetAllValue('#vehicleDelete_FormId [table-param]');
+        if (model != null) {
+            var newModel = {};
+            var files = $('#imageUploadFormDELETEVEHICLE').fileinput('getFileList');
+            var formData = new FormData();
+            for (var i = 0; i != files.length; i++)
+                formData.append("files", files[i]);
+
+            newModel = FormDataAppendModelValue(formData, "#vehicleDelete_FormId [table-param]");
+            sendAjxFormFileUpload(newModel,
+                '/Vehicle/VehicleDelete',
+                function(e) {
+                    if (e.IsSuccess) {
+                        $('#deleteVehicleId').val('');
+                        $('#VehicleDelModal').modal('hide');
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı.");
+                        GetAllLoadTable('/Vehicle/VehicleGetAll');
+                    } else {
+                        if (e == 'NotAuthorizationCore') {
+                            var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                            ShowMessage("error", "Yetkisiz İşlem", message);
+                        } else
+                            ShowMessage("error", "Hata", e.Message);
+                    }
+                },
+                'POST');
+        }
+    }
+</script>

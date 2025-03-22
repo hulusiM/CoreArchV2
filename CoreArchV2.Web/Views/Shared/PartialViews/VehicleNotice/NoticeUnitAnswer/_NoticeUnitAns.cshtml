@@ -1,0 +1,32 @@
+﻿
+<div class="form-group">
+    <div class="row">
+        <div class="col-md-12">
+            <div id="noticeUnitAnsList_">
+            </div>
+        </div>
+    </div>
+</div>
+<div class="form-group">
+    <div class="row">
+        <div class="col-md-12">
+            <textarea id="noticeUnitAnswerDesc" class="form-control content-group summernote-height" rows="3" cols="1" placeholder="Mesajınız..."></textarea>
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <div class="row">
+        <div class="col-md-12 text-right">
+            <button onclick="insertNoticeUnitAnswer()" type="button" class="btn bg-teal-400 btn-labeled btn-labeled-right"><b><i class="icon-circle-right2"></i></b> Cevapla</button>
+        </div>
+    </div>
+</div>
+<script>
+
+    $(function() {
+        $('.summernote-height').summernote({
+            height: 150
+        });
+    });
+</script>

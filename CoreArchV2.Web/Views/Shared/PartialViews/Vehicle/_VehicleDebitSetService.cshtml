@@ -1,0 +1,114 @@
+﻿<div id="VehicleSetDebitServiceInModal" class="modal fade" style="z-index: 10001 !important;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <h6 class="modal-title">Aracı Servise Al</h6>
+            </div>
+            <div class="modal-body">
+                <div id="vehicleDebitSetInService_FormId">
+                    <input type="text" table-param="Id" hidden />
+                    <div class="form-group">
+                        <label>Servise Giriş Tarihi (*):</label>
+                        <input table-param="StartDate" type="date" class="form-control" table-description="Servise Giriş Tarihi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>İkame Araç Plaka :</label>
+                        <input table-param="TempPlateNo" tabindex="3" type="text" class="form-control" autocomplete="off" placeholder="Plaka Giriniz" />
+                    </div>
+                    <div class="form-group">
+                        <label>Açıklama (*):</label>
+                        <textarea rows="3" cols="5" table-param="Description" class="form-control" table-description="Açıklama" placeholder="Açıklama" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="margin-top: 0px;">
+                    <div class="col-md-4">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" tabindex="5" class="btn btn-danger full-width" onclick="$('#VehicleSetDebitServiceInModal').modal('hide')"><i class="fa fa-times"></i> İptal</button>
+                    </div>
+                    <div class="col-md-4">
+                        <button tabindex="4" type="submit" class="btn btn-primary full-width" onclick="vehicleSetService()"><i class="fa fa-check"></i> Kaydet</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@*<div id="VehicleSetDebitServiceOutModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <h6 class="modal-title">Aracı Servisten Çıkar</h6>
+            </div>
+            <div class="modal-body">
+                <div id="vehicleDebitSetOutService_FormId">
+                    <div class="form-group">
+                        <label>Servis Çıkış Tarihi (*):</label>
+                        <input table-param="StartDate" type="date" class="form-control" table-description="Servis Çıkış Tarihi" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Açıklama (*):</label>
+                        <textarea rows="3" cols="5" table-param="Description" class="form-control" table-description="Açıklama" placeholder="Açıklama" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="margin-top: 0px;">
+                    <div class="col-md-4">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" tabindex="5" class="btn btn-danger full-width" onclick="$('#VehicleSetDebitServiceOutModal').modal('hide')"><i class="fa fa-times"></i> İptal</button>
+                    </div>
+                    <div class="col-md-4">
+                        <button tabindex="4" type="submit" class="btn btn-primary full-width" onclick="vehicleSetService(0)"><i class="fa fa-check"></i> Servisten Çıkar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>*@
+
+<script>
+    function vehicleSetInService() {
+        FormAllInputsClearNoCloseModal("#vehicleDebitSetInService_FormId [table-param]");
+        $('#VehicleSetDebitServiceInModal').modal("show");
+    }
+
+    function vehicleSetOutService() {
+        FormAllInputsClearNoCloseModal("#vehicleDebitSetOutService_FormId [table-param]");
+        $('#VehicleSetDebitServiceOutModal').modal("show");
+    }
+
+    function vehicleSetService() {
+        var vehicleId = $('#vehicle_Id').val();
+        //if (type == 1) {
+            var model = { VehicleId: vehicleId };
+            var model2 = FormGetAllValue('#vehicleDebitSetInService_FormId [table-param]');
+            if (model2 != null) {
+                var mergeObject = $.extend(model, model2);
+                sendAjxForm(mergeObject, "/Vehicle/VehicleSetService", function (e) {
+                    if (e.IsSuccess) {
+                        $('#Debit_toggle').click();
+                        $('#VehicleSetDebitServiceInModal').modal("hide");
+                        ShowMessage("success", "Bilgi", "İşlem Başarılı");
+                    } else
+                        ShowMessage("error", "Bilgi", e.Message);
+                }, 'POST');
+            }
+        //} else if (type == 0) {
+        //    var model = { VehicleId: vehicleId, Type: 0 };
+        //    var model2 = FormGetAllValue('#vehicleDebitSetOutService_FormId [table-param]');
+        //    if (model2 != null) {
+        //        var mergeObject = $.extend(model, model2);
+        //        sendAjxForm(mergeObject, "/Vehicle/VehicleSetService", function (e) {
+        //            if (e.IsSuccess) {
+        //                $('#Debit_toggle').click();
+        //                $('#VehicleSetDebitServiceOutModal').modal("hide");
+        //                ShowMessage("success", "Bilgi", "Araç başarıyla servisten çıkarıldı");
+        //            } else
+        //                ShowMessage("error", "Bilgi", e.Message);
+        //        }, 'POST');
+        //    }
+        //}
+    }
+</script>
+

@@ -1,0 +1,200 @@
+﻿<div class="table-responsive" style="font-size: 11px; height: 50vh; overflow: scroll;">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th class="text-center">Tarih</th>
+                <th class="text-center">Talep Eden</th>
+                <th class="text-center">Tedarikçi Firma</th>
+                <th class="text-center">Tutar</th>
+                <th class="text-center">Kullanıcı Hata Tutar</th>
+                <th class="text-center">Kullanıcı Hata Açıklama</th>
+                <th class="text-center">Fatura No/Tarih</th>
+                <th class="text-center">Km</th>
+                <th class="text-center">Açıklama</th>
+                <th class="text-center">Bakım</th>
+                <th class="text-center">Belge</th>
+            </tr>
+        </thead>
+        <tbody class="text-center" id="maintenanceHistoryListDiv">
+        </tbody>
+    </table>
+</div>
+
+<div id="MaintenanceFileModal" class="modal fade" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="horizontal-form">
+                    <div class="form-body">
+                        <div class="row">
+                            <div class="form-group">
+                                <div class="file-loading">
+                                    <input id="imageMaintananceUploadForm" tabindex="1" type="file" multiple>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: -30px;">
+                <div class="col-md-12">
+                    <button type="button" class="btn btn-danger full-width" onclick="$('#MaintenanceFileModal').modal('hide')"><i class="fa fa-times"></i> Ekranı Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#MaintenanceHistory_toggle').click(function () {
+        if (historyButtonsActive) {
+            $('#maintenanceHistoryUl li').remove();
+            var vehicleId = $('#select-plate2').val();
+            getByVehicleIdMaintenceHistory(vehicleId);
+        } else {
+            $('.nav-tabs a[href="#MaintenanceInsert_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için araç seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+    $('#MaintenanceHistory2_toggle').click(function () {
+        if (historyButtonsActive) {
+            $('#maintenanceHistoryUl li').remove();
+            var vehicleId = $('#vehicle_Id').val();
+            getByVehicleIdMaintenceHistory(vehicleId);
+        } else {
+            $('.nav-tabs a[href="#Vehicle_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için araç seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+    var isHgsPage = false;
+    function getByVehicleIdMaintenceHistory(vehicleId) {
+        if (vehicleId > 0) {
+            var model = { vehicleId: vehicleId };
+            sendAjxForm(model,
+                "/Maintenance/GetByVehicleIdMaintenanceHistory?isHgsFilter=" + isHgsPage,
+                function (data) {
+                    $('#maintenanceHistoryListDiv tr').empty();
+                    if (data.length > 0) {
+                        var result = "";
+                        for (var i = 0; i < data.length; i++) {
+                            result += '<tr><td> ' +
+                                ConvertJSONDateFormatISO(data[i].CreatedDate) +
+                                ' </td>' +
+                                '<td> ' +
+                                data[i].RequestFullName +
+                                ' </td>' +
+                                '<td> ' +
+                                data[i].SupplierName +
+                                ' </td>' +
+                                '<td> ' +
+                                formatMoney(data[i].TotalAmount) +
+                                ' </td>' +
+                                '<td> ' +
+                                formatMoney(data[i].UserFaultAmount) +
+                                ' </td>' +
+                                '<td> ' +
+                                (data[i].UserFaultDescription != null ? data[i].UserFaultDescription : '-') +
+                                ' </td>' +
+                                '<td> ' +
+                                (data[i].InvoiceNo != null ? data[i].InvoiceNo : '-') +
+                                '</br>' +
+                                ConvertJSONJustDateFormatISO(data[i].InvoiceDate) +
+                                ' </td>' +
+                                '<td> ' +
+                                (data[i].LastKm != null ? data[i].LastKm : '') +
+                                ' </td>' +
+                                '<td> ' +
+                                (data[i].Description != null ? data[i].Description : '') +
+                                ' </td>' +
+                                '<td> ' +
+                                maintenancePieceSplit(data[i].MaintenancePieces) +
+                                ' </td>' +
+                                '<td> ' +
+                                data[i].CustomButton +
+                                ' </td></tr >';
+                        }
+                        $('#maintenanceHistoryListDiv').append(result);
+                    }
+                }, 'GET');
+        }
+    }
+
+    $('#MaintenanceFileModal').on('show.bs.modal',
+        function (event) {
+            $(this).find('.file-caption-main').css("display", "none");
+            $(this).find('.kv-file-remove').css("display", "none");
+        });
+
+    function getVehicleMaintenanceFilesList(maintenanceId) {
+        sendAjxForm({ maintenanceId: maintenanceId },
+            "/Maintenance/GetMaintenanceFilesList",
+            function (e) {
+                if (e.length > 0) {
+                    var arr = new Array();
+                    var deleteObj = [];
+                    for (var i = 0; i < e.length; i++) {
+                        var imgUrl = "/uploads/logistics/" + e[i].Name;
+                        arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e[i].Name + '" data="' + imgUrl + '"></object>';
+
+                        deleteObj[i] = {
+                            type: e[i].Extention + '',
+                            size: e[i].FileSize,
+                            caption: e[i].Name,
+                            url: "/File/FileDeleteLogistics",
+                            key: e[i].Id
+                        };
+                    }
+                    setImageMaintenance(arr, deleteObj);
+                } else
+                    setImageMaintenance(null, null);
+
+                $('#MaintenanceFileModal').modal('show');
+            },
+            'GET');
+    }
+
+    function setImageMaintenance(prevArr, deleteObj) {
+        if (prevArr == null)
+            prevArr = new Array();
+
+        $("#imageMaintananceUploadForm").fileinput('destroy');
+        $("#imageMaintananceUploadForm").fileinput({
+            language: "tr",
+            theme: "fas",
+            uploadUrl: "/test/test",
+            initialPreviewDownloadUrl: "/File/FileDownloadLogistics",
+            allowedFileExtensions: ["jpg", "png", "pdf", "txt", "xls", "xlsx", "doc", "docx"],
+            initialPreviewFileType: 'image',
+            maxFileCount: 5,
+            overwriteInitial: false,
+            browseOnZoneClick: true,
+            showUpload: false,
+            maxFileSize: 5 * 1024,
+            msgSizeTooLarge: 'Yüklemeye çalışılan resim boyutu: (<b>{size} KB</b>)' + ' Maksimum <b>5 MB</b> boyutunda resim yüklebilirsiniz.',
+            fileActionSettings: {
+                showUpload: false,
+                showZoom: true
+            },
+            initialPreviewAsData: false,
+            initialPreview: prevArr,
+            dropZoneEnabled: false,
+            initialPreviewConfig: deleteObj,
+            uploadExtraData: {
+                userId: "1000",
+            }
+        });
+        $('#kvFileinputModal').css("z-index", "9999999");
+    }
+
+    function maintenancePieceSplit(arr) {
+        var result = "";
+        for (var i = 0; i < arr.length; i++)
+            result += "<span style='margin-left:1px;' class='label bg-pink-300'>" + arr[i] + "</span>";
+
+        return result;
+    }
+</script>

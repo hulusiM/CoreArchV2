@@ -1,0 +1,220 @@
+﻿@using Microsoft.AspNetCore.Http
+@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Görev İşlemleri / Kullanıcı Görev Raporu')</script>
+<script src="~/admin/amcharts4/core.js"></script>
+<script src="~/admin/amcharts4/charts.js"></script>
+<script src="~/admin/amcharts4/themes/animated.js"></script>
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var unitId = HttpContextAccessor.HttpContext.Session.GetInt32("UnitId");
+    var parentUnitId = HttpContextAccessor.HttpContext.Session.GetInt32("ParentUnitId");
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+}
+
+<!-- Header Dashboard -->
+<div class="row" style="margin: 4px -20px 0 -29px;">
+    <div class="col-sm-6 col-md-6">
+        <div class="panel panel-body bg-orange-300 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="totalKm" style="font-size: 14px;">---</h3>
+                    <span class="text-size-mini" id="head_4">Toplam Km</span>
+                </div>
+                <div class="media-right media-middle">
+                    <i class="icon-gas icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-6">
+        <div class="panel panel-body bg-slate-300 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin text-size-mini" id="totalTrip" style="font-size: 11px;">---</h3>
+                    <span class="text-size-mini" id="head_2">Görev Sayısı</span>
+                </div>
+                <div class="media-right media-middle">
+                    <i class="icon-film2 icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Header Dashboard -->
+<!-- Content Dashboard-->
+<div class="breadcrumb-line breadcrumb-line-component bg-teal-400" style="margin: 0px -11px 0px -19px; color: #fff;">
+    <ul class="breadcrumb">
+        <li id="contentHeadDiv">Kullanıcı Görev Raporu</li>
+    </ul>
+    <ul class="breadcrumb-elements">
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right" style="width: 326px;">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-Plate_Filter"
+                                tabindex="2"
+                                table-param="VehicleId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Baş.Tarihi</label>
+                        <input id="StartDate" table-param="StartDate" tabindex="4" class="form-control" type="date">
+                    </div>
+                    <div class="col-md-6" style="margin-top: 8px;">
+                        <label>Bit.Tarihi</label>
+                        <input id="EndDate" table-param="EndDate" tabindex="5" class="form-control" type="date">
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" tabindex="7" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" tabindex="6" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="row" style="margin: 0px -20px 0 -29px;">
+    <div class="col-md-12">
+        <div class="table-responsive" style="margin-top: 5px;">
+            <div class="panel panel-flat">
+                <div id="chart1" style="height: 450px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row" style="margin: 0px -20px 0 -29px;">
+    <div class="col-md-12">
+        <div class="table-responsive">
+            <div id="engineButtons" class="btn-group btn-group-justified" style="margin-bottom: 5px;"></div>
+            <div class="panel panel-flat">
+                <div id="chart2" style="height: 450px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Dashboard-->
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script src="~/js/jsamchart/tripuser.js"></script>
+<script src="~/js/jsamchart/chartutility.js"></script>
+<script type="text/javascript">
+    $('#select-Plate_Filter').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        setStartEndDate();
+    });
+
+    function setStartEndDate() {
+        $(".sidebar-control").click();
+        var end = moment();
+        var start = moment().subtract(1, 'years');//.startOf('year');
+        $('#StartDate').val(start.format("YYYY-MM-DD"));
+        $('#EndDate').val(end.format("YYYY-MM-DD"));
+        $('#contentHeadDiv').html("Kullanıcı Görev Raporu - (" + start.format("DD-MM-YYYY") + "/" + end.format("DD-MM-YYYY") + ")");
+
+        loadCharts({ StartDate: start.format("YYYY-MM-DD"), EndDate: end.format("YYYY-MM-DD") });
+        setTimeout(function() {
+            var message = "Otomatik seçilen tarih aralığı </br><b style='color:black;'>" + start.format("ll") + " / " + end.format("ll") + "</b>";
+            ShowMessage("warning", "Bilgi", message);
+        }, 2000);
+    }
+
+    function loadCharts(model) {
+        headerInfo(model);
+        chart1_Load(model);
+        chart2_Load(model);
+    }
+
+    //Toplam Km
+    function chart1_Load(model) {
+        sendAjxForm(model,
+            "/Report/TripTotalKmUser",
+            function(data) {
+                if (data.length == 0) {
+                    totalKm_trip(null);
+                    $('#totalKm').text("---");
+                    ShowMessage("info", "Bilgi", "Görev geçmişi bulunamadı")
+                } else {
+                    totalKm_trip(data);
+                    var groupCodeGroupBy = JavascriptSum(data, "Count")
+                    $('#totalKm').text(groupCodeGroupBy + " Km");
+                }
+            }, "GET");
+    }
+
+    //Toplam görev
+    function chart2_Load(model) {
+        sendAjxForm(model,
+            "/Report/TripTotalCountUser",
+            function(data) {
+                if (data.length == 0) {
+                    totalTripCount_trip(null);
+                    $('#totalTrip').text("---");
+                    ShowMessage("info", "Bilgi", "Görev geçmişi bulunamadı")
+                } else {
+                    totalTripCount_trip(data);
+                    var groupCodeGroupBy = JavascriptSum(data, "Count")
+                    $('#totalTrip').text(groupCodeGroupBy + " Adet");
+                }
+            }, "GET");
+    }
+
+    //Sayfa başlık raporu
+    function headerInfo(model) {
+        sendAjxForm(model, "/Report/HeaderInfoTripUser",
+            function(data) {
+                $('#totalKm').text(formatMoney(data.TotalKm, 0) + " Km"); //Toplam km
+                $('#totalTrip').text(data.TotalCount + " Adet");
+            }, "GET");
+    }
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+        loadCharts(model);
+
+        $('#contentHeadDiv').html("Kullanıcı Görev Raporu - (" + moment(model.StartDate).format("DD-MM-YYYY") + "/" + moment(model.EndDate).format("DD-MM-YYYY") + ")");
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        setStartEndDate();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+                    //------------------------------------- Static Area End ---------------------------------------//
+</script>

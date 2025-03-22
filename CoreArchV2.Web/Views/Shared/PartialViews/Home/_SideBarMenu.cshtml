@@ -1,0 +1,401 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+}
+
+<ul title="Hızlı Menü" style="margin-right:56px;" class="fab-menu fab-menu-fixed fab-menu-bottom-right" data-fab-toggle="click">
+    <li>
+        <a class="fab-menu-btn btn bg-orange-400 btn-float btn-rounded btn-icon">
+            <i class="fab-icon-open icon-feed"></i>
+            <i class="fab-icon-close icon-cross2"></i>
+        </a>
+
+        <ul class="fab-menu-inner">
+            <li>
+                <div data-fab-label="Mesaj Gönder">
+                    <a id="fastMessageDiv" class="btn btn-default btn-rounded btn-icon btn-float">
+                        <img src="~/admin/images/message.png" class="img-responsive" />
+                    </a>
+                </div>
+            </li>
+            <li>
+                <div data-fab-label="Araç Bilgileri Excel Al">
+                    <a onclick="exportExcelVehicle()" class="btn btn-default btn-rounded btn-icon btn-float">
+                        <img src="~/admin/images/excel.png" class="img-responsive" />
+                    </a>
+                </div>
+            </li>
+            @{
+                if (Convert.ToBoolean(isAdmin))
+                {
+                    <li>
+                        <div data-fab-label="Araç Fotoğraf Yükleme Listesi">
+                            <a onclick="loadImageVehicle()" class="btn btn-default btn-rounded btn-icon btn-float">
+                                <img src="~/admin/images/car.jpg" class="img-responsive" />
+                            </a>
+                        </div>
+                    </li>
+                }
+            }
+        </ul>
+    </li>
+</ul>
+
+@{
+    if (Convert.ToBoolean(isAdmin))
+    {
+        @await Html.PartialAsync("~/Views/Shared/PartialViews/Home/LoadVehicleImageModal.cshtml")
+    }
+}
+
+@*<ul class="fab-menu fab-menu-fixed fab-menu-bottom-right" data-fab-toggle="click">
+    <li>
+    <a class="fab-menu-btn btn bg-orange-400 btn-float btn-rounded btn-icon">
+    <i class="fab-icon-open icon-bubble2"></i>
+    <i class="fab-icon-close icon-bubble2"></i>
+    </a>
+    </li>
+    </ul>*@
+
+<script>
+    $('#fastMessageDiv').click(function () {
+        swal({
+            title: "<b style='color:red;'>Soru/Öneriniz mi var?</b>",
+            text: "<textarea id='fastMessageTextarea' placeholder='Bir şeyler yazınız ...' class='form-control' style='width: 100%;height: 190px;resize:vertical;'></textarea>",
+            inputPlaceholder: "Bir şeyler yazınız ...",
+            html: true,
+            type: "warning",
+            showCancelButton: true,
+            cancelButtonColor: "#DD6B55",
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "Gönder",
+            cancelButtonText: "Ekranı Kapat",
+            closeOnConfirm: false,
+            closeOnCancel: true,
+        }, function (isConfirm) {
+            if (isConfirm) {
+                var message = $('#fastMessageTextarea').val();
+                if (message != '') {
+                    sendAjxForm({ message: message }, "/OneNote/SendSuggestionMessage",
+                        function (e) {
+                            if (e) {
+                                swal({
+                                    title: "<b>Mesajınız gönderildi <i style='margin-bottom: 5px;color:red;margin-left: 10px;' class='fa fa-space-shuttle faa-passing animated'></i></b>",
+                                    html: true,
+                                    customClass: 'swal-FastMessage',
+                                    text: "Talebiniz alınmıştır, en kısa sürede cevap verilecektir.",
+                                    confirmButtonColor: "#2196F3",
+                                    confirmButtonText: "Kapat",
+                                    type: "success",
+                                });
+                            } else
+                                ShowMessage("info", "Bilgi", "Gönderme sırasında hata oluştu,tekrar deneyiniz");
+                        }, "POST");
+                } else {
+                    setTimeout(function () { $('#fastMessageTextarea').focus(); }, 100);
+                    ShowMessage("info", "Bilgi", "Lütfen mesaj içeriği giriniz");
+                }
+            }
+        });
+        setTimeout(function () { $('#fastMessageTextarea').focus(); }, 100);
+    });
+
+    function exportExcelVehicle() {
+        $('#loadingEffect').css("display", "flex");
+        var model = { "ParentUnitId": $('#mainPageParentUnitId').val(), "UnitId": $('#mainPageUnitId').val() };
+        window.location = insertParam('/Export/VehicleInfo2', model);
+        setTimeout(function () {
+            $('#loadingEffect').css("display", "none");
+        }, 5000);
+    }
+
+</script>
+
+<ul class="fab-menu fab-menu-fixed fab-menu-bottom-right" data-fab-toggle="click">
+    <li>
+        <a class="fab-menu-btn btn bg-teal-400 btn-float btn-rounded btn-icon">
+            <i class="fab-icon-open icon-bell-check"><span id="totalNotificationSpan" class="badge bg-orange-800 faa-flash animated faa-slow">0</span></i>
+            <i class="fab-icon-close icon-cross2"></i>
+        </a>
+
+        <ul class="fab-menu-inner">
+            <li>
+                <div data-fab-label="Sözleşmesi Biten Araçlar">
+                    <a onclick="$('#timeUpContract_toggle').click()" class="btn btn-default btn-rounded btn-icon btn-float">
+                        <img src="~/admin/images/deal.png" class="img-responsive" />
+                    </a>
+                    <span class="badge bg-primary-400 timeUpRentACarContractSpan">0</span>
+                </div>
+            </li>
+            <li>
+                <div data-fab-label="Sözleşmesi Yaklaşan Araçlar">
+                    <a onclick="$('#timeDownContract_toggle').click()" class="btn btn-default btn-rounded btn-icon btn-float">
+                        <img src="~/admin/images/megaphone.png" class="img-responsive" />
+                    </a>
+                    <span class="badge bg-primary-400 timeDownRentACarContractSpan">0</span>
+                </div>
+            </li>
+            <li>
+                <div data-fab-label="Araç Belge Tarihleri">
+                    <a onclick="$('#timeUpDocument_toggle').click()" class="btn btn-default btn-rounded btn-icon btn-float">
+                        <img src="~/admin/images/document.jpg" class="img-responsive" />
+                    </a>
+                    <span class="badge bg-primary-400 timeUpDocumentSpan">0</span>
+                </div>
+            </li>
+        </ul>
+    </li>
+</ul>
+
+<div id="HomeNotification_Modal" class="modal fade" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">Bildirimler</h5>
+            </div>
+            <div class="modal-body" style="max-height: 80vh;overflow-y: auto;">
+                <div class="tabbable tab-content-bordered">
+                    <ul class="nav nav-tabs nav-tabs-highlight nav-justified">
+                        <li id="liAttrNotification_1" class="active">
+                            <a id="timeUpContract_toggle" href="#timeUpContract_vehicle" data-toggle="tab"><i class="icon-quill2 position-left "></i>Sözleşmesi Biten Araçlar <span class="timeUpRentACarContractSpan badge bg-orange-600 badge-inline position-right">0</span></a>
+                        </li>
+                        <li id="liAttrNotification_3">
+                            <a id="timeDownContract_toggle" href="#timeDownContract_vehicle" data-toggle="tab"><i class="icon-megaphone position-left "></i>Sözleşmesi Yaklaşan Araçlar <span class="timeDownRentACarContractSpan badge bg-orange-600 badge-inline position-right">0</span></a>
+                        </li>
+                        <li id="liAttrNotification_2">
+                            <a id="timeUpDocument_toggle" href="#timeUpDocument_vehicle" data-toggle="tab"><i class="icon-newspaper position-left "></i>Araç Belge Tarihleri <span class="timeUpDocumentSpan badge bg-orange-600 badge-inline position-right">0</span></a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane has-padding active" id="timeUpContract_vehicle">
+                            <div class="table-responsive">
+                                <table class="table text-nowrap">
+                                    <tbody id="contractUp_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane has-padding active" id="timeDownContract_vehicle">
+                            <div class="table-responsive">
+                                <table class="table text-nowrap">
+                                    <tbody id="contractDown_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane has-padding" id="timeUpDocument_vehicle">
+                            <div class="table-responsive">
+                                <table class="table text-nowrap">
+                                    <tbody id="document_table">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(window).scroll(function () {
+        if ($(window).scrollTop() + $(window).height() > $(document).height() - 40)
+            $('.fab-menu-bottom-left, .fab-menu-bottom-right').addClass('reached-bottom');
+        else
+            $('.fab-menu-bottom-left, .fab-menu-bottom-right').removeClass('reached-bottom');
+
+    });
+
+    $(document).ready(function () {
+        getMessagesAlert();
+    });
+
+    function getMessagesAlert() {
+        sendAjxForm("", "/Home/GetNotificationMessages", function (e) {
+            $('#totalNotificationSpan').text(parseInt(e.TimeUpRentACar + e.TimeUpDocumentACar + e.TimeDownRentACar));
+            $('.timeUpRentACarContractSpan').text(e.TimeUpRentACar);
+            $('.timeDownRentACarContractSpan').text(e.TimeDownRentACar);
+            $('.timeUpDocumentSpan').text(e.TimeUpDocumentACar);
+        }, "GET");
+    }
+
+    $('#timeUpContract_toggle').click(function () {
+        sendAjxForm("", "/Home/GetTimeUpContractVehicle?DayCount=0", function (e) {
+            var result = "";
+            if (e.length > 0) {
+                result = loadContract(e);
+                $("#contractUp_table tr").empty();
+                $("#contractUp_table").append(result);
+                $('#HomeNotification_Modal').modal("show");
+            } else
+                result += "----";
+
+        }, 'GET');
+    });
+
+    $('#timeDownContract_toggle').click(function () {
+        sendAjxForm("", "/Home/GetTimeUpContractVehicle?DayCount=30", function (e) {
+            var result = "";
+            if (e.length > 0) {
+                result = loadContract(e);
+                $("#contractDown_table tr").empty();
+                $("#contractDown_table").append(result);
+                $('#HomeNotification_Modal').modal("show");
+            } else
+                result += "----"
+
+        }, 'GET');
+    });
+
+    function loadContract(e) {
+        var result = "";
+        for (var i = 0; i < e.length; i++) {
+            result += '<tr>' +
+                //'<td class="text-center">' +
+                //'    <h6 class="no-margin">' + e[i].DayCount + '<small class="display-block text-size-small no-margin">Gün</small></h6>' +
+                //'</td>' +
+                '<td>' +
+                '    <div class="media-left media-middle">' +
+                '        <a onclick="funcEditVehicle(' + e[i].VehicleId + ');" class="btn bg-orange-400 btn-rounded btn-icon btn-xs">' +
+                '            <span class="letter-icon">' + e[i].Plate.substring(0, 2) + '</span>' +
+                '        </a>' +
+                '    </div>' +
+                '    <div class="media-body">' +
+                '<div class="media-left">' +
+                '        <a onclick="funcEditVehicle(' + e[i].VehicleId + ');" class="display-inline-block text-default text-semibold letter-icon-title">' + e[i].Plate + '</a>' +
+                '        <div class="text-muted text-size-small"><span class="status-mark border-blue position-left"></span>' + e[i].VehicleTypeName + '</div>' +
+                '</div><div class="media-right">' + e[i].Button + '</div>' +
+                '    </div>' +
+                '</td>' +
+                '<td class="text-center">' +
+                '    <a href="#" class="text-default display-inline-block">' +
+                '        <span class="text-semibold">Kiralama Firması</span>' +
+                '        <span class="display-block text-muted">' + e[i].RentFirmName + '</span>' +
+                '    </a>' +
+                '</td>' +
+                '<td class="text-center">' +
+                '    <a href="#" class="text-default display-inline-block">' +
+                '        <span class="text-semibold">Kiralama Türü</span>' +
+                '        <span class="display-block text-muted">' + e[i].RentTypeName + '</span>' +
+                '    </a>' +
+                '</td>' +
+                '<td class="text-center">' +
+                '    <a href="#" class="text-default display-inline-block">' +
+                '        <span class="text-semibold">Sözleşme Tarihleri</span>' +
+                '        <span class="display-block text-muted">' + ConvertJSONJustDateFormatISO(e[i].StartDate) + " - " + ConvertJSONJustDateFormatISO(e[i].EndDate) + '</span>' +
+                '    </a>' +
+                '</td>' +
+                '</tr> ';
+        }
+        return result;
+    }
+
+    $('#timeUpDocument_toggle').click(function () {
+        sendAjxForm("", "/Home/GetTimeUpExaminationVehicle", function (e) {
+            var result = "";
+            if (e.length > 0) {
+                for (var i = 0; i < e.length; i++) {
+                    result += '<tr>' +
+                        '<td class="text-center">' +
+                        '    <h6 class="no-margin">' + e[i].Name + '<small class="display-block text-size-small no-margin">Demirbaş</small></h6>' +
+                        '</td>' +
+                        '<td>' +
+                        '    <div class="media-left media-middle">' +
+                        '        <a onclick="funcEditVehicle(' + e[i].VehicleId + ');" class="btn bg-orange-400 btn-rounded btn-icon btn-xs">' +
+                        '            <span class="letter-icon">' + e[i].Plate.substring(0, 2) + '</span>' +
+                        '        </a>' +
+                        '    </div>' +
+                        '    <div class="media-body">' +
+                        '<div class="media-left">' +
+                        '        <a onclick="funcEditVehicle(' + e[i].VehicleId + ');" class="display-inline-block text-default text-semibold letter-icon-title">' + e[i].Plate + '</a>' +
+                        '        <div class="text-muted text-size-small"><span class="status-mark border-blue position-left"></span>' + e[i].Name + '</div>' +
+                        '</div><div class="media-right">' + e[i].Button + '</div>' +
+                        '    </div>' +
+                        '</td>' +
+                        '<td class="text-center">' +
+                        '    <a href="#" class="text-default display-inline-block">' +
+                        '        <span class="text-semibold">K Belgesi</span>' +
+                        '        <span class="display-block text-muted">' + e[i].KDocumentEndDate + '</span>' +
+                        '    </a>' +
+                        '</td>' +
+                        '<td class="text-center">' +
+                        '    <a href="#" class="text-default display-inline-block">' +
+                        '        <span class="text-semibold">Trafik Sigortası</span>' +
+                        '        <span class="display-block text-muted">' + e[i].TrafficEndDate + '</span>' +
+                        '    </a>' +
+                        '</td>' +
+                        '<td class="text-center">' +
+                        '    <a href="#" class="text-default display-inline-block">' +
+                        '        <span class="text-semibold">Kasko</span>' +
+                        '        <span class="display-block text-muted">' + e[i].KaskoEndDate + '</span>' +
+                        '    </a>' +
+                        '</td>' +
+                        '<td class="text-center">' +
+                        '    <a href="#" class="text-default display-inline-block">' +
+                        '        <span class="text-semibold">Muayene</span>' +
+                        '        <span class="display-block text-muted">' + e[i].ExaminationEndDate + '</span>' +
+                        '    </a>' +
+                        '</td>' +
+                        '</tr> ';
+                }
+                $("#document_table tr").empty();
+                $("#document_table").append(result);
+                $('#HomeNotification_Modal').modal("show");
+
+            } else
+                result += "----";
+        }, 'GET');
+    });
+
+    function getVehicleNote(vehicleId) {
+        sendAjxForm({ vehicleId: vehicleId }, "/OneNote/GetVehicleNote", function (e) {
+            if (e.length > 0) {
+                var result = " <ul class='list-feed media-list'></ul>";
+                for (var i = 0; i < e.length; i++) {
+                    result += "<li style='padding: 7px;' class='media panel'>Not: " + e[i].Description + "<br/>" +
+                        '</b>' + ConvertJSONDateFormatISO(e[i].CreatedDate) + " " + e[i].NameSurname + "</b>";
+
+                    if (e[i].Type === 1)
+                        result += ' <b>(Yapılacaklar listesinde)</b>';
+                    else if (e[i].Type === 2)
+                        result += ' <b>(İşlemde listesinde)</b>';
+                    else
+                        result += ' <b>(Bitmiş listesinde)</b>';
+
+                    result += "</li>";
+                }
+
+                swal({
+                    title: "<b style=''color:red;>" + e[0].Plate + "</b> Plakalı Araç Notu",
+                    text: result,
+                    html: true,
+                    type: "info",
+                    showCancelButton: false,
+                    confirmButtonColor: "#EF5350",
+                    confirmButtonText: "Tamam",
+                    closeOnConfirm: false,
+                    closeOnCancel: false
+                },
+                    function (isConfirm) {
+                        if (isConfirm) {
+                            $(".cancel").click();
+                            $(".confirm").click();
+                            $('#stepy-head-1').click();
+                        } else {
+                            swal({
+                                title: "İsteğiniz üzere iptal Edildi",
+                                text: "Kayıtlar güvende",
+                                confirmButtonColor: "#2196F3",
+                                type: "info"
+                            });
+                        }
+                    });
+            } else
+                ShowMessage("warning", "Bilgi", "Not bulunamadı");
+        }, 'GET');
+    }
+</script>

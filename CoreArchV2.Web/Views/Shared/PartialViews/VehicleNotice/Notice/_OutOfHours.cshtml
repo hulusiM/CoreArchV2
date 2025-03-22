@@ -1,0 +1,60 @@
+﻿
+<div class="panel-group">
+    <div class="panel">
+        <div class="panel-heading bg-primary-300">
+            <h6 class="panel-title">
+                <a data-toggle="collapse" href="#collapsible-styled-group1" aria-expanded="true" class="">Sistemde kayıtlı plaka <b id="span_true" class="badge bg-orange-300 faa-flash animated faa-slow">0</b> Adet</a>
+            </h6>
+        </div>
+        <div id="collapsible-styled-group1" class="panel-collapse collapse in" aria-expanded="true" style="">
+            <div class="panel-body" style="height: 360px; overflow: scroll;">
+                @await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleNotice/Notice/Table/_OutOfHoursTable.cshtml")
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-heading bg-primary">
+            <h6 class="panel-title">
+                <a class="" data-toggle="collapse" href="#collapsible-styled-group2" aria-expanded="true">Sistem kayıtlı olmayanlar plaka <b id="span_false" class="badge bg-orange-300 faa-flash animated faa-slow">0</b> Adet</a>
+            </h6>
+        </div>
+        <div id="collapsible-styled-group2" class="panel-collapse collapse" aria-expanded="true">
+            <div class="panel-body" style="height: 360px; overflow: scroll;">
+                <table class="table-striped table-hover table table-xxs datatable-basic"
+                       style="font-size: 11px;"
+                       id="dataTableImportExcelNotice_false"
+                       table-id="dataTable-dataTableImportExcelNotice_false"
+                       table-model-url=""
+                       table-DatabaseName="/Notice"
+                       table-tool-type="dataTable">
+                    <thead>
+                        <tr class="filters">
+                            <th style="text-align: center; width: 1%;">No</th>
+                            <th style="text-align: center;">
+                                Arvento No(*)
+                            </th>
+                            <th style="text-align: center;">
+                                Plaka(*)
+                            </th>
+                            <th style="text-align: center;">
+                                Sürücü
+                            </th>
+                            <th style="text-align: center;">
+                                İlk Tarih
+                            </th>
+                            <th style="text-align: center;">
+                                Son Tarih
+                            </th>
+                            <th style="text-align: center;">
+                                Toplam Km
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="excelPrew_false" style="font-size: 12px;"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+

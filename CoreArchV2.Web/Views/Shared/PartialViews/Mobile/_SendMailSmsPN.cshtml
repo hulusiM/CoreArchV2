@@ -1,0 +1,192 @@
+﻿<div id="NewMessageModal" class="modal fade" data-backdrop="static" data-keyboard="false" style="margin: auto; margin-left: auto; margin-right: auto; z-index: 9991;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title"> Yeni Bildirim Gönder</h5>
+            </div>
+            <div class="modal-body">
+                <div class="horizontal-form">
+                    <div id="NewMessage_FormId" class="form-body">
+                        <div class="col-md-12" style="margin-top: 10px;">
+                            <label class="control-label col-lg-3">Kullanıcı *</label>
+                            <div class="col-md-9">
+                                <select id="UserId-Sender"
+                                        tabindex="1"
+                                        table-param="UserId"
+                                        class="select2-container select2-selection--single"></select>
+                            </div>
+
+                            @*<div class="col-md-3" style="margin-top: 7px;">
+                                <label>
+                                    <input id="IsAllUser-Sender" table-param="IsAllUser" type="checkbox" class="control-warning">
+                                    Tüm Kullanıcılar
+                                </label>
+                            </div>*@
+                        </div>
+                        <div class="col-md-12" style="margin-top: 10px;">
+                            <label class="control-label col-lg-3">Gönderim Tipi *</label>
+                            <div class="col-md-9">
+                                <select id="MessageType-sender"
+                                        class="select-search"
+                                        table-param="Type"
+                                        table-id="comboBox-MessageType-sender"
+                                        table-model-url="/Combo/GetMessageLogType"
+                                        table-tool-type="comboBox"
+                                        table-description="Gönderim Tipi"
+                                        data-option-label="Gönderim Tipi Seçiniz" required>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-12" style="margin-top: 10px;">
+                            <label class="control-label col-lg-3">Başlık *</label>
+                            <div class="col-md-9">
+                                <input tabindex="8" type="text" table-description="Mesaj Başlık" id="Subject-Sender" table-param="Subject" class="form-control" placeholder="Başlık Giriniz (Önerilen Başlık uzunluğu max 35 karakter olmalıdır.)" required />
+                            </div>
+                        </div>
+                        <div class="col-md-12" style="margin-top: 9px;">
+                            <div class="col-md-9">
+                            </div>
+                            <div class="col-lg-3" style="text-align: right;">
+                                <span id="MessageSubject" class="label bg-success-400"> Karakter Uzunluğu: 0 </span>
+                            </div>
+                        </div>
+                        <div class="col-md-12" style="margin-top: 10px;">
+                            <label class="control-label col-lg-3">Mesaj İçeriği *</label>
+                            <div class="col-md-9">
+                                <textarea tabindex="13" id="Body-Sender" table-param="Body" table-description="Mesaj Konu" rows="5" placeholder="Mesaj İçeriği Giriniz" class="form-control" required></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-12" style="margin-top: 9px;">
+                            <div class="col-md-9">
+                            </div>
+                            <div class="col-md-3" style="text-align: right;">
+                                <span id="MessageBody" class="label bg-success-400"> Karakter Uzunluğu: 0 </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col-md-12" style="margin-top: 20px;">
+                    <div class="col-md-3">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" tabindex="8" class="btn btn-danger full-width" onclick="funcCancelModal('#NewMessage_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                    </div>
+                    <div class="col-md-3">
+                        <button tabindex="15" type="button" title="Mesaj içeriğini temizle" style="width: 100%;" class="btn bg-success-300" onclick="$('#Body-Sender').val('')"><i class="fa fa-trash-o"></i> Mesaj Temizle</button>
+                    </div>
+                    <div class="col-md-3">
+                        <button tabindex="14" title="Mesajı Gönder" style="width: 100%;" type="submit" class="btn btn-primary" onclick="funcSenderMessage()"><i class="fa fa-check"></i> Gönder</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* <script src="~/Assets/select2Autocomplete/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#UserId-Sender').select2({
+        dropdownParent: $('#NewMessageModal'),
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserWithEmailCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function(data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+<script>
+    function funcSenderMessage() {
+        var id = "#NewMessage_FormId [table-param]";
+        var model = FormGetAllValue(id);
+        if (model != null) {
+            var isAllChecked = $('#IsAllUser-Sender').is(":checked");
+            if (!isAllChecked && model.UserId == "") {
+                ShowMessage("info", "Bilgi", "Kullanıcı seçiniz");
+                return;
+            }
+
+            if (isAllChecked) {
+                swal({
+                    title: "Onaylıyor musunuz ?",
+                    text: "Bu mesaj tüm kullanıcılara gönderilecek onaylıyor musunuz?",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#EF5350",
+                    confirmButtonText: "Evet, Gönder!",
+                    cancelButtonText: "Hayır, İptal Et",
+                    closeOnConfirm: false,
+                    closeOnCancel: false
+                },
+                    function(isConfirm) {
+                        if (isConfirm) {
+                            ShowMessage("info", "Bilgi", "Gönderim başladı,bilgilendirme maili alacaksınız", 10000);
+                            $('.confirm').prop("disabled", true);
+                            $('.cancel').prop("disabled", true);
+                            swal.close();
+                            $('#NewMessageModal').modal("hide");
+                            senderPost(model);
+                        } else {
+                            swal({
+                                title: "İsteğiniz üzere iptal Edildi",
+                                text: "Gönderilmedi",
+                                confirmButtonColor: "#2196F3",
+                                type: "error"
+                            });
+                        }
+                    });
+            } else {
+                senderPost(model)
+            }
+        }
+    }
+
+    function senderPost(model) {
+        sendAjxForm(model, "/Mobile/SendMessageDirectly", function(e) {
+            if (e.IsSuccess) {
+                ShowMessage("success", "Bilgi", e.Message);
+                funcFilterTable();
+                $('.confirm').prop("disabled", false);
+                $('.cancel').prop("disabled", false);
+                swal.close();
+                $('#NewMessageModal').modal("hide");
+            } else {
+                ShowMessage("info", "Bilgi", e.Message);
+            }
+        }, 'POST');
+    }
+
+    $("#Subject-Sender").keyup(function() {
+        $('#MessageSubject').text("Karakter Uzunluğu: " + $('#Subject-Sender').val().length);
+    });
+
+    $("#Body-Sender").keyup(function() {
+        $('#MessageBody').text("Karakter Uzunluğu: " + $('#Body-Sender').val().length);
+    });
+
+    function funcOpenNewMessageModal() {
+        $('#IsAllUser-Sender').prop("checked", false);
+        FormAllInputsClear("#NewMessage_FormId [table-param]");
+        $('#NewMessageModal').modal("show");
+    }
+
+    $("#IsAllUser-Sender").change(function() {
+        if (this.checked) {
+            $('#UserId-Sender').prop("disabled", true);
+            $('#UserId-Sender').val('').change()
+        } else {
+            $('#UserId-Sender').prop("disabled", false);
+        }
+    });
+</script>

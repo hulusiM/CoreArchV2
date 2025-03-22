@@ -1,0 +1,458 @@
+﻿@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Araç Yönetimi / Araç Trafik Ceza Tanımları')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Araç Trafik Ceza Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="CriminalModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-CriminalOwnerId"
+                                tabindex="1"
+                                table-param="CriminalOwnerId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-vehicleId"
+                                tabindex="2"
+                                table-param="VehicleId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableCriminal"
+                           table-id="dataTable-Criminal"
+                           table-model-url="/Criminal/CriminalGetAll"
+                           table-DatabaseName="/Criminal"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="Plate" style="text-align: center;">
+                                    Plaka
+                                </th>
+                                <th data-value="CriminalTypeName" style="text-align: center;">
+                                    Ceza Tipi
+                                </th>
+                                <th data-value="CityAndDistrict" style="text-align: center;">
+                                    Şehir/Bölge
+                                </th>
+                                <th data-value="PaidNameSurname" style="text-align: center;">
+                                    Ceza Sahibi
+                                </th>
+                                <th data-value="Amount" data-type="money" style="text-align: center;">
+                                    Tutar
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Araç Ceza Bilgileri</h6>
+            </div>
+            <div class="modal-body">
+                <div id="Criminal_FormId">
+                    <input type="text" table-param="Id" hidden />
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <label>Araç (*) :</label>
+                                <select id="select-vehicleId2"
+                                        tabindex="1"
+                                        table-param="VehicleId"
+                                        table-description="Araç"
+                                        class="select2-container select2-selection--single" required>
+                                </select>
+
+                            </div>
+
+                            <div class="col-sm-4">
+                                <label>Ceza Tipi (*) :</label>
+                                <select id="CriminalTypeId"
+                                        class="select-search"
+                                        tabindex="2"
+                                        table-param="CriminalTypeId"
+                                        table-id="comboBox-MaintenanceTypeId"
+                                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.CriminialType)"
+                                        table-tool-type="comboBox"
+                                        table-description="Ceza Tipi"
+                                        data-option-label="Ceza Tipi Seçiniz" required>
+                                </select>
+                            </div>
+                            <div class="col-sm-4">
+                                <label>Ceza Seri/No (*) :</label>
+                                <input table-param="CriminalSerialNumber" autocomplete="off" tabindex="3" type="text" class="form-control" table-description="Ceza Seri/No" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label>Tebliğ Tarihi (*) :</label>
+                                <input id="NotificationDate" table-param="NotificationDate" tabindex="4" type="datetime-local" class="form-control" table-description="Tebliğ Tarihi" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label>Şehir (*) :</label>
+                                <div class="col-md-12">
+                                    <select id="CityId"
+                                            tabindex="5"
+                                            class="select-search"
+                                            table-param="CriminalDistrictId"
+                                            table-id="comboBox-CityId"
+                                            table-model-url="/Combo/GetCityAndDistrictCmbx"
+                                            table-tool-type="comboBox"
+                                            table-description="Şehir/Bölge"
+                                            data-option-label="Şehir/Bölge Seçiniz" required>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label>Tutar (*) :</label>
+                                <input id="AmountCriminal" table-param="Amount" tabindex="7" type="text" class="form-control moneyCurrency" autocomplete="off" table-description="Tutar" placeholder="Tutar giriniz" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label>İndirimli Tutar (%25) :</label>
+                                <input id="TotalAmountDiscount" tabindex="8" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="indirimi Tutar" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Ceza Tarihi (*) :</label>
+                                <input id="CriminalDate" onchange="findCriminalDateInUser()" tabindex="9" table-param="CriminalDate" type="datetime-local" class="form-control" table-description="Ceza Tarihi" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Ceza Sahibi :</label>
+                                <select id="select-userId"
+                                        tabindex="10"
+                                        table-param="CriminalOwnerId"
+                                        class="select2-container select2-selection--single">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Ödenen Tarih :</label>
+                                <input id="PaidDate" table-param="PaidDate" tabindex="11" type="datetime-local" class="form-control" table-description="Ceza Ödenen Tarih">
+                            </div>
+                            <div class="col-md-6">
+                                <label>Ödenen Tutar :</label>
+                                <div class="row">
+                                    <div class="col-md-9">
+                                        <input id="PaidAmount" table-param="PaidAmount" tabindex="12" type="text" class="form-control moneyCurrency" autocomplete="off" placeholder="Ödenen Tutar giriniz">
+                                    </div>
+                                    <div class="">
+                                        <button type="button" onclick="$('#PaidAmount').val($('#TotalAmountDiscount').val())" class="btn btn-sm btn-success">İndirimli Tutar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label">Açıklama</label>
+                        <textarea rows="3" cols="5" table-param="Description" tabindex="13" class="form-control" placeholder="Açıklama"></textarea>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Belge :</label>
+                    <div class="file-loading">
+                        <input id="imageUploadForm" tabindex="14" type="file" multiple>
+                    </div>
+                    <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+                </div>
+
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#Criminal_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-4 col-md-3">
+                    <button id="vehicleId" tabindex="15" type="submit" class="btn btn-primary full-width" onclick="funcSaveCriminal()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/File/_PictureVisualModal.cshtml")
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script>
+    $('#select-vehicleId').select2({
+        placeholder: 'Araç Seçiniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-vehicleId2').select2({
+        dropdownParent: $('#EditInsertModal'),
+        placeholder: 'Araç Seçiniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-userId').select2({
+        dropdownParent: $('#EditInsertModal'),
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+    $('#select-CriminalOwnerId').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    function CriminalModalOpen() {
+        setImage(null);
+        FormAllInputsClear('#Criminal_FormId [table-param]');
+        $('#EditInsertModal').modal("show");
+    }
+
+    function funcEditCriminal(criminalId) {
+        sendAjxForm({ id: criminalId },
+            '/Criminal/GetById',
+            function (e) {
+                if (e.Id > 0) {
+                    var formId = '#Criminal_FormId [table-param]';
+                    var model = {
+                        selector: formId,
+                        data: e
+                    };
+                    FormSetAllValue(model);
+                    setVehicle(e.VehicleId, "select-vehicleId2");
+                    if (e.CriminalOwnerId > 0 && e.PaidDate != null) {
+                        setUser(e.CriminalOwnerId, "select-userId");
+                        document.getElementById('PaidDate').value = e.PaidDate;
+                    }
+
+                    if (e.files.length > 0) {
+                        var arr = new Array();
+                        var deleteObj = [];
+                        for (var i = 0; i < e.files.length; i++) {
+                            var imgUrl = "/uploads/logistics/" + e.files[i].Name;
+                            var type = e.files[i].Extention + '';
+                            if (e.files[i].Extention == 'doc' || e.files[i].Extention == 'docx') {
+                                type = "office";
+                                arr[i] = e.files[i].Name.split("-")[1];
+                            } else
+                                arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                            deleteObj[i] = {
+                                type: type,
+                                size: e.files[i].FileSize,
+                                caption: e.files[i].Name,
+                                url: "/File/FileDeleteLogistics",
+                                key: e.files[i].Id
+                            };
+                        }
+                        setImage(arr, deleteObj);
+                    } else
+                        setImage(null, null);
+
+                    $('#EditInsertModal').modal("show");
+                }
+            },
+            'POST');
+    }
+
+    //Criminal table insert
+    function funcSaveCriminal() {
+        var model = FormGetAllValue("#Criminal_FormId [table-param]");
+        if (model != null) {
+            var newModel = {};
+            var files = $('#imageUploadForm').fileinput('getFileList');
+            var formData = new FormData();
+            for (var i = 0; i != files.length; i++)
+                formData.append("files", files[i]);
+
+            newModel = FormDataAppendModelValue(formData, "#Criminal_FormId [table-param]");
+            sendAjxFormFileUpload(newModel,
+                '/Criminal/InsertUpdate',
+                function (e) {
+                    if (e.IsSuccess) {
+                        if (model.Id > 0)
+                            ShowMessage("success", "Bilgi", "Düzenleme başarılı");
+                        else {
+                            ShowMessage("success", "Bilgi", "Kayıt başarıyla eklendi");
+                        }
+                        GetAllLoadTable('/Criminal/CriminalGetAll');
+                        $('#EditInsertModal').modal("hide");
+                    } else {
+                        if (e == 'NotAuthorizationCore') {
+                            var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                            ShowMessage("error", "Yetkisiz İşlem", message);
+                        } else
+                            ShowMessage("error", "Hata", e.Message);
+                    }
+                },
+                'POST');
+        }
+    }
+
+    function findCriminalDateInUser() {
+        var criminalDate = $('#CriminalDate').val();
+        var vehicleId = $('#select-vehicleId2').val();
+        if (vehicleId > 0 && criminalDate.substr(0, 1) != '0') {
+            sendAjxForm({ TransactionDate: criminalDate, VehicleId: vehicleId },
+                "/Utility/FindDateRangeDebitUser",
+                function (e) {
+                    if (e != null)
+                        ShowMessage("info", "Bilgi", ("Araç seçilen tarihte <b>" + e.FullName + "</b> adlı kişide görünüyor"));
+                    else
+                        ShowMessage("info", "Bilgi", "Seçilen tarihte araç zimmeti bulunamadı");
+                }, "GET");
+        } else
+            ShowMessage("info", "Bilgi", "Seçilen tarihte zimmetli kişiyi bulabilmek için araç seçiniz");
+    }
+
+    $("#AmountCriminal").on('change onkeyup paste input',
+        function () {
+            var amount = ($('#AmountCriminal').val()).replaceAll('.', '').replace(',', '.');
+            var discount = 25;
+            if (amount == "") amount = 0;
+            var totalAmountDiscount = amount - (amount * discount / 100);
+            $('#TotalAmountDiscount').val(formatMoney(totalAmountDiscount));
+        });
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Criminal/CriminalGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

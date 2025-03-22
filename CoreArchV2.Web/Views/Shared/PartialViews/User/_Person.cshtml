@@ -1,0 +1,78 @@
+﻿<div id="PersonModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Kullanıcı Bilgileri</h6>
+            </div>
+            <div class="modal-body" id="PersonModalBodyDiv">
+                <fieldset>
+                    <legend class="text-semibold">Detaylı Kullanıcı Bilgileri</legend>
+                    <div class="col-md-7">
+                        <div class="col-md-12">
+                            <label>Adı :</label>
+                            <input table-param="Name" type="text" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-12">
+                            <label>Soyadı :</label>
+                            <input table-param="Surname" type="text" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-12" style="margin-top: 10px;">
+                            <label>Telefon :</label>
+                            <input table-param="MobilePhone" type="text" class="form-control" disabled>
+                        </div>
+                        <div class="col-md-12" style="margin-top: 10px;">
+                            <label>Doğum Tarihi :</label>
+                            <input table-param="BirthDate" type="date" class="date form-control" disabled>
+                        </div>
+                        <div class="col-md-12" style="margin-top: 10px;">
+                            <label>E-Mail :</label>
+                            <input table-param="Email" type="text" class="form-control" disabled>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <img id="PersonImageDiv"
+                             class="panel-body border-radius-top text-center" src="/admin/images/userEmpty.jpg" style="background-size: contain; height: 212px;" />
+
+                        <div class="content-group-sm">
+                            <h6 id="memberNameSurname" class="text-semibold no-margin-bottom text-center">
+                                ---
+                            </h6>
+                            <span id="MemberPhone" class="display-block text-center">---</span>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="modal-footer" style="margin-top: 0px;">
+                <div class="col-md-7"></div>
+                <div class="col-md-5">
+                    <button type="button" class="text-bla btn bg-danger-600" data-dismiss="modal" style="width: 100%;">Ekranı Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function funcGetPerson(memberId) {
+        sendAjxForm({ Id: memberId },
+            "/User/GetById",
+            function (e) {
+                if (e.Id > 0) {
+                    var model = {
+                        selector: "#PersonModalBodyDiv  [table-param]",
+                        data: e
+                    };
+                    FormSetAllValue(model);
+                    $('#memberNameSurname').text(e.Name + " " + e.Surname);
+                    $('#MemberPhone').text(e.MobilePhone);
+                    if (e.Image != "")
+                        $('#PersonImageDiv').attr('src', ("data:image/gif;base64," + e.Image));
+                    else
+                        $('#PersonImageDiv').attr('src', "/admin/images/userEmpty.jpg");
+                } else {
+                    ShowMessage("error", "Hata", "Kullanıcı bilgilerini çekerken hata oluştu");
+                }
+            });
+    }
+</script>

@@ -1,0 +1,220 @@
+﻿@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Sistem Yönetimi / Parametre Yön. / Mesai İçi/Dışı Bildirim Kapat')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Mesai İçi/Dışı Bildirim Kapat</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="ModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <label>Müdürlük/Proje :</label>
+                        <select id="UnitIdSearch"
+                                tabindex="3"
+                                table-param="UnitId"
+                                class="select-search"
+                                table-id="comboBox-UnitIdSearch"
+                                table-model-url="/Combo/GetUnitAndParentCmbx"
+                                table-tool-type="comboBox"
+                                data-option-label="Müdürlük veya Proje Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableOutOfHour"
+                           table-id="dataTable-OutOfHour"
+                           table-model-url="/OutOfHour/ParamOutOfHourGetAll"
+                           table-DatabaseName="/OutOfHour"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="UnitName" style="text-align: center;">
+                                    Birim/Proje
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Mesai içi/dışı bildirim kapat</h6>
+            </div>
+            <div class="modal-body">
+                <div id="OutOfParam_FormId">
+                    <input type="text" id="fuelVehicleId" table-param="Id" hidden />
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <label>Müdürlük/Proje :</label>
+                                <select id="UnitId"
+                                        tabindex="3"
+                                        table-param="UnitId"
+                                        class="select-search"
+                                        table-id="comboBox-UnitId"
+                                        table-model-url="/OutOfHour/ComboParamOutOfUnitList"
+                                        table-tool-type="comboBox"
+                                        data-option-label="Müdürlük veya Proje Seçiniz">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-3">
+                </div>
+                <div class="col-sm-3">
+                    <button type="button" tabindex="8" class="btn btn-danger full-width" onclick="funcCancelModal('#OutOfParam_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-6">
+                    <button tabindex="7" type="submit" class="btn btn-primary full-width" onclick="funcSaveOutOfParam()"><i class="fa fa-check"></i> Bildirimleri Kapat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function ModalOpen() {
+        $("#UnitId").val('').change();
+        $('#EditInsertModal').modal("show");
+    }
+
+    function funcSaveOutOfParam() {
+        var unitId = $("#UnitId").val();
+        sendAjxForm({ unitId: unitId }, "/OutOfHour/ParamOutOfHourSave", function (e) {
+            if (e.IsSuccess == true) {
+                $('#EditInsertModal').modal("hide");
+                funcFilterTable();
+                ShowMessage("success", "Bilgi", "Kayıt Başarılı.");
+                reloadCombobox("/OutOfHour/ComboParamOutOfUnitList", null, "UnitId", "Müdürlük veya Proje Seçiniz");
+            } else
+                ShowMessage("success", "Bilgi", e.Message, 10000);
+        }, "POST");
+    }
+
+    function funcGetOutOfParamDelete(id) {
+        var model = { Id: id };
+        swal({
+            title: "Emin misiniz?",
+            text: "Bu kayıt silinecektir !",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#EF5350",
+            confirmButtonText: "Evet, Kaydı Sil!",
+            cancelButtonText: "Hayır, Kayıt Kalsın!",
+            closeOnConfirm: false,
+            closeOnCancel: false
+        },
+            function (isConfirm) {
+                if (isConfirm) {
+                    sendAjxForm(model, "/OutOfHour/ParamOutOfHourDelete", function (e) {
+                        if (e.IsSuccess == true) {
+                            swal({
+                                title: "Başarılı!",
+                                text: "Kayıt silindi.",
+                                confirmButtonColor: "#66BB6A",
+                                type: "success"
+                            });
+                            funcFilterTable();
+                            ShowMessage("success", "Bilgi", "Silme Başarılı.");
+                            reloadCombobox("/OutOfHour/ComboParamOutOfUnitList", null, "UnitId", "Müdürlük veya Proje Seçiniz");
+                        } else if (e.IsSuccess == false) {
+                            $(".cancel").click();
+                            $(".confirm").click();
+                            ShowMessage("warning", "Bilgi", e.Message);
+                        }
+                    },
+                        "POST");
+                } else {
+                    swal({
+                        title: "İsteğiniz üzere iptal Edildi",
+                        text: "Kayıt güvende.",
+                        confirmButtonColor: "#2196F3",
+                        type: "error"
+                    });
+                }
+            });
+    }
+
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/OutOfHour/ParamOutOfHourGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

@@ -1,0 +1,316 @@
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    var userId = HttpContextAccessor.HttpContext.Session.GetInt32("UserId");
+    var userName = HttpContextAccessor.HttpContext.Session.GetString("UserName");
+}
+
+<script src="~/admin/js/pages/chat_layouts.js"></script>
+<div id="ChatModal" class="modal fade">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="panel panel-flat">
+                    <div class="panel-body ">
+                        <ul id="chatDiv" class="media-list chat-list content-group" style="height: 60vh; overflow: auto; scroll-behavior: smooth;">
+                        </ul>
+                    </div>
+                    <div style="height: 25px; margin: -30px 0px 2px 10px;">
+                        <div id="writingDiv" style="display: none;">
+                            <span id="messageAuthorWriting" style="color: red; font-size: 10px;"></span><img src="~/admin/images/loader.gif" style="height: 30px;">
+                        </div>
+                    </div>
+                    <div class="panel-footer">
+                        <div>
+                            <div class="col-md-8">
+                                <textarea id="enter-message" class="form-control content-group" rows="2" cols="1" placeholder="Mesajı giriniz ..."></textarea>
+                                <div class="row text-center">
+                                    <span class="emoji" onclick="emojiSend('&#128079')">&#128079;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128400')">&#128400;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128514')">&#128514;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128516')">&#128516;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128519')">&#128519;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128533')">&#128533;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128545')">&#128545;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128584')">&#128584;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128585')">&#128585;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128586')">&#128586;</span>
+                                    <span class="emoji" onclick="emojiSend('&#129309')">&#129309;</span>
+                                    <span class="emoji" onclick="emojiSend('&#128521')">&#128521;</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <button onclick="sendMessage()" type="button" class="btn bg-teal-400 btn-labeled btn-labeled-right" style="width: 100%;">
+                                    <b>
+                                        <i class="icon-circle-right2"></i>
+                                    </b> Gönder
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .emoji {
+        cursor: pointer;
+        font-size: 20px;
+    }
+</style>
+
+<script>
+    $("#enter-message").on('change onkeyup paste input',
+        function() {
+            connection.invoke('WritingMessage', '@userName');
+        });
+
+    connection.on('chatMessageWriting',
+        function(message) {
+            $('#writingDiv').css("display", "block");
+            $('#messageAuthorWriting').html(message);
+            setTimeout(function() {
+                    $('#writingDiv').css("display", "none");
+                },
+                1000);
+        });
+
+
+    var pageIndex = 0;
+
+    function openChatModal() {
+        $('#chatDiv li').empty();
+        sendAjxForm({ pageIndex: pageIndex },
+            "/Utility/GetChatMessages",
+            function(list) {
+                setTextMessage(list);
+            },
+            "GET");
+        $('#ChatModal').modal("show");
+        $('#enter-message').val('');
+        $('#enter-message').focus();
+        setTimeout(function() { firstScrollHeight = document.getElementById("chatDiv").scrollHeight; }, 300);
+        setTimeout(function() { updateScroll(); }, 500);
+    }
+
+    $('#ChatModal').on('hidden.bs.modal', function() {
+            pageIndex = 0;
+        });
+
+    function emojiSend(emoji) {
+        var old = $('#enter-message').val();
+        if (old.length > 0)
+            $('#enter-message').val(old + ' ' + emoji + ' ');
+        else
+            $('#enter-message').val(emoji + ' ');
+    }
+
+    $(document).on('keypress',
+        function(e) {
+            if (e.which == 13)
+                sendMessage();
+        });
+
+    function sendMessage() {
+        var message = $('#enter-message').val();
+        if (message.length > 0)
+            connection.invoke('chatMessage', '@userName', message);
+    }
+
+    function updateScroll() {
+        var element = document.getElementById("chatDiv");
+        element.scrollTop = element.scrollHeight;
+    }
+
+    connection.on('broadcastMessage',
+        function(userName, message, id, messageDate) {
+            if ('@userName' != userName)
+                ShowMessage("info", "Chat Mesaj", (userName + ": " + message));
+
+            $('#chatMessageSpan').text(parseInt($('#chatMessageSpan').text()) + 1);
+            $('#enter-message').val('');
+            $('#enter-message').focus();
+            var idLi = "li_" + id;
+            if ('@userName' == userName) {
+                var me = '<li id="' +
+                    idLi +
+                    '" class="media reversed">' +
+                    '<div class="media-body">' +
+                    '   <div class="media-heading">' +
+                    '<a onclick="funcDeleteChatMesssage(' +
+                    id +
+                    ')" style="margin-right: 5px;color: red;"><i class="icon-trash"></i></a>' +
+                    '      <a href="#" class="text-semibold">' +
+                    userName +
+                    '</a>' +
+                    '     <span class="media-annotation dotted">' +
+                    messageDate +
+                    '</span>' +
+                    '</div><div class="media-content">' +
+                    message +
+                    '</div></div>' +
+                    '<div class="media-right">' +
+                    '<a href="#" class="btn bg-danger-400 btn-rounded btn-icon btn-xs">' +
+                    '    <span class="letter-icon">' +
+                    userName.substring(0, 1) +
+                    '</span>' +
+                    '</a>' +
+                    '</div>' +
+                    '</li>';
+                $('#chatDiv').append(me);
+            } else {
+                var other = '<li id="' +
+                    idLi +
+                    '" class="media">' +
+                    '<div class="media-left">' +
+                    '<a href="#" class="btn bg-indigo-400 btn-rounded btn-icon btn-xs">' +
+                    '    <span class="letter-icon">' +
+                    userName.substring(0, 1) +
+                    '</span>' +
+                    '</a>' +
+                    ' </div>' +
+                    ' <div class="media-body">' +
+                    '    <div class="media-heading">' +
+                    '        <a href="#" class="text-semibold">' +
+                    userName +
+                    '</a>' +
+                    '        <span class="media-annotation dotted">' +
+                    messageDate +
+                    '</span>' +
+                    '</div><div class="media-content">' +
+                    message +
+                    '</div></div>' +
+                    '</li>';
+                $('#chatDiv').append(other);
+            }
+            updateScroll();
+        });
+
+    function setTextMessage(list) {
+        var text = "";
+        pageIndex++;
+        for (var i = list.length - 1; i >= 0; i--) {
+            var idLi = "li_" + list[i].id;
+            if (parseInt('@userId') == list[i].UserId) {
+                text += '<li id="' +
+                    idLi +
+                    '" class="media reversed">' +
+                    '<div class="media-body">' +
+                    '   <div class="media-heading">' +
+                    '<a onclick="funcDeleteChatMesssage(' +
+                    list[i].Id +
+                    ')" style="margin-right: 5px;color: red;"><i class="icon-trash"></i></a>' +
+                    '      <a href="#" class="text-semibold">' +
+                    list[i].UserNameSurname +
+                    '</a>' +
+                    '     <span class="media-annotation dotted">' +
+                    ConvertJSONDateFormatISO(list[i].CreatedDate) +
+                    '</span>' +
+                    '</div><div class="media-content">' +
+                    list[i].Message +
+                    '</div></div>' +
+                    '<div class="media-right">' +
+                    '<a href="#" class="btn bg-danger-400 btn-rounded btn-icon btn-xs">' +
+                    '    <span class="letter-icon">' +
+                    list[i].UserNameSurname.substring(0, 1) +
+                    '</span>' +
+                    '</a>' +
+                    '</div>' +
+                    '</li>';
+            } else {
+                text += '<li id="' +
+                    idLi +
+                    '" class="media">' +
+                    '<div class="media-left">' +
+                    '<a href="#" class="btn bg-indigo-400 btn-rounded btn-icon btn-xs">' +
+                    '    <span class="letter-icon">' +
+                    list[i].UserNameSurname.substring(0, 1) +
+                    '</span>' +
+                    '</a>' +
+                    ' </div>' +
+                    ' <div class="media-body">' +
+                    '    <div class="media-heading">' +
+                    '        <a href="#" class="text-semibold">' +
+                    list[i].UserNameSurname +
+                    '</a>' +
+                    '        <span class="media-annotation dotted">' +
+                    ConvertJSONDateFormatISO(list[i].CreatedDate) +
+                    '</span>' +
+                    '   </div><div class="media-content">' +
+                    list[i].Message +
+                    '</div></div>' +
+                    '</li>';
+            }
+        }
+        $('#chatDiv').prepend(text);
+        //$('#chatMessageSpan').text(list.length);
+    }
+
+    function funcDeleteChatMesssage(id) {
+        swal({
+                title: "Onaylıyor musunuz ?",
+                text: "Mesajı silmek istediğinize emin misiniz?",
+                type: "warning",
+                html: '',
+                showCancelButton: true,
+                confirmButtonColor: "#EF5350",
+                confirmButtonText: "Evet, Devam et!",
+                cancelButtonText: "Hayır, Kalsın!",
+                closeOnConfirm: false,
+                closeOnCancel: false
+            },
+            function(isConfirm) {
+                if (isConfirm) {
+                    connection.invoke('DeleteChatMessage', id);
+                } else {
+                    swal({
+                        title: "İsteğiniz üzere iptal Edildi",
+                        text: "Kayıt güvende.",
+                        confirmButtonColor: "#2196F3",
+                        type: "error"
+                    });
+                }
+            });
+    }
+
+    connection.on('chatMessageDeleted',
+        function(id, userId) {
+            $(".cancel").click();
+            $(".confirm").click();
+            $('#li_' + id).fadeOut(1000,
+                function() {
+                    $('#li_' + id).remove();
+                });
+        });
+
+</script>
+
+<script>
+    var firstScrollHeight;
+    $(function () {
+        $('#chatDiv').scroll(function () {
+            if ($(this).scrollTop() <= 0) {
+                firstScrollHeight = document.getElementById("chatDiv").scrollHeight;
+                //$('#loadingEffect').css("display", "flex");
+                sendAjxForm({ pageIndex: pageIndex },
+                    "/Utility/GetChatMessages",
+                    function (list) {
+                        setTextMessage(list);
+                        setTimeout(function () {
+                            //$('#loadingEffect').css("display", "none");
+                            document.getElementById("chatDiv").scrollTop = document.getElementById("chatDiv").scrollHeight - firstScrollHeight;
+                        },
+                            500);
+                    },
+                    "GET");
+            }
+        });
+
+    });
+</script>

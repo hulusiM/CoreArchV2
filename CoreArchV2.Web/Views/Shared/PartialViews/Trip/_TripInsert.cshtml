@@ -1,0 +1,85 @@
+﻿@using CoreArchV2.Core.Enum.TripVehicle
+<div id="Trip_FormId">
+    <input id="tripId" type="text" table-param="Id" hidden />
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-4">
+                <label>Araç (*) :</label>
+                <select id="select-vehicleId"
+                        tabindex="1"
+                        table-param="VehicleId"
+                        table-description="Araç"
+                        onchange="funcGetLastKm()"
+                        class="select2-container select2-selection--single" required>
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <label>İşlem Tipi (*):</label>
+                <select table-param="Type" class="select-search">
+                    <option value="@((int)TripType.Mission)">Görev</option>
+                    <option value="@((int)TripType.OffDuty)">Görev Dışı</option>
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <label>Görev Adı/Adresi-Açıklama :</label>
+                <input id="MissionName" table-param="MissionName" tabindex="2" type="text" class="form-control" placeholder="Görev adı/adresi giriniz">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-4">
+                <label>Çıkış Yeri (*) :</label>
+                <select id="StartCityId"
+                        tabindex="3"
+                        class="select-search"
+                        table-param="StartCityId"
+                        table-id="comboBox-StartCityId"
+                        table-model-url="/Combo/GetCityAndDistrictCmbx"
+                        table-tool-type="comboBox"
+                        table-description="Şehir/Bölge"
+                        data-option-label="Şehir/Bölge Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <label>Araç Km (*) :</label>
+                <input id="StartKm-Mission" table-param="StartKm" tabindex="4" type="text" min="0" class="form-control moneyCurrency" autocomplete="off" placeholder="Anlık km değerini giriniz" table-description="Anlık km değeri" required>
+            </div>
+            <div class="col-sm-4">
+                <label>Çıkış Tarihi (*) :</label>
+                <input id="StartDate-mission" table-param="StartDate" tabindex="4" type="date" class="form-control" table-description="Çıkış Tarihi" required>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="alert alert-warning alert-styled-left alert-arrow-left alert-component overflow-auto">
+            <h6 class="alert-heading text-semibold text-brown faa-flash animated">Son Görev Bilgileri</h6>
+            <div id="lastTripUserInfoTag">--.--.--- </div>
+        </div>
+    </div>
+    @* <div class="form-group">
+    <label class="control-label">Açıklama</label>
+    <textarea rows="3" cols="5" table-param="Description" tabindex="13" class="form-control" placeholder="Açıklama"></textarea>
+    </div>*@
+</div>
+@await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+
+<script>
+
+    function funcGetLastKm(vehicleId = null) {
+        var vehicleId = vehicleId != null ? vehicleId : $('#select-vehicleId').val();
+        if (vehicleId > 0) {
+            sendAjxForm({ vehicleId: vehicleId }, "/Trip/GetVehicleLastKm",
+                function (e) {
+                    e.LastKm > 0 ? ($('#StartKm-Mission').val(formatMoney(e.LastKm)).prop("disabled", true)) : $('#StartKm-Mission').prop("disabled", false).val('').attr('placeholder', 'Aracın son km değeri: 0');
+                    e.LastCityId > 0 ? $('#StartCityId').val(e.LastCityId).change().prop("disabled", true) : $('#StartCityId').val('').change().prop("disabled", false);
+                    e.NameSurname != null ? ($('#lastTripUserInfoTag').html("Adı Soyadı: <b>" + e.NameSurname + "</b></br>Araç son km: <b>" + formatMoney(e.LastKm) + "</b>")) : $('#lastTripUserInfoTag').html("<b style='color:red;'>Araç daha önce göreve çıkmamış!</b>");
+
+                    $('#MissionName').focus();
+                    document.getElementById("StartDate-mission").valueAsDate = new Date();
+                    //ShowMessage("info", "Bilgi", ("Seçili plakanın güncel km değeri: <b>" + formatMoney(e,0) + "</b>"),10000);
+                }, 'POST');
+        }
+    }
+</script>

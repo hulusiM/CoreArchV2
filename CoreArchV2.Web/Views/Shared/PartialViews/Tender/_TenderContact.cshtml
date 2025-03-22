@@ -1,0 +1,239 @@
+﻿<div id="TenderContract_FormId" style="font-size: 12px;">
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Adı ve Soyadı (*) :</label>
+                <select id="select-InstitutionUserSurname"
+                        tabindex="1"
+                        table-param="InstitutionId"
+                        class="select2-container select2-selection--single"></select>
+            </div>
+            <div class="col-md-2">
+                <label>-</label>
+                <button tabindex="2" type="submit" class="btn btn-primary full-width" onclick="beforeSaveContact()"><i class="fa fa-plus"></i> Seçili olanı Ekle</button>
+            </div>
+            <div class="col-md-1">
+                <label>-</label>
+                <button tabindex="3" type="submit" class="btn btn-success full-width" onclick="openNewContact()"><i id="newContact_i" class="fa fa-arrow-down"></i> Yeni Kişi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tender_contact" class="form-group" style="padding: 15px;background-color: antiquewhite; display: none;" margin: 11px;>
+        <div class="row">
+            <div class="col-md-2">
+                <label>Adı (*) :</label>
+                <input id="tenderContactName" table-param="Name" type="text" table-description="Kişi Adı" class="form-control" placeholder="Kişi adı giriniz" required>
+            </div>
+            <div class="col-md-2">
+                <label>Soyadı (*) :</label>
+                <input table-param="Surname" type="text" table-description="Kişi Soyadı" class="form-control" placeholder="Kişi soyadı giriniz" required>
+            </div>
+            <div class="col-md-2">
+                <label>Telefon (*) :</label>
+                <input table-param="Phone" type="text" table-description="Kişi Telefon" class="form-control" placeholder="Kişi telefon giriniz" required>
+            </div>
+            <div class="col-md-4">
+                <label>E-Mail :</label>
+                <input table-param="Email" type="text" class="form-control" placeholder="Kişi mail adresi giriniz">
+            </div>
+            <div class="col-md-2">
+                <label>-</label>
+                <button type="submit" class="btn btn-success full-width" onclick="newSaveContact()"><i class="fa fa-plus"></i> Yeni Kişi Ekle</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="panel panel-flat">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="table-responsive">
+                            <table class="table datatable-basic dataTable no-footer" style="font-size: 11px;">
+                                <thead>
+                                    <tr class="filters">
+                                        <th style="text-align: center;">
+                                            Adı
+                                        </th>
+                                        <th style="text-align: center;">
+                                            Soyadı
+                                        </th>
+                                        <th style="text-align: center;">
+                                            Telefon
+                                        </th>
+                                        <th style="text-align: center;">
+                                            E-Mail
+                                        </th>
+                                        <th style="text-align: center;">
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contact_TBody" class="text-center"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+            </div>
+            <div class="col-sm-1">
+                <button tabindex="4" type="submit" class="btn btn-success full-width" onclick="$('#stepy-head-0').click()"><i class="fa fa-arrow-left"></i> Önceki</button>
+            </div>
+            <div class="col-sm-4">
+                <button tabindex="3" type="submit" class="btn btn-primary full-width" onclick="funcSaveUpdateContact()"><i class="fa fa-arrow-right"></i> Kaydet ve Devam Et</button>
+            </div>
+            <div class="col-sm-1">
+                <button tabindex="4" type="submit" class="btn btn-success full-width" onclick="$('#stepy-head-2').click()"><i class="fa fa-arrow-right"></i> Sonraki</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    table tr td {
+        text-align: center;
+    }
+</style>
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-InstitutionUserSurname').select2({
+        placeholder: 'Kişi adı ve soyadı giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetTenderContactCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    }).on('change',
+        function (e) {
+
+        });
+</script>
+
+<script>
+    var contactArr = new Array();
+    function beforeSaveContact() {
+        var userId = $('#select-InstitutionUserSurname').val();
+        if (userId > 0) {
+            sendAjxForm({ id: userId },
+                "/Combo/GetTenderContactCmbx",
+                function (e) {
+                    if (e.length > 0)
+                        addContactRow({ Name: e[0].Name, Surname: e[0].Surname, Phone: e[0].Phone, Email: e[0].Email });
+                }, "GET");
+        } else
+            ShowMessage("info", "Bilgi", "Kişi seçiniz");
+    }
+
+    function newSaveContact() {
+        var model = FormGetAllValue("#tender_contact [table-param]");
+        if (model != null)
+            addContactRow(model);
+    }
+
+    function addContactRow(model) {
+        if (contactArrControl(model))
+            ShowMessage("info", "Bilgi", "Bu kişi zaten eklenmiş.");
+        else {
+            var id = "contact_" + Math.random().toString().substring(2);
+            model.Id = id;
+            contactArr.push(model);
+            var onclick = "deleteRowContact('" + id + "')";
+            var button = '<a onclick="' + onclick + '"><i title="Satırı Sil" class="fa fa-trash text-warning"></i></button>';
+            var query = "<tr id='" + id + "'><td>" + model.Name + "</td><td>" + model.Surname + "</td><td>" + model.Phone + "</td><td>" + (model.Email ?? "") + "</td><td>" + button + "</td></tr>";
+            $('#contact_TBody').append(query);
+            $('#select-InstitutionUserSurname').val('').change();
+            FormAllInputsClearNoCloseModal("#tender_contact [table-param]");
+        }
+    }
+
+    function contactArrControl(model) {
+        for (var i = 0; i < contactArr.length; i++) {
+            var temp = contactArr[i];
+            if (temp.Name.toLowerCase() === model.Name.toLowerCase() && temp.Surname.toLowerCase() === model.Surname.toLowerCase() && temp.Phone.toLowerCase() === model.Phone.toLowerCase())
+                return true;
+        }
+        return false;
+    }
+
+    function deleteRowContact(id) {
+        for (var i = 0; i < contactArr.length; i++)
+            if (contactArr[i].Id === id)
+                contactArr.splice(i, 1);
+
+        $("#" + id).remove();
+    }
+
+    function openNewContact() {
+        if (!$('#tender_contact').is(':visible')) {
+            $('#tenderContactName').focus();
+            $('#newContact_i').removeClass('fa-arrow-down').addClass('fa-arrow-up');
+            $("#tender_contact").slideDown();
+        } else
+            closeSlide();
+    }
+
+    function closeSlide() {
+        $('#newContact_i').removeClass('fa-arrow-up').addClass('fa-arrow-down');
+        $("#tender_contact").slideUp();
+    }
+
+    function funcSaveUpdateContact() {
+        var tenderId = $('#tender_Id').val();
+        if (tenderId == 0 || tenderId == "")
+            ShowMessage("info", "Bilgi", "Teklif değeri bulunamadı");
+        else if (contactArr.length == 0)
+            ShowMessage("info", "Bilgi", "Herhangi bir kişi seçilmedi");
+        else {
+            var model = {
+                TenderId: tenderId,
+                ContactList: contactArr
+            };
+            sendAjxForm(model, "/Tender/InsertUpdateTenderContract",
+                function (e) {
+                    if (e.IsSuccess) {
+                        ShowMessage("success", "Bilgi", "İşlem başarılı");
+                        $('#stepy-head-2').click();
+                    }
+                    else
+                        ShowMessage("warning", "Hata", e.Message);
+
+                }, "POST");
+        }
+    }
+
+    function funcSetContactList() {
+        var tenderId = $('#tender_Id').val();
+        if (tenderId > 0) {
+            sendAjxForm({ tenderId: tenderId }, "/Tender/GetByTenderIdContactList",
+                function (e) {
+                    removeContactTable();
+                    if (e.length > 0) {
+                        for (var i = 0; i < e.length; i++)
+                            addContactRow(e[i]);
+                        contactArr = e;
+                    }
+                    else
+                        ShowMessage("warning", "Bilgi", "Teklif/Satışa ait iletişim bilgileri girilmedi");
+                }, "POST");
+        }
+    }
+
+    function removeContactTable() {
+        $('#contact_TBody tr').remove();
+        contactArr = [];
+    }
+</script>

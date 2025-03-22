@@ -1,0 +1,64 @@
+﻿<script src="~/admin/chat/script.js"></script>
+<link href="~/admin/chat/style.css" rel="stylesheet" />
+
+@* <div class="chat_box">
+    <div class="chat_head"><span id="onlineUserCount" class="badge bg-primary-800">0</span> Aktif Kullanıcılar </div>
+    <div class="chat_body" style="overflow: auto;height:400px;">
+     
+    </div>
+</div> *@
+
+
+<script>
+    var alertDiv = $('#onlineUserCount');
+    function loadOnlineUser() {
+        sendAjxForm("", "/Login/GetOnlineUser",
+            function (e) {
+                var result = "";
+                for (var i = 0; i < e.length; i++) {
+                    var image = e[i].Image != "" ? "data:image/gif;base64," + e[i].Image : "/admin/images/userEmpty.jpg";
+                    result += '<div id="' + e[i].Id + '" class="sidebar-user-box"><img src="' + image + '" /><span>' + e[i].UserName + '</span></div>';
+                }
+
+                $('.chat_body').html(result);
+                $('#onlineUserCount').html(e.length);
+
+                alertDiv.addClass(' faa-flash animated faa-slow');
+
+                setTimeout(function () {
+                    alertDiv.removeClass('faa-flash animated faa-slow')
+                }, 3000);
+
+            }, 'GET', false);
+    }
+
+    //$(document).on('keypress', 'textarea',
+    //    function(e) {
+    //        if (e.keyCode == 13) {
+    //            var msg = $(this).val();
+    //            $(this).val('');
+    //            if (msg.trim().length != 0) {
+    //                var chatbox = $(this).parents().parents().parents().attr("rel");
+    //                $('<div class="msg-right">' + msg + '</div>').insertBefore('[rel="' + chatbox + '"] .msg_push');
+    //                $('.msg_body').scrollTop($('.msg_body')[0].scrollHeight);
+    //            }
+    //        }
+    //    });
+
+    $("#group_message_text").on('change onkeyup paste input',
+        function () {
+            if (e.keyCode == 13) {
+                var msg = $(this).val();
+                $(this).val('');
+                if (msg.trim().length != 0) {
+                    var chatbox = $(this).parents().parents().parents().attr("rel");
+                    $('<div class="msg-right">' + msg + '</div>').insertBefore('[rel="' + chatbox + '"] .msg_push');
+                    $('.msg_body').scrollTop($('.msg_body')[0].scrollHeight);
+                }
+            }
+        });
+
+    $(document).ready(function () {
+         // loadOnlineUser();
+    });
+</script>

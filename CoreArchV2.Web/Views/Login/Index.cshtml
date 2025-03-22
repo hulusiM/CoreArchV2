@@ -1,0 +1,211 @@
+﻿@{
+    Layout = "~/Views/Shared/_Login_Layout.cshtml";
+}
+
+<div class="limiter">
+    <div class="container-login100">
+        <div class="wrap-login100">
+            <div class="login100-pic js-tilt" data-tilt>
+                <img src="~/admin/Login/images/img-01.png" />
+            </div>
+
+            <div class="login100-form validate-form">
+                <span class="login100-form-title">
+                    Portal Giriş
+                </span>
+
+                <div class="wrap-input100 validate-input" data-validate="Telefon numarası zorunludur">
+                    <input class="input100 phone-format" type="text" id="UserName" placeholder="(532) 123-0000">
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-phone" aria-hidden="true"></i>
+                    </span>
+                </div>
+
+                <div class="wrap-input100 validate-input" data-validate="Şifre alanı zorunludur">
+                    <input class="input100" type="password" id="Password" placeholder="Şifre">
+                    <span class="focus-input100"></span>
+                    <span class="symbol-input100">
+                        <i class="fa fa-lock" aria-hidden="true"></i>
+                    </span>
+                </div>
+
+                <div class="container-login100-form-btn">
+                    <button class="login100-form-btn">
+                        Giriş
+                    </button>
+                </div>
+                <div class="text-center p-t-12">
+                    <span id="capsLockSpan" style="text-align: center;color: red; display: none;">Caps Lock Açık!</span>
+                </div>
+                <div class="text-center p-t-12">
+                    <a id="passForget" class="txt2" href="#">
+                        Şifremi Unuttum !
+                    </a>
+                </div>
+
+                <div class="text-center p-t-136">
+                    <a class="txt2" href="#">
+
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(".control-success").uniform({
+        radioClass: 'choice',
+        wrapperClass: 'border-danger-600 text-danger-800'
+    });
+
+
+    function checkLogin() {
+        $('.pageloader').css("display", "block");
+        setTimeout(function () {
+            var username = $('#UserName').val();
+            var password = $('#Password').val();
+            if (username.length > 0 && password.length > 0) {
+                var url_string = window.location.href;
+                var url = new URL(url_string);
+                var redirectToUrl = url.searchParams.get("redirectUrl");
+
+                var model = {
+                    mobilePhone: username,
+                    pass: password,
+                    redirectUrl: redirectToUrl
+                };
+                sendAjxForm(model, "/Login/LoginCheck",
+                    function (e) {
+                        if (e.LoginMessage == "") {
+                            ShowMessage("success", "Bilgi", "Giriş Başarılı");
+                            setTimeout(function () { window.location = e.RedirectUrl; }, 100);
+                        }
+                        else
+                            ShowMessage("info", "Bilgi", e.LoginMessage);
+
+                        $('.pageloader').css("display", "none");
+                    }, "POST");
+            } else {
+                ShowMessage("info", "Bilgi", "Telefon ve Şifre boş geçilemez");
+                $('.pageloader').css("display", "none");
+            }
+        }, 100);
+    }
+
+    $('#passForget').click(function () {
+        swal({
+            title: "<b style='color:red;'>Sifremi Unuttum?</b>",
+            text: "<textarea id='passForgetInput' type='text' placeholder='E-Mail adresini giriniz' rows='1' class='form-control' style='width: 100%;'></textarea>",
+            inputPlaceholder: "Bir şeyler yazınız ...",
+            html: true,
+            type: "warning",
+            showCancelButton: true,
+            cancelButtonColor: "#DD6B55",
+            confirmButtonColor: "#DD6B55",
+            confirmButtonText: "Gönder",
+            cancelButtonText: "Ekranı Kapat",
+            closeOnConfirm: false,
+            closeOnCancel: true,
+        }, function (isConfirm) {
+            if (isConfirm) {
+                var email = $('#passForgetInput').val();
+                if (email != '') {
+                    $('.pageloader').css("display", "block");
+                    setTimeout(function () {
+                        sendAjxForm({ email: email }, "/Login/GenerateNewPassword",
+                            function (e) {
+                                if (e.IsSuccess) {
+                                    swal({
+                                        title: "<b>Yeni şifreniz gönderildi <i style='margin-bottom: 5px;color:red;margin-left: 10px;' class='fa fa-space-shuttle faa-passing animated'></i></b>",
+                                        html: true,
+                                        customClass: 'swal-FastMessage',
+                                        text: "Yeni şifre talebiniz alınmıştır, sisteme kayıtlı e-mail adresinizi kontrol ediniz.",
+                                        confirmButtonColor: "#2196F3",
+                                        confirmButtonText: "Kapat",
+                                        type: "success",
+                                    });
+                                } else
+                                    ShowMessage("info", "Bilgi", e.Message);
+
+                                $('.pageloader').css("display", "none");
+                            }, "POST");
+                    }, 100);
+                } else {
+                    setTimeout(function () { $('#passForgetInput').focus(); }, 100);
+                    ShowMessage("info", "Bilgi", "Lütfen e-mail adresi giriniz");
+                }
+            }
+        });
+        setTimeout(function () { $('#passForgetInput').focus(); }, 100);
+    });
+
+    $(document).ready(function () {
+        catchCaps();
+    });
+
+    function catchCaps() {
+        var input = document.getElementById("bodyDiv");
+        var text = document.getElementById("capsLockSpan");
+        input.addEventListener("keyup", function (event) {
+            if (event.getModifierState("CapsLock"))
+                text.style.display = "block";
+            else
+                text.style.display = "none";
+        });
+    }
+
+    $('.phone-format').keydown(function (e) {
+        var key = e.which || e.charCode || e.keyCode || 0;
+        $phone = $(this);
+
+        if ($phone.val().length === 1 && (key === 8 || key === 46)) {
+            $phone.val('(');
+            return false;
+        } else if ($phone.val().charAt(0) !== '(') {
+            $phone.val('(' + $phone.val());
+        }
+
+        if (key !== 8 && key !== 9) {
+            if ($phone.val().length === 4) {
+                $phone.val($phone.val() + ')');
+            }
+            if ($phone.val().length === 5) {
+                $phone.val($phone.val() + ' ');
+            }
+            if ($phone.val().length === 9) {
+                $phone.val($phone.val() + '-');
+            }
+        }
+
+        return (key == 8 ||
+            key == 9 ||
+            key == 46 ||
+            (key >= 48 && key <= 57) ||
+            (key >= 96 && key <= 105));
+    }).keyup(function (e) {
+        $phone = $(this);
+
+        if ($phone.val().length == 2 && $phone.val() == "(0")
+            return $phone.val('(');
+
+    }).bind('focus click', function () {
+        $phone = $(this);
+
+        if ($phone.val().length === 0) {
+            $phone.val('(');
+        }
+        else {
+            var val = $phone.val();
+            $phone.val('').val(val);
+        }
+    }).blur(function () {
+        $phone = $(this);
+
+        if ($phone.val() === '(') {
+            $phone.val('');
+        }
+    });
+
+</script>

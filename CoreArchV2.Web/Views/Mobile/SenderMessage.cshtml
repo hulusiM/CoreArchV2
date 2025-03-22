@@ -1,0 +1,222 @@
+﻿@using CoreArchV2.Core.Enum
+@using CoreArchV2.Dto.ELogisticsDto
+<script>$('#broadCrumbDiv').text('EMail/Sms/Push Notification')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>EMail/Sms/Push Notification Gönderme</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">     
+        <li>
+            <a onclick="funcOpenNewMessageModal()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="select-userId"
+                                tabindex="1"
+                                table-param="UserId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="MessageType"
+                                class="select-search"
+                                table-param="Type"
+                                table-id="comboBox-Type"
+                                table-model-url="/Combo/GetMessageLogType"
+                                table-tool-type="comboBox"
+                                data-option-label="Gönderim Tipi Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableMain"
+                           table-id="dataTable-Main"
+                           table-model-url="/Mobile/MessageGetAll"
+                           table-DatabaseName="/Mobile"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="MessageType" style="text-align: center;">
+                                    Mesaj Tipi
+                                </th>
+                                 <th data-value="CreatedDate" data-type="datetime" style="text-align: center;">
+                                    Gönderim Tarihi
+                                </th>
+                                <th data-value="MessageTo" style="text-align: center;">
+                                    Kime
+                                </th>
+                                <th data-value="Subject" style="text-align: center;">
+                                    Konu
+                                </th>
+                                <th data-value="Body" style="text-align: center;">
+                                    İçerik
+                                </th>
+                                <th data-value="CreatedNameSurname" style="text-align: center;">
+                                    Kim Gönderdi
+                                </th>
+                                <th data-value="Status" style="text-align: center;">
+                                    Durum
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/Mobile/_SendMailSmsPN.cshtml")
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-plate').select2({
+        placeholder: 'Araç Seçiniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+
+    $('#select-plate2').select2({
+        placeholder: 'Araç Seçiniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleDebitUserCmbx2',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+
+    $('#select-userId').select2({
+        placeholder: 'Talep Eden Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+
+    $('#select-userId2').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    var historyButtonsActive = false;
+    var isHgsPage = false;
+    function MainModalOpen() {
+        $('#MaintenanceInsert_toggle').click();
+        historyButtonsActive = false;
+        FormAllInputsClearNoCloseModal("#Maintenance_FormId [table-param]");
+        setImage(null);
+        funcCustomComboBoxSingle("select-plate2", "", "");
+        funcCustomComboBoxSingle("select-userId2", "", "");
+        $('.select-search').val('').select2();
+        $('#EditInsertModal').modal("show");
+    }
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Mobile/MessageGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

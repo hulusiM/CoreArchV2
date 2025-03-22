@@ -1,0 +1,138 @@
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration _config
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = null;
+    var userName = HttpContextAccessor.HttpContext.Session.GetString("UserName");
+    var userId = HttpContextAccessor.HttpContext.Session.GetInt32("UserId");
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>@_config["FirmSetting:DisplayName"]-One Note</title>
+    <script src="~/admin/js/core/libraries/jquery.min.js"></script>
+    <link rel='stylesheet' href='https://pro.fontawesome.com/releases/v5.10.0/css/all.css'>
+    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css'>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/css/bootstrap-select.min.css'>
+    <link href="~/js/trello/style.css" rel="stylesheet" />
+    <script src="~/admin/Toastr/toastr.js"></script>
+</head>
+<body>
+
+    <input id="userName" value="@userName" hidden />
+    <input id="userId" value="@userId" hidden />
+
+    <div class="main-page">
+        <div class="main" id="main-0">
+            <div class="content">
+                <h3 class="text-center">To Do List</h3>
+                <span id="tab">
+                    <div class="row">
+                        <div class="col" data-col-num="1">
+                            <div class="card card-col">
+                                <div class="card-body noPadding">
+                                    <input type="text" class="text-center title-col form-control-lg" value="Yapılacaklar" disabled />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col" data-col-num="2">
+                            <div class="card card-col">
+                                <div class="card-body noPadding">
+                                    <input type="text" class="text-center title-col form-control-lg" value="İşlemde" disabled />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col" data-col-num="3">
+                            <div class="card card-col">
+                                <div class="card-body noPadding">
+                                    <input type="text" class="text-center title-col form-control-lg" value="Bitmiş Olanlar" disabled />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col" ondrop="drop(event)" ondragover="allowDrop(event)" id="col_1">
+                            <div id="btnTodo" class="card card-col" onclick="addCard(event)" data-col="1">
+                                <div class="card-body new-col">
+                                    <i class="fas fa-plus text-center"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col" ondrop="drop(event)" ondragover="allowDrop(event)" id="col_2">
+                            <div id="btnProcess" class="card card-col" onclick="addCard(event)" data-col="2">
+                                <div class="card-body new-col">
+                                    <i class="fas fa-plus text-center"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col" data-col-num="3" ondrop="drop(event)" ondragover="allowDrop(event)" id="col_3">
+                            <div id="btnFinished" class="card card-col" onclick="addCard(event)" data-col="3">
+                                <div class="card-body new-col">
+                                    <i class="fas fa-plus text-center"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-card" class="modal fade" aria-hidden="true" data-backdrop="static" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <select id="modal-title"
+                            class="modal-title selectpicker"
+                            data-live-search="true"
+                            table-id="comboBox-modal-title"
+                            table-tool-type="comboBox"
+                            data-option-label="Araç Seçiniz"
+                            table-model-url="/Combo/GetVehicle2Cmbx">
+                    </select>
+                    @*<h5 class="modal-title" id="modal-title" contenteditable></h5>*@
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input id="cellId" type="text" hidden />
+                    <input id="oneNoteId" type="text" hidden />
+                    <input id="oneNoteType" type="text" hidden />
+                    <h6>Açıklama :</h6>
+                    @*<div id="modal-content" contenteditable></div>*@
+                    <textarea id="modal-content" class="form-control" rows="6" placeholder="Kart için içerik giriniz ..." autofocus></textarea>
+                    <div>
+                        <br />
+                        <h6>Konu seçiniz :</h6>
+                        <select class="form-select" aria-label="Default select example" id="importantSelect">
+                            <option value="0">Önemli</option>
+                            <option value="1">Normal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        İptal
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveModifCard()">
+                        Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/js/jsutilities/ajxutils.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/@@popperjs/core@2.9.3/dist/umd/popper.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@@popperjs/core@2.9.2/dist/umd/popper.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js'></script>
+    <script src="~/js/trello/script.js"></script>
+    <link href="~/admin/Toastr/toastr.css" rel="stylesheet" />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta2/js/bootstrap-select.min.js'></script>
+</body>
+</html>

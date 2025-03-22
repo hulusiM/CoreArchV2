@@ -1,0 +1,108 @@
+﻿<div id="TireDebitModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Araç Lastik Değişimi</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        @await Html.PartialAsync("~/Views/Shared/PartialViews/Tire/_TireDebit.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TireDebitReturnModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Araç Lastik Depoya iade</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        @await Html.PartialAsync("~/Views/Shared/PartialViews/Tire/_TireDebitReturn.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TireInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Depoya Lastik Ekle</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        @await Html.PartialAsync("~/Views/Shared/PartialViews/Tire/_TireInsert.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TireHistoryModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Lastik İşlem Geçmişi</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        @await Html.PartialAsync("~/Views/Shared/PartialViews/Tire/_TireHistory.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TireInertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Lastik Atıl İşlemi</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        @await Html.PartialAsync("~/Views/Shared/PartialViews/Tire/_TireInert.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TireChartModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Lastik Rapor</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        @await Html.PartialAsync("~/Views/Shared/PartialViews/Tire/_TireChart.cshtml")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

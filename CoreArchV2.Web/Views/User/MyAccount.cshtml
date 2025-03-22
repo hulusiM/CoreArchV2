@@ -1,0 +1,227 @@
+﻿<script>$('#broadCrumbDiv').text('Dashboard')</script>
+@model EUserDto
+
+<div class="row" style="margin: 4px -7px 0px -20px;">
+    <div class="panel panel-info panel-bordered">
+        <div class="panel-heading">
+            <h6 class="panel-title text-semibold"><i class="icon-profile position-left"></i>Profilim</h6>
+            <div class="heading-elements panel-nav">
+            </div>
+        </div>
+        <div class="row" style="padding: 20px;">
+            <div class="col-md-3">
+                <div class="thumbnail">
+                    <div class="thumb">
+                        @if (!string.IsNullOrEmpty(Model.Image))
+                        {
+                            var imgSrc = String.Format("data:image/gif;base64,{0}", @Model.Image);
+                            <img id="userpicture" src="@imgSrc" class="img-responsive full-width" alt="@Model.FullName">
+                        }
+                        else
+                        {
+                            <img id="userpicture" src="/admin/images/userEmpty.jpg" class="img-responsive full-width" alt="@Model.FullName" />
+                        }
+                        <input id="imgupload" type="file" name="file" title="Resim seçiniz" accept="image/*" class="btn hidden" />
+                    </div>
+
+                    <div class="caption text-center">
+                        <h6 class="text-semibold no-margin">@Model.FullName <small class="display-block">@Model.UnitName</small></h6>
+                        <ul class="icons-list mt-15">
+                            <li><a onclick="deleteImage();" data-popup="tooltip" title="" data-original-title="Sil"><i class="icon-trash" style="color: red; font-size: 16px; margin-left: 5px;"></i></a></li>
+                            <li><a onclick="$('#imgupload').trigger('click');" data-popup="tooltip" title="" data-original-title="Yükle"><i class="icon-upload" style="font-size: 16px;"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="tabbable tab-content-bordered">
+                    <ul class="nav nav-tabs nav-tabs-highlight nav-justified">
+                        <li id="liAttr_1" class="active">
+                            <a href="#resetPass" data-toggle="tab"><i class="icon-history position-left "></i>Şifre Yenile</a>
+                        </li>
+                        <li id="liAttr_2">
+                            <a id="UserProfile_toggle" href="#myProfile" data-toggle="tab"><i class="icon-profile position-left"></i>Profilim</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane has-padding active" id="resetPass">
+                            <div class="row">
+                                <div class="form-group">
+                                    <label class="control-label">Eski Şifre</label>
+                                    <input table-param="oldPassword" id="oldPass" type="password" class="form-control pass" maxlength="10" table-description="Eski Şifre" placeholder="Eski Şifre Giriniz" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Yeni Şifre</label>
+                                    <input table-param="newPassword" id="newPass" type="password" class="form-control pass" maxlength="10" table-description="Yeni Şifre" placeholder="Yeni Şifreyi Giriniz" required />
+                                </div>
+                                <div class="form-group">
+                                    <label class="control-label">Yeni Şifre Tekrarı</label>
+                                    <input id="newPassAgain" type="password" class="form-control pass" table-description="Yeni Şifre Tekrar" maxlength="10" placeholder="Yeni Şifreyi Tekrar Giriniz" required />
+                                </div>
+                                <div class="form-group">
+                                    <a onclick="funcPasswordChange()" class="btn btn-primary" style="float: right;">Şifreyi Değiştir</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane has-padding" id="myProfile">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="col-md-12">
+                                        <label>Adı :</label>
+                                        <input table-param="Name" type="text" class="form-control" disabled>
+                                    </div>
+                                    <div class="col-md-12" style="margin-top: 10px;">
+                                        <label>Telefon :</label>
+                                        <input table-param="MobilePhone" type="text" class="form-control" disabled>
+                                    </div>
+                                    <div class="col-md-12" style="margin-top: 10px;">
+                                        <label>E-Mail :</label>
+                                        <input table-param="Email" type="text" class="form-control" disabled>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="col-md-12">
+                                        <label>Soyadı :</label>
+                                        <input table-param="Surname" type="text" class="form-control" disabled>
+                                    </div>
+                                    <div class="col-md-12" style="margin-top: 10px;">
+                                        <label>Doğum Tarihi :</label>
+                                        <input table-param="BirthDate" type="date" class="form-control" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('.pass').on('input', function() {
+        if ($(this).val().length >= 10) {
+            ShowMessage("info", "Önemli", "Şifre uzunluğu max 10 karakter olabilir");
+            return;
+        }
+    });
+    $(document).ready(function() {
+        if ('@Model.IsChangePassWarning' == 'True')
+            ShowMessage("warning", "Önemli", "Sistemde tanımlı ilk şifreniz görünüyor, güvenlik için lütfen değiştiriniz", "30000");
+    });
+
+    $('#UserProfile_toggle').click(function() {
+        var userId = @Model.Id;
+        if (userId > 0) {
+            sendAjxForm({ Id: userId },
+                "/User/GetById",
+                function(e) {
+                    if (e.Id > 0) {
+                        var model = {
+                            selector: "#myProfile [table-param]",
+                            data: e
+                        };
+                        FormSetAllValue(model);
+                    } else
+                        ShowMessage("error", "Hata", "Kullanıcı bilgilerini çekerken hata oluştu");
+                }, "GET");
+        }
+    });
+
+    function funcPasswordChange() {
+        var newPass = $('#newPass').val();
+        var newPassAgain = $('#newPassAgain').val();
+        if (newPass == newPassAgain) {
+            if (newPass.length < 4) {
+                ShowMessage("info", "Bilgi", "Şifre uzunluğu min 4 karakter olmalıdır.");
+                return;
+            }
+            var model = FormGetAllValue(".tab-pane [table-param]");
+            sendAjxForm(model,
+                "/User/ChangePassword",
+                function(e) {
+                    if (e.IsSuccess === true) {
+                        $('#oldPass').val('');
+                        $('#newPass').val('');
+                        $('#newPassAgain').val('');
+                        ShowMessage("success", "Bilgi", e.Message);
+                    } else {
+                        ShowMessage("error", "Bilgi", e.Message);
+                    }
+                },
+                "POST");
+        } else {
+            ShowMessage("info", "Bilgi", "Şifreler Uyuşmamaktadır.");
+        }
+    }
+
+    function readURL(input, div) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $(div).attr('src', e.target.result);
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    $("#imgupload").change(function() {
+        var fileName = document.getElementById("imgupload").value;
+        var idxDot = fileName.lastIndexOf(".") + 1;
+        var extFile = fileName.substr(idxDot, fileName.length).toLowerCase();
+        if (extFile == "jpg" || extFile == "jpeg" || extFile == "png") {
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.readAsDataURL(this.files[0]);
+                reader.onload = function(e) {
+                    $('#userpicture').attr('src', e.target.result);
+                    uploadImage();
+                }
+            }
+            //readURL(input, '#userpicture');
+        } else {
+            $('#userpicture').attr('src', '/admin/images/userEmpty.jpg');
+            ShowMessage("warning", "Bilgi", "Lütfen resim formatı seçiniz.<br/> (Örnek format: jpg/jpeg/png)");
+        }
+    });
+
+    function uploadImage() {
+        var file = document.getElementById("userpicture").src;
+        var formdata = new FormData();
+        formdata.append("base64image", file);
+        formdata.append("UserId", @Model.Id);
+
+        sendAjxFormFileUpload(formdata,
+            '/User/SaveImage',
+            function(e) {
+                if (e == true) {
+                    readURL($('#imgupload')[0], '.profilePhoto');
+                    ShowMessage("success", "Bilgi", "Profil resmi başarıyla eklendi");
+                } else if (e == false)
+                    ShowMessage("error", "Hata", "Kayıt sırasında hata oluştu");
+                else {
+                    if (e == 'NotAuthorizationCore') {
+                        var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                        ShowMessage("error", "Yetkisiz İşlem", message);
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+                }
+            },
+            'POST');
+    }
+
+    function deleteImage() {
+        funcSwalMessage({ UserId: @Model.Id }, "/User/DeleteImage", "Profil resmi silinecektir?", function(e) {
+            if (e == true) {
+                $("#imgupload").val('');
+                $('#userpicture').attr('src', '/admin/images/userEmpty.jpg');
+                $('.profilePhoto').attr('src', '/admin/images/userEmpty.jpg');
+                //$("#updateBut").attr("disabled", true);
+                ShowMessage("success", "Bilgi", "Profil resmi silindi");
+            } else if (e == false)
+                ShowMessage("error", "Hata", "İşlem sırasında hata oluştu");
+            else
+                ShowMessage("warning", "Bilgi", e);
+        });
+    }
+</script>

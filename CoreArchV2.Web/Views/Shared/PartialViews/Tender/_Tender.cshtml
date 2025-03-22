@@ -1,0 +1,228 @@
+﻿@using CoreArchV2.Core.Enum
+<div id="Tender_FormId">
+    <input type="text" id="tender_Id" table-param="Id" hidden />
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Satış numarası (*) :</label>
+                <input id="SalesNumber" table-param="SalesNumber" tabindex="1" type="text" class="form-control" placeholder="Teklif numarası" disabled>
+            </div>
+            <div class="col-md-4">
+                <label>Proje Adı (*) :</label>
+                <input table-param="Name" tabindex="2" type="text" class="form-control" autocomplete="off" table-description="Proje Adı"
+                       placeholder="Proje Adı" required>
+            </div>
+            <div class="col-md-4">
+                <label>Satış Tipi (*) :</label>
+                <select id="ProjectDetailId"
+                        class="select-search"
+                        table-param="ProjectDetailId"
+                        table-id="comboBox-ProjectDetailId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TenderProjectType)"
+                        table-tool-type="comboBox"
+                        tabindex="3"
+                        table-description="Satış Tipi"
+                        data-option-label="Satış Tipi Seçiniz" required>
+                </select>
+            </div>
+            @*<div class="col-md-3">
+                <label>Kurum/Müdürlük (*) :</label>
+                <select id="select-InstitutionId"
+                        tabindex="4"
+                        table-param="InstitutionId"
+                        table-description="Kurum"
+                        class="select2-container select2-selection--single" required></select>
+            </div>*@
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>İletişim Kanalı (*) :</label>
+                <select id="ContactTypeId"
+                        class="select-search"
+                        table-param="ContactTypeId"
+                        table-id="comboBox-ContactTypeId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.ContactType)"
+                        table-tool-type="comboBox"
+                        tabindex="5"
+                        table-description="İletişim Kanalı"
+                        data-option-label="İletişim Kanalı Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Şehir :</label>
+                <select id="CityId"
+                        tabindex="7"
+                        class="select-search"
+                        table-param="CityId"
+                        table-id="comboBox-CityId"
+                        table-model-url="/Combo/GetCityCmbx"
+                        table-tool-type="comboBox"
+                        table-description="Şehir/Bölge"
+                        data-option-label="Şehir Seçiniz">
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>İhale Tarihi :</label>
+                <input id="TenderDate" table-param="TenderDate" tabindex="6" type="date" class="form-control">
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Para Birimi :</label>
+                <select id="MoneyTypeId"
+                        class="select-search"
+                        table-param="MoneyTypeId"
+                        table-id="comboBox-MoneyTypeId"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.MoneyType)"
+                        table-tool-type="comboBox"
+                        tabindex="8"
+                        table-description="Para Birimi"
+                        data-option-label="Para Birimi Seçiniz">
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label>Döviz Kur (TL Cinsinden):</label>
+                <input id="ExchangePrice" table-param="ExchangePrice" tabindex="9" type="text" class="form-control moneyCurrency"
+                       autocomplete="off" table-description="Döviz Kuru Bedeli" placeholder="Döviz Kuru bedeli giriniz">
+            </div>
+            <div class="col-md-4">
+                <label>Garanti :</label>
+                <div class="checkbox checkbox-switchery" style="margin-top: 0px;">
+                    <input table-param="IsWarranty"
+                           id="IsWarranty"
+                           type="checkbox"
+                           class="make-switch"
+                           data-on-text="Var"
+                           data-off-text="Yok"
+                           data-size="large" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-12">
+                <label class="control-label">Belge :</label>
+                <div class="file-loading">
+                    <input id="imageUploadFormTender" tabindex="1" type="file" multiple>
+                </div>
+                <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+            </div>
+            <div class="col-sm-1">
+                <button type="button" tabindex="4" class="btn btn-danger full-width" onclick="funcCancelModal('#Tender_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+            </div>
+            <div class="col-sm-4">
+                <button tabindex="3" type="submit" class="btn btn-primary full-width" onclick="funcSaveUpdateTender()"><i class="fa fa-arrow-right"></i> Kaydet ve Devam Et</button>
+            </div>
+            <div class="col-sm-1">
+                <button tabindex="3" type="submit" class="btn btn-success full-width" onclick="$('#stepy-head-1').click()"><i class="fa fa-arrow-right"></i> Sonraki</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-InstitutionId').select2({
+        placeholder: 'Kurum veya müdürlük seçiniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetInstitutionAddManagerCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+    function funcSaveUpdateTender() {
+        var model = FormGetAllValue("#Tender_FormId [table-param]");
+        if (model != null) {
+            var tenderId_ = model.Id;
+            var files = $('#imageUploadFormTender').fileinput('getFileList');
+            var formData = new FormData();
+            for (var i = 0; i === files.length; i++)
+                formData.append("files", files[i]);
+
+            var newModel = insertFormDataParam(formData, model);
+            sendAjxFormFileUpload(newModel, '/Tender/InsertUpdate',
+                function (e) {
+                    if (e == 'NotAuthorizationCore') {
+                        var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                        ShowMessage("error", "Yetkisiz İşlem", message);
+                    } //else
+                    else if (e.IsSuccess) {
+                        ShowMessage("success", "Bilgi", e.Message, "8000");
+                        $('#tender_Id').val(e.Id);
+                        tenderId = e.Id;
+                        if (tenderId_ == 0)//güncelleme
+                            $('#stepy-head-1').click();
+                        funcFilterTable();
+                    } else
+                        ShowMessage("error", "Bilgi", e.Message);
+                },
+                'POST');
+        }
+    }
+
+    function funcEditTender(tenderId) {
+        clearButtons();
+        sendAjxForm({ id: tenderId }, '/Tender/GetById', function (e) {
+            if (e.Id > 0) {
+                var model = {
+                    selector: '#Tender_FormId [table-param]',
+                    data: e
+                };
+                FormSetAllValue(model);
+                setInstitution(e.InstitutionId, "select-InstitutionId");
+                if (e.files.length > 0) {
+                    var arr = new Array();
+                    var deleteObj = [];
+                    for (var i = 0; i < e.files.length; i++) {
+                        var imgUrl = "/uploads/tender/" + e.files[i].Name;
+                        var type = e.files[i].Extention + '';
+                        if (e.files[i].Extention == 'doc' || e.files[i].Extention == 'docx') {
+                            type = "office";
+                            arr[i] = e.files[i].Name.split("-")[1];
+                        } else
+                            arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                        deleteObj[i] = {
+                            type: type,
+                            size: e.files[i].FileSize,
+                            caption: e.files[i].Name,
+                            url: "/File/FileDeleteTender",
+                            key: e.files[i].Id
+                        };
+                    }
+                    setImageTender(arr, deleteObj);
+                } else
+                    setImageTender(null, null);
+
+                $('#EditInsertModal').modal("show");
+            }
+        }, 'GET');
+    }
+
+</script>

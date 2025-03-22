@@ -1,0 +1,126 @@
+﻿@using CoreArchV2.Core.Enum
+
+<div id="NoticeUnitRedirectModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Birime Yönlendir</h6>
+            </div>
+            <div class="modal-body">
+                <div id="Redirect_FormId">
+                    <input type="text" id="noticeUnitIdForRedirect" hidden />
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label>Gönderilecek Birim (*) :</label>
+                                <select id="ToUnitIdForRedirect"
+                                        tabindex="1"
+                                        class="select-search"
+                                        table-param="ToUnitId"
+                                        table-id="comboBox-ToUnitIdForRedirect"
+                                        table-model-url="/Combo/GetUnitJustParentCmbx"
+                                        table-tool-type="comboBox"
+                                        table-description="Birim"
+                                        data-option-label="Birim Seçiniz" disabled>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="background-color: aliceblue;">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="panel-body">
+                                    <div id="redirectVehicleListBody">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="control-label">Açıklama :</label>
+                                <div id="RedirectDescription" table-param="Description" class="summernote-height"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="8" class="btn btn-danger full-width" onclick="funcCancelModal('#Redirect_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="7" type="submit" class="btn btn-primary full-width" onclick="redirectNoticeUnit()"><i class="fa fa-check"></i> Yönlendir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleNotice/NoticeUnit/_NoticeUnitHistoryDetail.cshtml")
+<script>
+    function redirectNoticeUnit() {
+        var noticeUnitId = $('#noticeUnitIdForRedirect').val();
+        var toUnitIdForRedirect = $('#ToUnitIdForRedirect').val();
+        var descripton = $('#RedirectDescription').summernote('code');
+
+        if (toUnitIdForRedirect>0) {
+            var arr = $("#redirectVehicleListBody #excelPrew_true tr");
+            if(arr.length>0){
+                $("#excelPrew_true tr").css("background-color", "white");
+                var model = {
+                        Id: noticeUnitId,
+                        ToUnitId:toUnitIdForRedirect,
+                        Description: (descripton == "<p><br></p>" ? "" : descripton),
+                        NoticeList:[]
+                    };
+                    for (var i = 0; i < arr.length; i++) {
+                        var md = FormGetAllValue("#" + arr[i].id + " [table-param]");
+                        if (md.IsSend && md.NoticeDriverId == "") {
+                            $("#" + arr[i].id).css("background-color", "orange");
+                            ShowMessage("info", "Bilgi", "Sürücü boş geçilemez");
+                            return;
+                        } else {
+                            var tempModel = {
+                                Id: md.Id,
+                                IsSend: md.IsSend,
+                                Amount: md.Amount,
+                                DriverId: md.NoticeDriverId
+                            };
+                            model.NoticeList.push(tempModel);
+                        }
+                    }
+                    sendAjxForm(model, "/Notice/InsertRedirectNotice",
+                        function (e) {
+                            if (e.IsSuccess) {
+                                $('#NoticeUnitRedirectModal').modal("hide");
+                                ShowMessage("success", "Bilgi", "İşlem başarılı");
+                            } else
+                                ShowMessage("info", "Bilgi", e.Message);
+                        }, 'POST');
+            }else
+                ShowMessage("info", "Bilgi", "En az 1 plaka seçilmelidir");
+        }else
+            ShowMessage("info", "Bilgi", "Gönderilecek birimi seçiniz");
+    }
+
+    function funcRedirectNoticeUnit(noticeUnitId) {
+        sendAjxForm({noticeUnitId:noticeUnitId}, '/Notice/IsRedirectNoticeUnit',
+            function (e) {
+                if (e.IsSuccess) {
+                    $('#noticeUnitIdForRedirect').val(noticeUnitId);
+                    $('#redirectVehicleListBody').load('@Url.Action("RedirectVehicleList","Notice")?noticeUnitId=' + noticeUnitId);
+                    $('#ToUnitIdForRedirect').val(@((int)UnitId.InsanKaynaklari)).change();
+                    $('#NoticeUnitRedirectModal').modal("show");
+                } else
+                    ShowMessage("error", "Bilgi", e.Message,15000);
+            }, 'GET');
+    }
+</script>

@@ -1,0 +1,80 @@
+﻿<div id="NoticeUnit_FormId">
+    <input id="noticeUnitId" type="text" table-param="Id" hidden />
+    <div id="vehicleListDiv">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Talep Türü (*):</label>
+                    <select id="comboBox-NoticeUnitTypeId"
+                            class="select-search"
+                            tabindex="1"
+                            onchange="changeNoticeUnitCombo()"
+                            table-param="NoticeType"
+                            table-id="comboBox-NoticeUnitTypeId"
+                            table-model-url="/Combo/GetNoticeUnitType"
+                            table-tool-type="comboBox"
+                            table-description="Talep Türü"
+                            data-option-label="Talep Türü Seçiniz" required>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label>Baş.Tarihi (*):</label>
+                    <input id="StartDate" table-param="StartDate" tabindex="2" onchange="changeNoticeDate()" class="form-control" type="date" autocomplete="off" table-description="Başlangıç Tarihi" required>
+                </div>
+                <div class="col-md-2">
+                    <label>Bit.Tarihi (*):</label>
+                    <input id="EndDate" table-param="EndDate" tabindex="3" onchange="changeNoticeDate()" class="form-control" type="date" autocomplete="off" table-description="Bitiş Tarihi" required>
+                </div>
+                <div class="col-md-3">
+                    <label>Müdürlük/Proje :</label>
+                    <select id="ToUnitId"
+                            tabindex="1"
+                            class="select-search"
+                            table-param="ToUnitId"
+                            onchange="changeNoticeDate()"
+                            table-id="comboBox-ToUnitId"
+                            table-model-url="/Combo/GetUnitCmbx"
+                            table-tool-type="comboBox"
+                            table-description="Birim"
+                            data-option-label="Birim Seçiniz">
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label>---</label>
+                    <button id="btnNoticeUnitVehicle" type="button" onclick="changeNoticeUnit()" style="width: 100%; margin-top: -2px;" class="btn border-warning text-warning-600 btn-flat btn-icon">
+                        <i id="btn_iNoticeUnitVehicle" class="icon-circle-down2 position-left"></i> Araç Listele
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="NoticeUnitDiv">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-12">
+                    <label class="control-label">Birim Notu (*) :</label>
+                    <div id="Description" table-param="Description" class="summernote-height"></div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label">Belge :</label>
+            <div class="file-loading">
+                <input id="imageUploadNoticeUnitForm" tabindex="14" type="file" multiple>
+            </div>
+            <span class="help-block">Not: Birden fazla dosya yükleyebilirsiniz. Desteklenen dosya türleri: "jpg", "png", "pdf","xls","word"</span>
+        </div>
+    </div>
+</div>
+<div id="NoticeUnitVehicleDiv" style="display: none;background-color: aliceblue">
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel-body" style="height: 66vh; overflow: scroll;">
+                    <div id="noticeUnitVehicleBody" class="form-group">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

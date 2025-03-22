@@ -1,0 +1,381 @@
+﻿@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Sistem Yönetimi / Parametre Yön. / Araç Marka-Model')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Araç Marka ve Model Tanımları</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="BrandModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableUnit"
+                           table-id="dataTable-Unit"
+                           table-model-url="/Brand/BrandGetAll"
+                           table-DatabaseName="/VehicleBrandModel"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="Name" style="text-align: center;">
+                                    Marka
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Araç Marka ve Model Bilgileri</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="tabbable tab-content-bordered">
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-justified">
+                                <li id="liAttr_1" class="active">
+                                    <a id="unit_toggle" href="#unit_Insert" data-toggle="tab"><i class="icon-quill4 position-left "></i>Marka Ekle/Güncelle</a>
+                                </li>
+                                <li id="liAttr_2">
+                                    <a id="projectUpdate_toggle" href="#project_Update" data-toggle="tab"><i class="icon-pen6 position-left "></i>Model Güncelle</a>
+                                </li>
+                                <li id="liAttr_3">
+                                    <a id="newproject_toggle" href="#project_Insert" data-toggle="tab"><i class="icon-box-add position-left "></i>Yeni Model Ekle</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane has-padding active" id="unit_Insert">
+                                    <div id="Unit_FormId">
+                                        <input id="ParentUnitId_" table-param="Id" hidden />
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label>Marka Adı (*):</label>
+                                                    <input table-param="Name" type="text" placeholder="Marka Adı Giriniz" table-description="Marka Adı" class="form-control" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <button type="button" tabindex="9" class="btn btn-danger full-width" onclick="$('#EditInsertModal').modal('hide')">Ekranı Kapat</button>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <button tabindex="8" type="submit" class="btn btn-primary full-width" onclick="saveUnit()"><i class="fa fa-check"></i> Kaydet</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane has-padding" id="project_Update">
+                                    <div id="ProjectUpdate_FormId">
+                                        <input id="unitId_updateProject" type="text" table-param="ParentId" hidden />
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label>Model Adı (*):</label>
+                                                    <select id="unitPageUnitId"
+                                                            tabindex="1"
+                                                            table-param="Id"
+                                                            onchange="onchangeProjectSetInfo()"
+                                                            class="select-search"
+                                                            table-id="comboBox-unitPageUnitId"
+                                                            table-model-url=""
+                                                            table-tool-type="comboBox"
+                                                            table-description="Model Seçiniz"
+                                                            data-option-label="Model Seçiniz" required>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label>Model Adı (*):</label>
+                                                    <input id="projectName" tabindex="2" table-param="Name" type="text" placeholder="Model Adı Giriniz" table-description="Model Adı" class="form-control" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <button type="button" tabindex="9" class="btn btn-danger full-width" onclick="$('#EditInsertModal').modal('hide')">İptal</button>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <button tabindex="8" type="submit" class="btn btn-primary full-width" onclick="updateProject()"><i class="fa fa-check"></i> Güncelle</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane has-padding" id="project_Insert">
+                                    <div id="ProjectInsert_FormId">
+                                        <input id="unitId_InsertProject" type="text" table-param="Id" hidden />
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label>Marka Adı :</label>
+                                                    <select id="newUnitPageUnitId"
+                                                            tabindex="2"
+                                                            table-param="ParentId"
+                                                            class="select-search"
+                                                            table-id="comboBox-newUnitPageUnitId"
+                                                            table-model-url=""
+                                                            table-tool-type="comboBox"
+                                                            table-description="Marka Seçiniz"
+                                                            data-option-label="Marka Seçiniz" disabled required>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label>Model Adı (*):</label>
+                                                    <input table-param="Name" type="text" placeholder="Model Adı Giriniz" table-description="Model Adı" class="form-control" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button type="button" tabindex="9" class="btn btn-danger full-width" onclick="$('#EditInsertModal').modal('hide')">Ekranı Kapat</button>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <button tabindex="8" type="submit" class="btn btn-primary full-width" onclick="saveProject()"><i class="fa fa-check"></i> Kaydet</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var historyButtonsActive = false;
+    var _unitId = 0;
+    function BrandModalOpen() {
+        $('#unit_toggle').click();
+        historyButtonsActive = false;
+        FormAllInputsClearNoCloseModal("#Unit_FormId [table-param]");
+        $('#EditInsertModal').modal("show");
+    }
+
+    function editUnit() {
+        var model = FormGetAllValue("#Unit_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, "/Brand/BrandInsertUpdate",
+                function (e) {
+                    if (e.IsSuccess) {
+                        ShowMessage("success", "Bilgi", "Düzenleme işlemi başarılı");
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+
+                }, 'POST');
+        }
+    }
+
+    function getByIdBrand(unitId) {
+        sendAjxForm({ id: unitId }, "/Brand/BrandGetById",
+            function (e) {
+                if (e.Id > 0) {
+                    historyButtonsActive = true;
+                    setParentBrandId(unitId);
+                    $('#unit_toggle').click();
+                    var model = {
+                        selector: '#Unit_FormId [table-param]',
+                        data: e
+                    };
+                    FormSetAllValue(model);
+                    $('#EditInsertModal').modal("show");
+                } else
+                    ShowMessage("error", "Hata", "Hata oluştu");
+
+            }, 'GET');
+    }
+
+    function setParentBrandId(unitId) {
+        _unitId = unitId;
+        $('#ParentUnitId_').val(_unitId);
+        $('#unitId_updateProject').val(unitId);
+        $('#unitId_InsertProject').val(unitId);
+    }
+
+    function saveUnit() {
+        var model = FormGetAllValue("#Unit_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, "/Brand/BrandInsertUpdate",
+                function (e) {
+                    if (e.IsSuccess) {
+                        historyButtonsActive = true;
+                        setParentBrandId(e.Id);
+                        ShowMessage("success", "Bilgi", "Kayıt işlemi Başarılı");
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+
+                }, 'POST');
+        }
+    }
+
+    function deleteBrand(unitId) {
+        funcSwalMessage({ id: unitId }, "/Brand/BrandDelete", "Kayıt silinecektir?", function (e) {
+            if (e.IsSuccess) {
+                ShowMessage("success", "Bilgi", "Silme işlemi başarılı");
+            } else
+                ShowMessage("warning", "Bilgi", e);
+        });
+    }
+
+    function updateProject() {
+        var model = FormGetAllValue("#ProjectUpdate_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, "/Brand/BrandInsertUpdate",
+                function (e) {
+                    if (e.IsSuccess) {
+                        funcFilterTable();
+                        $('#EditInsertModal').modal('hide');
+                        ShowMessage("success", "Bilgi", "Düzenleme işlemi başarılı");
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+
+                }, 'POST');
+        }
+    }
+
+    function saveProject() {
+        var model = FormGetAllValue("#ProjectInsert_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, "/Brand/BrandInsertUpdate",
+                function (e) {
+                    if (e.IsSuccess) {
+                        funcFilterTable();
+                        $('#EditInsertModal').modal('hide');
+                        ShowMessage("success", "Bilgi", "Kayıt işlemi Başarılı");
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+
+                }, 'POST');
+        }
+    }
+
+
+    $('#projectUpdate_toggle').click(function () {
+        if (historyButtonsActive) {
+            FormAllInputsClearNoCloseModal("#ProjectUpdate_FormId [table-param]");
+            setProjectCombo();
+        } else {
+            $('.nav-tabs a[href="#unit_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için marka seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+    $('#newproject_toggle').click(function () {
+        if (historyButtonsActive) {
+            FormAllInputsClearNoCloseModal("#ProjectInsert_FormId [table-param]");
+            setBrand(_unitId, "newUnitPageUnitId")
+        } else {
+            $('.nav-tabs a[href="#unit_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için marka seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+
+    function setProjectCombo() {
+        sendAjxForm({ parentId: _unitId }, "/Combo/GetBrandChildCmbx",
+            function (e) {
+                if (e.length == 0) {
+                    $('#newproject_toggle').click();
+                    setBrand(_unitId, "newUnitPageUnitId")
+                    ShowMessage("info", "Bilgi", ("Seçtiğiniz markaya bağlı model bulunamadı, yeni model ekleyebilirsiniz"));
+                }
+                else if (e.length > 0) {
+                    funcCustomComboBox(e, "unitPageUnitId", "Model Seçiniz");
+                    ShowMessage("info", "Bilgi", ("Seçtiğiniz marka bağlı " + e.length + " adet model listelendi"));
+                }
+                else
+                    ShowMessage("error", "Hata", "Hata oluştu");
+
+            }, 'GET');
+    }
+
+    function onchangeProjectSetInfo() {
+        var unitIdd = $('#unitPageUnitId').val();
+        sendAjxForm({ id: unitIdd }, "/Brand/BrandGetById",
+            function (e) {
+                if (e.Id > 0) {
+                    $('#projectName').val(e.Name);
+                    $('#projectCode').val(e.Code);
+                } else
+                    ShowMessage("error", "Hata", "Hata oluştu");
+
+            }, 'GET');
+    }
+    //------------------------------------- Static Area Start ---------------------------------------//
+
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Brand/BrandGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+                //------------------------------------- Static Area End ---------------------------------------//
+</script>

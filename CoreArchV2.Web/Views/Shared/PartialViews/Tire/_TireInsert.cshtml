@@ -1,0 +1,112 @@
+﻿
+@using CoreArchV2.Core.Enum
+<div id="TireInsert_FormId">
+    <input type="text" id="TireId" table-param="Id" hidden />
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+                <label>Depo :</label>
+                <select id="WareHouseId_Ti"
+                        class="select-search"
+                        table-param="WareHouseId"
+                        table-id="comboBox-WareHouseId_Ti"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.SupplierACar)"
+                        table-tool-type="comboBox"
+                        tabindex="1"
+                        table-description="Depo"
+                        data-option-label="Depo Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-sm-6">
+                <label>Kullanım Tipi (*) :</label>
+                <select id="TireTypeId_Ti"
+                        class="select-search"
+                        table-param="TireTypeId"
+                        table-id="comboBox-TireTypeId_Ti"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.TireTypeId)"
+                        table-tool-type="comboBox"
+                        tabindex="2"
+                        table-description="Lastik Kullanım Tipi"
+                        data-option-label="Lastik Kullanım Tipi Seçiniz" required>
+                </select>
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-sm-6">
+                <label>Lastik Ebat (*) :</label>
+                <select id="DimensionTypeId_Ti"
+                        class="select-search"
+                        table-param="DimensionTypeId"
+                        table-id="comboBox-DimensionTypeId_Ti"
+                        table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.DimensionTypeId)"
+                        table-tool-type="comboBox"
+                        tabindex="3"
+                        table-description="Lastik Ebat"
+                        data-option-label="Lastik Ebat Seçiniz" required>
+                </select>
+            </div>
+            <div class="col-sm-6">
+                <label>Adet (*) :</label>
+                <input type="number" tabindex="4" table-param="TireCount" class="form-control" table-description="Lastik Adet" required />
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+
+    <div class="row">
+        <div class="col-md-6">
+            <button type="button" tabindex="6" class="btn btn-danger full-width" onclick="funcCancelModal('#TireInsert_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+        </div>
+        <div class="col-md-3">
+            <button tabindex="5" type="submit" class="btn bg-slate full-width" onclick="funcDeleteTire()"><i class="fa fa-trash"></i> Depodan Sil</button>
+        </div>
+        <div class="col-md-3">
+            <button tabindex="5" type="submit" class="btn btn-primary full-width" onclick="funcSaveTire()"><i class="fa fa-check"></i> Depoya Ekle</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function TireOpenModal() {
+        FormAllInputsClearNoCloseModal("#TireInsert_FormId [table-param]");
+        $('#TireInsertModal').modal("show");
+    }
+
+    function funcDeleteTire() {
+        var model = FormGetAllValue("#TireInsert_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, '/Tire/Delete',
+                function (e) {
+                    if (e.IsSuccess)
+                        ShowMessage("success", "Bilgi", "Silme başarılı");
+                    else
+                        ShowMessage("error", "Hata", e.Message);
+                }, 'POST');
+        }
+    }
+
+    function funcSaveTire() {
+        var model = FormGetAllValue("#TireInsert_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, '/Tire/InsertUpdate',
+                function (e) {
+                    if (e.IsSuccess) {
+                        if (model.Id > 0)
+                            ShowMessage("success", "Bilgi", "Düzenleme başarılı");
+                        else {
+                            GetAllLoadTable('/Tire/TireGetAll');
+                            ShowMessage("success", "Bilgi", "Kayıt başarıyla eklendi");
+                        }
+
+                        FormAllInputsClearNoCloseModal("#TireInsert_FormId [table-param]");
+                    } else
+                        ShowMessage("error", "Hata", e.Message);
+                }, 'POST');
+        }
+    }
+
+</script>

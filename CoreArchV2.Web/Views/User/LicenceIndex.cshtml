@@ -1,0 +1,330 @@
+﻿@using CoreArchV2.Core.Enum
+<script>$('#broadCrumbDiv').text('Sistem Yönetimi / Parametre Yön. / Lisanslar')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Lisanslar</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="ModalOpen()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                @*  <li>
+                <div class="col-md-12" style="margin-top: 8px;">
+                <label>Müdürlük/Proje :</label>
+                <select id="UnitIdSearch"
+                tabindex="3"
+                table-param="UnitId"
+                class="select-search"
+                table-id="comboBox-UnitIdSearch"
+                table-model-url="/Combo/GetUnitAndParentCmbx"
+                table-tool-type="comboBox"
+                data-option-label="Müdürlük veya Proje Seçiniz">
+                </select>
+                </div>
+                </li> *@
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableLicence"
+                           table-id="dataTable-Licence"
+                           table-model-url="/User/LicenceGetAll"
+                           table-DatabaseName="/UserLicence"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="StatusName" style="text-align: center;">
+                                    Aktif ?
+                                </th>
+                                <th data-value="LockName" style="text-align: center;">
+                                    Kilitli ?
+                                </th>
+                                <th data-value="LockDate" data-type="datetime" style="text-align: center;">
+                                    Kilitlenme Tarihi
+                                </th>
+                                <th data-value="FirmLongName" style="text-align: center;">
+                                    Firma Adı
+                                </th>
+                                <th data-value="StartDate" data-type="date" style="text-align: center;">
+                                    Başlangıç Tar.
+                                </th>
+                                <th data-value="EndDate" data-type="date" style="text-align: center;">
+                                    Bitiş Tar.
+                                </th>
+                                <th data-value="MaxUserCount" style="text-align: center;">
+                                    Max Kullanıcı Rol
+                                </th>
+                                <th data-value="ActiveUserCount" style="text-align: center;">
+                                    Aktif Kullanıcı Rol
+                                </th>
+                                <th data-value="MaxVehicleCount" style="text-align: center;">
+                                    Max Araç Sayısı
+                                </th>
+                                <th data-value="ActiveVehicleCount" style="text-align: center;">
+                                    Aktif Araç Sayısı
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Yazılım Lisans Bilgileri</h6>
+            </div>
+            <div class="modal-body">
+                <div id="Licence_FormId">
+                    <input type="text" table-param="Id" hidden />
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Firma Adı (*):</label>
+                                <input table-param="FirmName" tabindex="1" type="text" table-description="Firma Kısa Adı" class="form-control" placeholder="Firma Kısa Adı Giriniz" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Firma Kısa Adı (*):</label>
+                                <input table-param="FirmLongName" tabindex="1" type="text" table-description="Firma Uzun Adı" class="form-control" placeholder="Firma Uzun Adı Giriniz" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Lisans Baş. Tarihi (*):</label>
+                                <input table-param="StartDate" tabindex="1" type="date" table-description="lisans Baş. Tarihi" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Lisans Bit. Tarihi (*):</label>
+                                <input table-param="EndDate" tabindex="2" type="date" table-description="Lisans Bit. Tarihi" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Max Kullanıcı Sayısı (*):</label>
+                                <input table-param="MaxUserCount" tabindex="1" type="number" table-description="Max Kullanıcı Sayısı" class="form-control" placeholder="Max Kullanıcı Sayısı" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Max Araç Sayısı (*):</label>
+                                <input table-param="MaxVehicleCount" tabindex="2" type="number" table-description="Max Araç Sayısı" class="form-control" placeholder="Max Araç Sayısı" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label>Sunucu IP Adresi (*):</label>
+                                <input table-param="Ip" tabindex="1" type="text" table-description="Sunucu IP Adresi" class="form-control" placeholder="Örn: 10.10.16.50" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Mail listesi (*):</label>
+                                <input table-param="FirmMailList" tabindex="2" type="text" table-description="Soyadı" class="form-control" placeholder="Birden fazla mail için abc@abc.com;xyz@xyz.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6" style="margin-top: 10px;">
+                                <label>Aktif :</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <input table-param="IsActive"
+                                           id="IsActive"
+                                           type="checkbox"
+                                           class="make-switch"
+                                           data-on-text="Aktif"
+                                           data-off-text="Pasif"
+                                           data-size="large" />
+                                </div>
+                            </div>
+                            <div class="col-md-6" style="margin-top: 10px;">
+                                <label>Kilitli :</label>
+                                <div class="checkbox checkbox-switchery">
+                                    <input table-param="IsLock"
+                                           id="IsLock"
+                                           type="checkbox"
+                                           class="make-switch"
+                                           data-on-text="Aktif"
+                                           data-off-text="Pasif"
+                                           data-size="large" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @await Html.PartialAsync("~/Views/Shared/_RequiredInfoText.cshtml")
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-3">
+                </div>
+                <div class="col-sm-3">
+                    <button type="button" tabindex="8" class="btn btn-danger full-width" onclick="funcCancelModal('#Licence_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+
+                <div class="col-sm-6">
+                    <button tabindex="7" type="submit" class="btn btn-primary full-width" onclick="funcSaveLicence()"><i class="fa fa-check"></i> Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function ModalOpen() {
+        $('#IsActive').bootstrapSwitch('state', true);
+        $('#IsLock').bootstrapSwitch('state', false);
+        FormAllInputsClearNoCloseModal('#Licence_FormId [table-param]');
+        $('#EditInsertModal').modal("show");
+    }
+
+    function funcSaveLicence() {
+        var model = FormGetAllValue("#Licence_FormId [table-param]");
+        if (model != null) {
+            sendAjxForm(model, "/User/LicenceAddUpdate", function (e) {
+                if (e.IsSuccess == true) {
+                    $('#EditInsertModal').modal("hide");
+                    funcFilterTable();
+                    ShowMessage("success", "Bilgi", "Kayıt Başarılı.");
+                }
+            }, "POST");
+        }
+    }
+
+    function funcEditLicence(licenceId) {
+        sendAjxForm({ Id: licenceId },
+            "/User/LicenceGetById",
+            function (e) {
+                if (e.Id > 0) {
+                    var model = {
+                        selector: '#Licence_FormId [table-param]',
+                        data: e
+                    };
+
+                    FormSetAllValue(model);
+                    $('#IsActive').bootstrapSwitch('state', e.IsActive);
+                    $('#IsLock').bootstrapSwitch('state', e.IsLock);
+                    $('#EditInsertModal').modal("show");
+                } else
+                    ShowMessage("error", "Hata", "Hata oluştu!");
+
+            }, 'GET');
+    }
+
+    function funcDeleteLicence(id) {
+        var model = { Id: id };
+        swal({
+            title: "Emin misiniz?",
+            text: "Bu kayıt silinecektir !",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#EF5350",
+            confirmButtonText: "Evet, Kaydı Sil!",
+            cancelButtonText: "Hayır, Kayıt Kalsın!",
+            closeOnConfirm: false,
+            closeOnCancel: false
+        },
+            function (isConfirm) {
+                if (isConfirm) {
+                    sendAjxForm(model, "/User/LicenceDeleteUser", function (e) {
+                        if (e.IsSuccess == true) {
+                            swal({
+                                title: "Başarılı!",
+                                text: "Kayıt silindi.",
+                                confirmButtonColor: "#66BB6A",
+                                type: "success"
+                            });
+                            funcFilterTable();
+                            ShowMessage("success", "Bilgi", "Silme Başarılı.");
+                        } else if (e.IsSuccess == false) {
+                            $(".cancel").click();
+                            $(".confirm").click();
+                            ShowMessage("warning", "Bilgi", e.Message);
+                        }
+                    },
+                        "POST");
+                } else {
+                    swal({
+                        title: "İsteğiniz üzere iptal Edildi",
+                        text: "Kayıt güvende.",
+                        confirmButtonColor: "#2196F3",
+                        type: "error"
+                    });
+                }
+            });
+    }
+
+
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/User/LicenceGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

@@ -1,0 +1,126 @@
+﻿@using CoreArchV2.Core.Enum
+<div class="row">
+    <div class="panel panel-body border-top-teal">
+        <ul id="debitUserHistoryUl" class="list-feed media-list" style="font-size: 12px;height: 50vh;overflow: scroll;">
+        </ul>
+    </div>
+</div>
+
+<script>
+    $('#DebitHistory_toggle').click(function () {
+        if (historyButtonsActive) {
+            setHistoryDebit();
+        } else {
+            $('.nav-tabs a[href="#Vehicle_toggle"]').tab('show');
+            ShowMessage("warning", "Uyarı", "Bu ekranı kullanabilmek için araç seçmeniz gerekiyor.");
+            return false;
+        }
+    });
+
+    function setHistoryDebit() {
+        $('#debitUserHistoryUl li').remove();
+        var vehicleId = $('#vehicle_Id').val();
+        if (vehicleId > 0) {
+            var model = { vehicleId: vehicleId };
+            sendAjxForm(model,
+                "/Vehicle/GetByVehicleIdDebitHistory",
+                function (e) {
+                    if (e.length > 0) {
+                        var result = "";
+                        for (var i = 0; i < e.length; i++) {
+                            if (e[i].DebitState2 == @((int)DebitState.Debit)) {
+                                result += '<li class="media"><div class="media-body">';
+                                result += "<strong>" + e[i].Plate + " (" + e[i].UsageTypeName + ")</strong> plakalı araç ";
+                                result += "<strong>" + e[i].DebitNameSurname + "</strong> adlı personele " + (isEmpty(e[i].DeliveryUserName) == false ? e[i].DeliveryUserName : "--") + " tarafından " + (isEmpty(e[i].CityName) == false ? ("<strong>" + e[i].CityName + "</strong>") : "--") + "'da teslim edilmiştir.<br/>";
+                                result += e[i].CreatedUserName + " tarafından " + ConvertJSONDateFormatISO(e[i].CreatedDate) + " tarihinde kayıt altına alınmıştır.</br>";
+                                result += "<b>Birim/Proje Adı:</b> <span class='label bg-orange-300'>" + e[i].UnitName + "</span></br>";
+                                result += "<b>Zimmet Tarihleri:</b> " + ConvertJSONJustDateFormatISO(e[i].DebitStartDate) + " - " + (e[i].DebitEndDate != null ? ConvertJSONJustDateFormatISO(e[i].DebitEndDate) : "Devam Ediyor");
+                                result += "</br><b>Km:</b> " + (e[i].LastKm == null ? "--" : e[i].LastKm);
+
+                            } else if (e[i].DebitState2 == @((int)DebitState.Pool)) {
+                                result += "<li class='media'><div class='media-body'><b style='color:red;'><i class='icon-library2'></i> Araç havuza alınmıştır.</b> " + ConvertJSONJustDateFormatISO(e[i].DebitStartDate) + "-" + (e[i].DebitEndDate != null ? ConvertJSONJustDateFormatISO(e[i].DebitEndDate) : "Devam Ediyor");
+                                result += "<br/>Havuza alınma nedeni: " + e[i].Description;
+                            }
+                            else if (e[i].DebitState2 == @((int)DebitState.Deleted)) {
+                                result += "<li class='media'><div class='media-body'><b style='color:red;'><i class='icon-info22'></i> Araç silinmiştir.</b></br>" + e[i].CreatedUserName + " tarafından kayıt altına alınmıştır.</br>";
+                                result += "<b>Zimmetli Sona Erme Tarihi:</b>" + ConvertJSONJustDateFormatISO(e[i].VehicleTransfer.DebitVehicleEndDate) + "</br><b>İşlem Türü:</b> " + e[i].VehicleTransfer.TransferTypeName + "</div>"
+                            } else if (e[i].DebitState2 == @((int)DebitState.InService)) {
+                                result += "<li class='media'><div class='media-body'><b style='color:red;'><i class='icon-move-right faa-flash animated faa-slow'></i> Araç servise alınmıştır.</b> " + ConvertJSONJustDateFormatISO(e[i].DebitStartDate) + "-" + (e[i].DebitEndDate != null ? ConvertJSONJustDateFormatISO(e[i].DebitEndDate) : "Devam Ediyor");
+                                result += "<br/><b>İkame Araç Plaka:</b> " + (e[i].TempPlateNo == null ? "Yok" : e[i].TempPlateNo);
+                                result += "<br/><b>Açıklama:</b> " + e[i].Description;
+                                result += "<br/>" + e[i].CreatedUserName + " tarafından " + ConvertJSONDateFormatISO(e[i].CreatedDate) + " tarihinde kayıt altına alınmıştır.</br>";
+                                result += "<b>Birim/Proje Adı:</b> <span class='label bg-orange-300'>" + e[i].UnitName + "</span></br>";
+
+                            }
+                            result += '</div><div class="media-right text-nowrap text-muted text-size-small">' + e[i].CustomButton + '</div>';
+                            result += "<hr/></li>";
+                        }
+
+                        $('#debitUserHistoryUl').append(result);
+                        if (e.length > 29)
+                            ShowMessage("info", "Bilgi", "Son 30 zimmet listelendi.");
+                    }
+                },
+                'GET');
+        }
+    }
+
+    function funcEditInService(vehicleDebitId) {
+        FormAllInputsClearNoCloseModal("#VehicleSetDebitServiceInModal [table-param]");
+        sendAjxForm({ vehicleDebitId: vehicleDebitId }, "/Vehicle/GetByVehicleDebitId", function (e) {
+            var model = {
+                selector: '#vehicleDebitSetInService_FormId [table-param]',
+                data: e
+            };
+            FormSetAllValue(model);
+            //$('#Debit_toggle').click();
+            $('#VehicleSetDebitServiceInModal').modal("show");
+        }, 'GET');
+    }
+
+    function funcDeleteDebit(vehicleDebitId) {
+        var model = { vehicleDebitId: vehicleDebitId };
+        swal({
+            title: "Emin misiniz?",
+            text: "Bu kayıt silinecektir !",
+            type: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#EF5350",
+            confirmButtonText: "Evet, Kaydı Sil!",
+            cancelButtonText: "Hayır, Kayıt Kalsın!",
+            closeOnConfirm: false,
+            closeOnCancel: false
+        },
+            function (isConfirm) {
+                if (isConfirm) {
+                    sendAjxForm(model,
+                        "/Vehicle/VehicleDebitDelete",
+                        function (e) {
+                            if (e.IsSuccess == true) {
+                                swal({
+                                    title: "Başarılı!",
+                                    text: "Kayıt silindi.",
+                                    confirmButtonColor: "#66BB6A",
+                                    type: "success"
+                                });
+                                setHistoryDebit();
+                                ShowMessage("success", "Bilgi", "Silme Başarılı.");
+                            } else {
+                                $(".cancel").click();
+                                $(".confirm").click();
+                                ShowMessage("warning", "Bilgi", e.Message);
+                            }
+                        },
+                        "POST");
+                } else {
+                    swal({
+                        title: "İsteğiniz üzere iptal Edildi",
+                        text: "Kayıt güvende.",
+                        confirmButtonColor: "#2196F3",
+                        type: "error"
+                    });
+                }
+            });
+    }
+
+</script>

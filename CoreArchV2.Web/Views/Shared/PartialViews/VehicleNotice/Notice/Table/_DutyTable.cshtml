@@ -1,0 +1,374 @@
+﻿@model IEnumerable<CoreArchV2.Dto.ENoticeVehicleDto.ENoticeDto_.ENoticeDto>
+@using CoreArchV2.Core.Enum.NoticeVehicle.Notice
+@using System.Web
+
+
+@{
+    if (Model.Any())
+    {
+        var counter = 1;
+        foreach (var parent in Model)
+        {
+            var uniqueId = Guid.NewGuid().ToString("N");
+            <div class="panel-group content-group-xs" id="accordion-@uniqueId">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h6 class="panel-title">
+                            @{
+                                if (parent.EditMode)
+                                {
+                                    var answerCount = parent.PlateList.Count(w => w.IsAnswer);
+                                    var all = parent.PlateList.Count(w => w.IsSend);
+                                    <a data-toggle="collapse" data-parent="#accordion-@uniqueId" href="#accordion-group-@uniqueId" aria-expanded="true" class="">@parent.ToUnitName <span class="badge @Html.Raw((@answerCount != @all) ? " bg-blue faa-flash animated faa-slow" : "badge-success") heading-text">@answerCount/@all</span></a>
+                                }
+                                else
+                                {
+                                    <a data-toggle="collapse" data-parent="#accordion-@uniqueId" href="#accordion-group-@uniqueId" aria-expanded="true" class="">@parent.ToUnitName</a>
+                                }
+                            }
+                        </h6>
+                    </div>
+                    <div id="accordion-group-@uniqueId" class="panel-collapse collapse" aria-expanded="true">
+                        <div class="panel-body" style="overflow-x: scroll">
+                            <table class="table-striped table-hover table table-xxs datatable-basic"
+                           style="font-size: 11px;"
+                           id="dataTableImportExcelNotice_true-@uniqueId"
+                           table-id="dataTable-dataTableImportExcelNotice_true-@uniqueId"
+                           table-model-url=""
+                           table-DatabaseName="/Notice"
+                           table-tool-type="dataTable">
+                                <thead>
+                                    <tr class="filters">
+                                        <th style="text-align: center;">S.No</th>
+                                        @{
+                                            if (Model.First().UnitMode)//Birim cevaplarken ve düzenlemede görülecek
+                                            {
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Birim Cevap
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Açıklama
+                                                </th>
+                                            }
+                                            else if (Model.First().RedirectAnswerMode)
+                                            {
+                                                <th style="text-align: center;">
+                                                    İşlem Tipi
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Açıklama
+                                                </th>
+                                                <th style="text-align: center;min-width: 230px;">
+                                                   Gerçek Sürücü
+                                                </th>
+                                                <th style="text-align: center; min-width: 170px;">
+                                                    Ücret Kesintisi
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Birim Açıklama
+                                                </th>
+                                            }
+                                            else if (Model.First().EditMode)
+                                            {
+                                                <th style="text-align: center;">
+                                                    Dahil
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Birim Cevap
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Açıklama
+                                                </th>
+                                            }
+                                            else if (Model.First().RedirectMode)
+                                            {
+                                                <th style="text-align: center;">
+                                                    Dahil
+                                                </th>
+                                                <th style="text-align: center;min-width: 230px;">
+                                                   Tahmini Sürücü
+                                                </th>
+                                                <th style="text-align: center; min-width: 170px;">
+                                                    Ücret Kesintisi
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Birim Cevap
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Açıklama
+                                                </th>
+                                            }
+                                            else if (Model.First().HistoryMode)
+                                            {
+                                                <th style="text-align: center;">
+                                                    İşlem Tipi
+                                                </th>
+                                                <th style="text-align: center;min-width: 230px;">
+                                                    Sürücü
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Açıklama
+                                                </th>
+                                                <th style="text-align: center; min-width: 170px;">
+                                                    Ücret Kesintisi
+                                                </th>
+                                                <th style="text-align: center;min-width: 214px;">
+                                                    Birim Cevap
+                                                </th>
+                                            }
+                                            else
+                                            {
+                                                <th style="text-align: center;">
+                                                    Dahil
+                                                </th>
+                                            }
+                                        }
+                                        @*<th style="text-align: center;min-width: 110px;">
+                                            Arvento No(*)
+                                            </th>*@
+                                        <th style="text-align: center;">
+                                            Plaka(*)
+                                        </th>
+                                        <th style="text-align: center;min-width: 230px;">
+                                            Sürücü
+                                        </th>
+                                        <th style="text-align: center; min-width: 120px;">
+                                            İşlem Tarihi
+                                        </th>
+                                        <th style="text-align: center;">
+                                            Görev Adı
+                                        </th>
+                                        <th style="text-align: center;">
+                                            Görev Bölgesi
+                                        </th>
+                                        <th style="text-align: center;min-width: 214px;">
+                                            Görev Adresi
+                                        </th>
+                                        <th style="text-align: center;min-width: 400px;">
+                                            Talep Notu
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="excelPrew_true" style="text-align: center">
+                                    @{
+                                        foreach (var item in parent.PlateList)
+                                        {
+                                            uniqueId = Guid.NewGuid().ToString("N");
+                                            <tr id="RowTr_@uniqueId">
+                                                <td style="display: none;"><input table-param="Id" value="@item.Id" type="hidden" class="form-control"></td>
+                                                <td>@counter</td>
+                                                @{
+                                                    if (@parent.EditMode)
+                                                    {
+                                                        <td><input id="id_@uniqueId-@item.Id" table-param="IsSend" class="control-primary" type="checkbox" @Html.Raw(@item.IsSend ? "checked" : "") disabled></td>
+                                                        <td>@Html.Raw(@item.NoticeSendUnitState2)</td>
+                                                        <td>@item.NoticeSendUnitDescription</td>
+                                                    }
+                                                    else if (parent.RedirectAnswerMode)//son adım insan kaynakları ekranı
+                                                    {
+                                                        <td>
+                                                            <select id="state_@uniqueId" tabindex="1" table-param="State">
+                                                                <option value="0">İşlem Tipi</option>
+                                                                <option value="@((int) NoticePunishmentState.Warning)">Uyarı</option>
+                                                                <option value="@((int) NoticePunishmentState.Condemnation)">Kınama</option>
+                                                                <option value="@((int) NoticePunishmentState.PayCut)">Ücret Kesintisi</option>
+                                                            </select>
+                                                        </td>
+                                                         <td>
+                                                            <textarea id="description_@item.Id"
+                                                              @*onclick="changeInputSetWidth(@item.Id)"*@
+                                                              tabindex="3" table-param="Description"
+                                                              autocomplete="off"
+                                                              placeholder="Açıklama"
+                                                              class="form-control">@item.NoticeSendRedirectUnitDescription</textarea>
+                                                        </td>
+                                                        <td>
+                                                            <select id="userId_@uniqueId" tabindex="2" table-param="NoticeDriverId" class="select2-container select2-selection--single noticeUserNotice" disabled></select>
+                                                            @{
+                                                                if (@item.DriverId > 0)
+                                                                {
+                                                                    <script>
+                                                                        var comboId ='@HttpUtility.JavaScriptStringEncode("userId_" + @uniqueId)';
+                                                                        var name = '@HttpUtility.JavaScriptStringEncode(item.NameSurname)';
+                                                                        funcCustomComboBoxSingle(comboId, @item.DriverId, name);
+                                                                    </script>
+                                                                }
+
+                                                                if (@item.NoticeSendRedirectUnitState > 0)
+                                                                {
+                                                                    <script>
+                                                                        $('#state_@uniqueId').val(@item.NoticeSendRedirectUnitState).change();
+                                                                    </script>
+                                                                }
+                                                            }
+                                                        </td>
+                                                        <td><input table-param="Amount" value="@item.Amount" tabindex="4" type="text" class="form-control moneyDisabled moneyCurrency" autocomplete="off" placeholder="Tutar giriniz" disabled></td>
+                                                       
+                                                        <td>@item.NoticeSendUnitDescription</td>
+                                                    }
+                                                    else if (parent.RedirectMode)//birimden gelen cevapları son birime gönder
+                                                    {
+                                                        <td><input id="id_@uniqueId-@item.Id" table-param="IsSend" class="control-primary" type="checkbox" checked></td>
+                                                        <td>
+                                                            <select id="userId_@uniqueId"
+                                                                tabindex="2"
+                                                                table-param="NoticeDriverId"
+                                                                class="select2-container select2-selection--single noticeUserNotice">
+                                                            </select>
+                                                            @{
+                                                                if (@item.DriverId > 0)
+                                                                {
+                                                                    <script>
+                                                                        var comboId ='@HttpUtility.JavaScriptStringEncode("userId_" + @uniqueId)';
+                                                                        var name = '@HttpUtility.JavaScriptStringEncode(item.NameSurname)';
+                                                                        funcCustomComboBoxSingle(comboId, @item.DriverId, name);
+                                                                    </script>
+                                                                }
+
+                                                                if (@item.NoticeSendRedirectUnitState > 0)
+                                                                {
+                                                                    <script>
+                                                                        $('#state_@uniqueId').val(@item.NoticeSendRedirectUnitState).change();
+                                                                    </script>
+                                                                }
+                                                            }
+                                                        </td>
+                                                        <td><input table-param="Amount" value="@item.Amount" tabindex="4" type="text" class="form-control moneyDisabled moneyCurrency" autocomplete="off" placeholder="Tutar giriniz"></td>
+                                                        <td>@Html.Raw(@item.NoticeSendUnitState2)</td>
+                                                        <td>@item.NoticeSendUnitDescription</td>
+                                                    }
+                                                    else if (parent.UnitMode)
+                                                    {
+                                                        <td>
+                                                            <select id="state_@uniqueId" table-param="State" onchange="$('#excelPrew_true tr [table-param]').css('background-color','white')">
+                                                                <option value="0">İşlem Tipi</option>
+                                                                @{
+                                                                    if (Model.First().NoticeType == (int)NoticeType.Speed)
+                                                                    {
+                                                                        <option value="@((int) NoticeState.SpecialPermission)">Özel İzin</option>
+                                                                    }
+                                                                    else if (Model.First().NoticeType == (int)NoticeType.Duty || Model.First().NoticeType == (int)NoticeType.OutOfHours)
+                                                                    {
+                                                                        <option value="@((int) NoticeState.Mission)">Görevde</option>
+                                                                        <option value="@((int) NoticeState.OffMission)">Görev Dışı</option>
+                                                                    }
+                                                                }
+                                                                <option value="@((int) NoticeState.Other)">Diğer</option>
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <textarea id="description_@item.Id"
+                                                              @*onclick="changeInputSetWidth(@item.Id)"*@
+                                                              tabindex="3" table-param="Description"
+                                                              autocomplete="off"
+                                                              placeholder="Açıklama"
+                                                              class="form-control">@item.NoticeSendUnitDescription</textarea>
+                                                            <script>
+                                                                if (@item.NoticeSendUnitState >= @((int) NoticeState.Mission)) {
+                                                                    $('#state_@uniqueId').val(@item.NoticeSendUnitState).change();
+                                                                }
+                                                            </script>
+                                                        </td>
+                                                    }
+                                                    else if (parent.HistoryMode)
+                                                    {
+                                                        <td>
+                                                            <select id="state_@uniqueId" tabindex="1" table-param="State" disabled>
+                                                                <option value="0">İşlem Tipi</option>
+                                                                <option value="@((int) NoticePunishmentState.Warning)">Uyarı</option>
+                                                                <option value="@((int) NoticePunishmentState.Condemnation)">Kınama</option>
+                                                                <option value="@((int) NoticePunishmentState.PayCut)">Ücret Kesintisi</option>
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <select id="userId_@uniqueId" tabindex="2" table-param="NoticeDriverId" class="select2-container select2-selection--single noticeUserNotice" disabled></select>
+                                                            @{
+                                                                if (@item.DriverId > 0)
+                                                                {
+                                                                    <script>
+                                                                        var comboId ='@HttpUtility.JavaScriptStringEncode("userId_" + @uniqueId)';
+                                                                        var name = '@HttpUtility.JavaScriptStringEncode(item.NameSurname)';
+                                                                        funcCustomComboBoxSingle(comboId, @item.DriverId, name);
+                                                                    </script>
+                                                                }
+
+                                                                if (@item.NoticeSendRedirectUnitState > 0)
+                                                                {
+                                                                    <script>
+                                                                        $('#state_@uniqueId').val(@item.NoticeSendRedirectUnitState).change();
+                                                                    </script>
+                                                                }
+                                                            }
+                                                        </td>
+                                                        <td>@item.NoticeSendRedirectUnitDescription</td>
+                                                        <td>@item.Amount</td>
+                                                        <td>@item.NoticeSendUnitDescription</td>
+                                                        //<td>@Html.Raw(@item.NoticeSendUnitState2)</td>
+                                                        //<td>@item.NoticeSendUnitDescription</td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td><input id="id_@item.Id" table-param="IsSend" class="control-primary" type="checkbox" checked></td>
+                                                    }
+                                                }
+                                                @*<td>@item.ArventoNo</td>*@
+                                                <td>@item.Plate</td>
+                                                <td>@item.Driver</td>
+                                                <td>@item.TransactionDate.Value.ToString("dd-MM-yyyy HH:mm")</td>
+                                                <td>@item.MissionName</td>
+                                                <td>@item.CityName</td>
+                                                <td>@item.Address</td>
+                                                <td>@item.Description</td>
+                                            </tr>
+                                            counter++;
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+}
+
+<style>
+    .input-Notice {
+        text-align: center;
+        width: 100%;
+        height: 20px;
+        border: 0;
+        outline: 0;
+        border-bottom: 1px solid #db7ee6;
+    }
+
+    .select2-selection--single:not([class*=bg-]) {
+        height: 31px;
+    }
+
+    .moneyCurrency {
+        height: 31px;
+    }
+</style>
+
+<script src="~/admin/js/moneyformat/money.js"></script>
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('.noticeUserNotice').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>

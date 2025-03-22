@@ -1,0 +1,100 @@
+﻿<div id="VehicleBulkCostUpdateModal" class="modal fade" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 class="modal-title">Toplu Araç Güncel Bedel Değiştir</h5>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Değiştirilecek Yüzde (%) Oran: </label>
+                    <input type="text" id="BulkAmountCost" value="0" class="touchspin-postfix">
+                </div>
+                <div class="form-group" style="margin-bottom: -14px;">
+                    <div class="alert bg-info alert-styled-left">
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>×</span><span class="sr-only">Uyarıyı Kapat</span>
+                        </button>
+                        <span class="text-danger text-semibold faa-flash animated faa-slow">Dikkat: </span>
+                        <span class="text-semibold">Bu işlem <b>mülkiyet araçlardaki</b>  <u>güncel bedel tutarını,</u> girilen yüzdelik oranında arttırır/azaltır. Bu işlem geri alınamaz.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="margin-top: 0px;">
+                <div class="col-md-6">
+                    <button type="button" class="text-bla btn bg-danger-600" data-dismiss="modal" style="width: 100%;"><i class="fa fa-times"></i> Ekranı Kapat</button>
+                </div>
+                <div class="col-md-6">
+                    <button tabindex="28" type="submit" class="btn btn-primary full-width" onclick="vehicleBulkCostChange()"><i class="fa fa-check"></i> Toplu Değiştir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(".touchspin-postfix").TouchSpin({
+        min: -100,
+        max: 100,
+        step: 5,
+        decimals: 0,
+        postfix: '%'
+    });
+    function vehicleCostChangeModalOpen() {
+        $('#BulkAmountCost').val(0);
+        $('#VehicleBulkCostUpdateModal').modal("show");
+    }
+
+    function vehicleBulkCostChange() {
+        var percent = $('#BulkAmountCost').val();
+
+        if (percent == 0) {
+            ShowMessage("warning", "Bilgi", "Yüzdelik oran 0'dan farklı bir değer giriniz.");
+        } else {
+            swal({
+                title: "Emin misiniz?",
+                text: "Sistemde kayıtlı aktif tüm araçların oranı değişecektir !",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#EF5350",
+                confirmButtonText: "Evet, Tümünü Değiştir!",
+                cancelButtonText: "Hayır, Kalsın!",
+                closeOnConfirm: false,
+                closeOnCancel: false
+            }, function (isConfirm) {
+                if (isConfirm) {
+                    var model = {
+                        amountPercent: percent
+                    };
+                    sendAjxForm(model,
+                        "/Vehicle/BulkCostUpdate",
+                        function (e) {
+                            if (e.IsSuccess == true) {
+                                $('#VehicleBulkCostUpdateModal').modal("hide");
+                                swal({
+                                    title: "Başarılı!",
+                                    text: "İşlem Başarılı",
+                                    confirmButtonColor: "#66BB6A",
+                                    type: "success"
+                                });
+                                ShowMessage("success", "Bilgi", e.Message, 20000);
+                            } else {
+                                $(".cancel").click();
+                                $(".confirm").click();
+                                ShowMessage("warning", "Bilgi", e.Message,20000);
+                            }
+                        },
+                        "POST");
+                } else {
+                    swal({
+                        title: "İsteğiniz üzere iptal Edildi",
+                        text: "Kayıt güvende.",
+                        confirmButtonColor: "#2196F3",
+                        type: "error"
+                    });
+                }
+            });
+        }
+
+    }
+</script>

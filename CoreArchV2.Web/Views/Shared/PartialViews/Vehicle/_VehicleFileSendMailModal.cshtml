@@ -1,0 +1,163 @@
+﻿<div id="MailSenderModal" class="modal fade" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-orange-300">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h5 id="ModalTitleId" class="modal-title">Mail Gönder</h5>
+            </div>
+            <div class="modal-body">
+                <div class="horizontal-form">
+                    <div id="SendMailVehiclePhoto_FormId" class="form-body">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label>Kayıtlı Kullanıcı :</label>
+                                    <select id="MailUserId" table-param="MailUserId" class="select2-container select2-selection--single"></select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label>Farklı Kullanıcı (Üstteki kullanıya eklenir) :</label>
+                                    <input id="SenderMailTo" table-param="SenderMailTo" placeholder="Birden fazla mail adresi için ; ile ayırınız. Örnek (abc@abc.com;xyz@xyz.com)" tabindex="1" type="text" table-description="E-Mail" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label>Konu :</label>
+                                    <input id="SenderMailSubject" table-param="Subject" tabindex="2" table-description="Konu" type="text" placeholder="E-Mail Konu Giriniz" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label>Cc :</label>
+                                    <input id="SenderMailCc" table-param="SenderMailCc" tabindex="3" type="text" placeholder="E-Mail Cc Adresi Giriniz" class="form-control">
+                                </div>
+                                <div class="col-md-6">
+                                    <label>Bcc :</label>
+                                    <input id="SenderMailBcc" table-param="SenderMailBcc" tabindex="4" type="text" placeholder="E-Mail Bcc Adresi Giriniz" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label>Body :</label>
+                                    <textarea rows="3" cols="5" table-param="Body" tabindex="13" class="form-control" table-description="E-Mail Body" placeholder="E-Mail Açıklama Giriniz" required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="col-sm-4 col-md-6">
+                    </div>
+                    <div class="col-sm-4 col-md-6">
+                        <button type="button" class="btn btn-danger" onclick="$('#MailSenderModal').modal('hide')"><i class="fa fa-times"></i> İptal</button>
+                        <button type="submit" class="btn btn-primary" onclick="choosePhotographySendMail()"><i class="fa fa-check"></i> Mail Gönder</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#MailUserId').select2({
+        placeholder: 'Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        ajax: {
+            url: '/Combo/GetUserWithEmailCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+</script>
+
+<script>
+
+    function choosePhotographySendMail() {
+        var userId = $('#MailUserId').val();
+        var differentMail = $('#SenderMailTo').val();
+
+        if (userId > 0 || differentMail.length > 0) {
+            var model = FormGetAllValue("#SendMailVehiclePhoto_FormId [table-param]");
+            if (model != null) {
+                swal({
+                    title: "Onaylıyor musunuz ?",
+                    text: "E-Mail gönderilecektir. Onaylıyor Musunuz?",
+                    type: "warning",
+                    html: '',
+                    showCancelButton: true,
+                    confirmButtonColor: "#EF5350",
+                    confirmButtonText: "Evet, Gönder!",
+                    cancelButtonText: "Hayır, İptal Et!",
+                    closeOnConfirm: false,
+                    closeOnCancel: false
+                },
+                    function (isConfirm) {
+                        if (isConfirm) {
+
+                            var model2 = {
+                                VehicleId: $('#vehicle_Id').val(),
+                                //PhotographyTypeId: $('#photographyTypeId').val(),
+                                UserId: userId,
+                                VehiclePhysicalImageId: $('#VehiclePhysicalIdForMail').val()
+                            };
+                            var mergeObject = $.extend(model, model2);
+                            sendAjxForm(mergeObject, "/Vehicle/SendMailVehiclePhotography",
+                                function (e) {
+                                    if (e.IsSuccess) {
+                                        swal({
+                                            title: "Başarılı!",
+                                            text: "Mail Gönderildi.",
+                                            confirmButtonColor: "#66BB6A",
+                                            type: "success"
+                                        });
+                                        ShowMessage("success", "Bilgi", "Mail başarıyla gönderilmiştir");
+                                        $('#MailSenderModal').modal("hide");
+                                    } else {
+                                        $(".cancel").click();
+                                        $(".confirm").click();
+                                        ShowMessage("info", "Bilgi", e.Message, 10000);
+                                    }
+                                }, 'POST');
+
+                        } else {
+                            swal({
+                                title: "İsteğiniz üzere iptal Edildi",
+                                text: "Kayıt güvende.",
+                                confirmButtonColor: "#2196F3",
+                                type: "error"
+                            });
+                        }
+                    });
+            }
+        } else
+            ShowMessage("info", "Bilgi", "Kullanıcı veya farklı mail adresinden biri dolu olmalıdır");
+    }
+
+    function FileSendMailOpenModal() {
+        var vehicleId = $('#vehicle_Id').val();
+
+        sendAjxForm({ id: vehicleId }, "/Vehicle/GetByIdVehicle",
+            function (e) {
+                $('#SenderMailSubject').val(e.Plate + " Plakalı Aracın " + $("#photographyTypeId option:selected").text() + "ı");
+            }, 'GET');
+
+        FormAllInputsClearNoCloseModal('#SendMailVehiclePhoto_FormId [table-param]');
+        $('#MailSenderModal').modal("show");
+    }
+
+</script>

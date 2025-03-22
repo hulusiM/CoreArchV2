@@ -1,0 +1,491 @@
+﻿@using CoreArchV2.Core.Enum.NoticeVehicle.Notice
+<script>$('#broadCrumbDiv').text('Talep Yönetimi / Birim Talep İşlemleri')</script>
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div id="reportNoticeDiv" class="row" style="margin: 3px -20px 0 -29px; display: none;">
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body" title="Açık/Toplam Taleplerim">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h5 class="no-margin text-semibold">2/10 Adet</h5>
+                    <span class="text-uppercase text-size-mini text-muted">Taleplerim</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class=" icon-git-pull-request icon-3x text-danger-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body panel-body-accent">
+            <div class="media no-margin">
+                <div class="media-left media-middle">
+                    <i class="icon-pointer icon-3x text-success-400"></i>
+                </div>
+
+                <div class="media-body text-right">
+                    <h5 class="no-margin text-semibold">7 Adet</h5>
+                    <span class="text-uppercase text-size-mini text-muted">Açık Talep</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body">
+            <div class="media no-margin">
+                <div class="media-left media-middle">
+                    <i class="icon-enter6 icon-3x text-indigo-400"></i>
+                </div>
+
+                <div class="media-body text-right">
+                    <h5 class="no-margin text-semibold">5 Adet</h5>
+                    <span class="text-uppercase text-size-mini text-muted">Kapalı Talep</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-md-3">
+        <div class="panel panel-body">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h5 class="no-margin text-semibold">12 Adet</h5>
+                    <span class="text-uppercase text-size-mini text-muted">Toplam Talep</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-bubbles4 icon-3x text-blue-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="breadcrumb-line breadcrumb-line-component content-group-lg bg-teal-400" style="margin: 3px -11px 0 -23px;">
+    <ul class="breadcrumb">
+        <li>Birim Talep İşlemleri</li>
+    </ul>
+
+    <ul class="breadcrumb-elements">
+        <li>
+            <a onclick="reportNotice()"><i class="icon-chart position-left"></i> Talep Rapor</a>
+        </li>
+        <li>
+            <a onclick="newNoticeUnit()"><i class="icon-make-group position-left"></i> Yeni Kayıt</a>
+        </li>
+        <li class="dropdown">
+            <a href="#" id="btnSearch" class="dropdown-toggle" data-toggle="dropdown" onclick="funcSearchForm()">
+                <i class="icon-gear position-left"></i>
+                Filtreleme Seçenekleri
+                <span class="caret"></span>
+            </a>
+            <ul id="FormSearchTable" class="dropdown-menu dropdown-menu-right">
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <select id="comboBox-NoticeTypeId-search"
+                                class="select-search"
+                                tabindex="1"
+                                table-param="NoticeTypeId"
+                                table-id="comboBox-NoticeTypeId-search"
+                                table-model-url="/Combo/GetNoticeType"
+                                table-tool-type="comboBox"
+                                table-description="İhbar Tipi"
+                                data-option-label="İhbar Tipi Seçiniz">
+                        </select>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin-top: 8px;">
+                        <button type="button" style="width: 100%;" class="btn bg-danger-800 btn-xs" onclick="funcClearFilterTable('FormSearchTable')"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                </li>
+                <li>
+                    <div class="col-md-12" style="margin: 8px 0 8px 0;">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="funcFilterTable()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
+
+<div class="content has-bg-image small" style="margin: -25px -10px 0px -23px;">
+    <div class="panel panel-flat has-bg-image">
+        <div class="panel-body ">
+            <div class="row">
+                <div class="table-responsive genericDatatables">
+                    <table class="table-striped table-hover table-bordered table datatable-basic table-loader"
+                           id="dataTableNotice"
+                           table-id="dataTable-Notice"
+                           table-model-url="/Notice/NoticeUnitGetAll"
+                           table-DatabaseName="/Notice"
+                           table-tool-type="dataTable">
+                        <thead>
+                            <tr class="filters">
+                                <th data-value="Id" hidden="hidden"></th>
+                                <th style="text-align: center; width: 1%;">No</th>
+                                <th data-value="StatusName" style="text-align: center;">
+                                    Durum
+                                </th>
+                                <th data-value="Id" style="text-align: center;">
+                                    Talep No
+                                </th>
+                                <th data-value="OpenDate" data-type="datetime" style="text-align: center;">
+                                    Talep Aç. Tarihi
+                                </th>
+                                <th data-value="ClosedDate" data-type="datetime" style="text-align: center;">
+                                    Talep Kap. Tarihi
+                                </th>
+                                <th data-value="NoticeTypeName" style="text-align: center;">
+                                    Talep Tipi
+                                </th>
+                                <th data-value="StateName" style="text-align: center;">
+                                    Talep Durum
+                                </th>
+                                <th data-value="ButtonEditDelete" style="text-align: center;">
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="table-footer">
+                    <div class="col-md-12" id="TableFooter">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="EditInsertModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Birim Talep Bilgileri</h6>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="tabbable tab-content-bordered">
+                            <ul class="nav nav-tabs nav-tabs-highlight nav-justified">
+                                <li id="liAttr_1" class="active">
+                                    <a id="NoticeUnitInsert_toggle" href="#noticeUnit_Insert" data-toggle="tab"><i class="icon-price-tags2 position-left "></i>Yeni Talep</a>
+                                </li>
+                                <li id="liAttr_2">
+                                    <a id="NoticeUnitHistory_toggle" href="#noticeUnit_History" data-toggle="tab"><i class="icon-history position-left "></i>Talep Geçmişi</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content">
+                                <div class="tab-pane has-padding active" id="noticeUnit_Insert">
+                                    @await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleNotice/NoticeUnit/_NoticeUnitInsert.cshtml")
+                                </div>
+                                <div class="tab-pane has-padding" id="noticeUnit_History">
+                                    @await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleNotice/NoticeUnit/_NoticeUnitHistory.cshtml")
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="col-sm-4 col-md-6">
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#NoticeUnit_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                </div>
+                <div class="col-sm-4 col-md-3">
+                    <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="funcSaveNoticeUnit()"><i class="fa fa-check"></i> Birime Gönder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="DeleteNoticeUnitModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-brown">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Talep Sil</h6>
+            </div>
+            <div id="NoticeUnitDelete_FormId" class="modal-body">
+                <input type="text" id="deleteNoticeUnitId" table-param="NoticeUnitId" hidden />
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label class="control-label">Talebi Silme Nedeni</label>
+                            <textarea id="closeNoticeTextarea" rows="7" cols="5" tabindex="8" class="form-control" placeholder="Açıklama"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="checkbox">
+                                <input id="closeNoticeChcbx" type="checkbox" class="styled" checked="checked">
+                                <label>
+                                    Yeni talep açınca, bu talebe bağlı plakalar tekrar listelensin
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer" style="margin-top: 0px;">
+                    <div class="row">
+                        <div class="col-md-6"></div>
+                        <div class="col-md-3">
+                            <button type="button" tabindex="9" class="btn btn-danger full-width" onclick="funcCancelModal('#NoticeUnitDelete_FormId [table-param]')"><i class="fa fa-close"></i> Ekranı Kapat</button>
+                        </div>
+                        <div class="col-md-3">
+                            <button tabindex="8" type="submit" class="btn btn-primary full-width" onclick="funcDeleteNoticeUnit()"><i class="fa fa-check"></i> Talebi Sil</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("~/Views/Shared/PartialViews/VehicleNotice/NoticeRedirect/_NoticeUnitRedirect.cshtml")
+<script src="~/js/jsutilities/fileuploader_notice.js"></script>
+<script>
+
+    var isLoadBeforeVehicle = false;
+    var isApprovalVehicleList = false;//araç önizleme açıldı
+    function changeNoticeUnit() {
+        var model = FormGetAllValue("#vehicleListDiv [table-param]");
+        if (model != null) {
+            if (!isLoadBeforeVehicle) {
+                var mergeObject = $.extend(model, { Id : $('#noticeUnitId').val() });
+                var path = insertFormDataParamReturnString(mergeObject);
+                $('#noticeUnitVehicleBody').load('@Url.Action("GetTypeDateRangeVehicleList","Notice")' + path);
+                isLoadBeforeVehicle = true;
+            }
+            previewNoticeVehicle();
+            isApprovalVehicleList = true;
+        }
+    }
+
+    function changeNoticeDate() {
+        if ($('#btn_iNoticeUnitVehicle').attr('class').search("up") > 0)
+            vehicleShowUp();
+        isLoadBeforeVehicle = false;
+        isApprovalVehicleList = false;
+    }
+
+    function funcSaveNoticeUnit() {
+        var noticeUnitModel = FormGetAllValue("#NoticeUnit_FormId [table-param]");
+        if (noticeUnitModel != null) {
+            var descripton = $('#Description').summernote('code');
+            if (!isApprovalVehicleList && plateWithProcess()) {
+                ShowMessage("warning", "Bilgi", "Açılan ekranda plakaları kontrol edip tekrar onay veriniz");
+                changeNoticeUnit();
+            }
+            else {
+                var arr = $("#NoticeUnitVehicleDiv #excelPrew_true tr");
+                if(arr.length>0){
+                    var files = $('#imageUploadNoticeUnitForm').fileinput('getFileList');
+                var formData = new FormData();
+                for (var j = 0; j != files.length; j++)
+                    formData.append("files", files[j]);
+
+                var model = FormDataAppendModelValue(formData, "#NoticeUnit_FormId [table-param]");
+                for (var i = 0; i < arr.length; i++) {
+                    var md = FormGetAllValue("#" + arr[i].id + " [table-param]");
+                    formData.append("NoticeList[" + i + "].Id", md.Id);
+                    formData.append("NoticeList[" + i + "].IsSend", md.IsSend);
+                }
+
+                model.append("Description", descripton);
+                sendAjxFormFileUpload(model,
+                    '/Notice/InsertUpdateNoticeUnit',
+                    function (e) {
+                        isLoadBeforeVehicle = false;
+                        if ($('#btn_iNoticeUnitVehicle').attr('class').search("up") > 0)
+                            vehicleShowUp();
+
+                        if (e.IsSuccess) {
+                            if (noticeUnitModel.Id > 0)
+                                ShowMessage("success", "Bilgi", "Düzenleme başarılı");
+                            else {
+                                GetAllLoadTable('/Notice/NoticeUnitGetAll');
+                                ShowMessage("success", "Bilgi", ("<b>" + e.Id + "</b> numaralı talep kaydınız başarıyla açılmıştır."));
+                            }
+                            $('#EditInsertModal').modal("hide");
+                        } else {
+                            if (e == 'NotAuthorizationCore') {
+                                var message = "Bu işlemi yapmaya yetkiniz yok. Adminle iletişime geçiniz";
+                                ShowMessage("error", "Yetkisiz İşlem", message);
+                            } else
+                                ShowMessage("error", "Hata", e.Message);
+                        }
+                    }, 'POST');
+                }else
+                    ShowMessage("warning", "Bilgi", "Araç listesi bulunamadı");
+            }
+        }
+    }
+
+    function funcEditNoticeUnit(noticeUnitId) {
+        $('#NoticeUnitInsert_toggle').click();
+        sendAjxForm({ Id: noticeUnitId },"/Notice/GetByIdNoticeUnit",function(e) {
+            if (e != null) {
+                var model = {
+                    selector: '#NoticeUnit_FormId [table-param]',
+                    data: e
+                };
+                $('#Description').summernote('code', e.Description);
+                FormSetAllValue(model);
+
+                if (e.files.length > 0) {
+                    var arr = new Array();
+                    var deleteObj = [];
+                    for (var i = 0; i < e.files.length; i++) {
+                        var imgUrl = "/uploads/Notice/NoticeUnit/" + e.files[i].Name;
+                        var type = e.files[i].Extention + '';
+                        if (e.files[i].Extention == 'doc' || e.files[i].Extention == 'docx') {
+                            type = "office";
+                            arr[i] = e.files[i].Name.split("-")[1];
+                        } else
+                            arr[i] = '<object class="kv-preview-data file-preview-pdf" title="' + e.files[i].Name + '" data="' + imgUrl + '"></object>';
+
+                        deleteObj[i] = {
+                            type: type,
+                            size: e.files[i].FileSize,
+                            caption: e.files[i].Name,
+                            url: "/File/FileDeleteNoticeUnit",
+                            key: e.files[i].Id
+                        };
+                    }
+                    setImageNoticeUnit(arr, deleteObj);
+                } else
+                    setImageNoticeUnit(null, null);
+
+                $('#EditInsertModal').modal("show");
+            } else
+                ShowMessage("error", "Bilgi", "Hata oluştu!");
+        },'GET');
+    }
+
+    function funcDeleteModalOpen(noticeUnitId){
+        $('#closeNoticeTextarea').val('')
+        $('#deleteNoticeUnitId').val(noticeUnitId);
+        $('#DeleteNoticeUnitModal').modal("show");
+    }
+
+    function funcDeleteNoticeUnit(){
+        var model={
+                 NoticeUnitId: $('#deleteNoticeUnitId').val(),
+                 Description: $('#closeNoticeTextarea').val(),
+                 IsReleaseSubNotice: $('#closeNoticeChcbx').is(":checked")
+             };
+        sendAjxForm(model, "/Notice/DeleteNoticeUnit",
+             function (e) {
+                 if(e.IsSuccess){
+                    $('#DeleteNoticeUnitModal').modal("hide");
+                     ShowMessage("info", "Bilgi", e.Message);
+                 }
+                 else
+                     ShowMessage("warning", "Bilgi", e.Message);
+             }, "POST");
+
+        setTimeout(function () { $('#closeNoticeTextarea').focus(); }, 100);
+    }
+
+    function previewNoticeVehicle() {
+        if (plateWithProcess()) {
+            if ($('#btn_iNoticeUnitVehicle').attr('class').search("up") > 0)
+                $('#btn_iNoticeUnitVehicle').attr('class', 'icon-circle-down2');
+            else
+                $('#btn_iNoticeUnitVehicle').attr('class', 'icon-circle-up2');
+            $("#NoticeUnitDiv").slideToggle("slow");
+            $("#NoticeUnitVehicleDiv").slideToggle("slow");
+        } else
+            ShowMessage("info", "Bilgi", "Bu <b>Talep Türü</b>'nde araç listele listelenemez");
+    }
+
+    function newNoticeUnit() {
+        $('#NoticeUnitInsert_toggle').click();
+        $('#Description').summernote('code', '');
+        FormAllInputsClear('#NoticeUnit_FormId [table-param]');
+        $('#EditInsertModal').modal("show");
+    }
+
+    function changeNoticeUnitCombo() {
+        changeNoticeDate();
+        //if (plateWithProcess()) {
+        //    $('#btnNoticeUnitVehicle').prop('disabled', false);
+        //    $('#StartDate').prop('required', true);
+        //    $('#EndDate').prop('required', true);
+        //    $('#StartDate').prop('disabled', false);
+        //    $('#EndDate').prop('disabled', false);
+        //} else {
+        //    $('#btnNoticeUnitVehicle').prop('disabled', true);
+        //    $('#StartDate').removeAttr('required');
+        //    $('#EndDate').removeAttr('required');
+        //    $('#StartDate').prop('disabled', true);
+        //    $('#EndDate').prop('disabled', true);
+        //}
+    }
+
+    function vehicleShowUp() {
+        $('#btn_iNoticeUnitVehicle').attr('class', 'icon-circle-down2');
+        $("#NoticeUnitDiv").slideToggle("slow");
+        $("#NoticeUnitVehicleDiv").slideToggle("slow");
+    }
+
+    function plateWithProcess() {
+        var noticeType = $('#comboBox-NoticeUnitTypeId').val();
+        if (noticeType == @((int) NoticeType.Speed) ||
+            noticeType ==  @((int) NoticeType.Duty) ||
+            noticeType ==  @((int) NoticeType.OutOfHours) ||
+            noticeType ==  @((int) NoticeType.MaintananceUserFault))
+            return true;
+        else
+            return false;
+    }
+
+    $(function() {
+        // Control editor height
+        $('.summernote-height').summernote({
+            height: 200
+        });
+    });
+
+    $('#NoticeUnitHistory_toggle').click(function () {
+        var noticeUnitId = $('#noticeUnitId').val();
+        $('#noticeHistoryUlLi').load("/Notice/GetNoticeUnitHistory", { id: noticeUnitId, partialPath : 'PartialViews/VehicleNotice/NoticeUnit/_NoticeUnitHistory' });
+    });
+
+    function reportNotice(){$('#reportNoticeDiv').slideToggle('slow')}
+    //------------------------------------- Static Area Start ---------------------------------------//
+    function funcFilterTable(incomingUrl) {
+        firstLoadModal = true;
+        if (incomingUrl == undefined || incomingUrl == null || incomingUrl == "")
+            incomingUrl = "/Notice/NoticeUnitGetAll";
+
+        var model = FormGetAllValue("#FormSearchTable [table-param]");
+
+        dtSayac = 0;
+        sendAjxForm(model, incomingUrl, funcDataTable, "POST");
+
+        IsSearchOpen = false;
+        $('#FormSearchTable').hide();
+    }
+
+    function funcClearFilterTable() {
+        FormAllInputsClear('#FormSearchTable [table-param]');
+        funcFilterTable();
+        ShowMessage("success", "Bilgi", "Tüm parametreler temizlendi.");
+    }
+    //------------------------------------- Static Area End ---------------------------------------//
+</script>

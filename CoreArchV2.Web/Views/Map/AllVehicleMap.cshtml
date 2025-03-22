@@ -1,0 +1,629 @@
+﻿@using CoreArchV2.Core.Enum
+@using Microsoft.AspNetCore.Http
+<script>$('#broadCrumbDiv').text('Araç Harita')</script>
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var isAdmin = HttpContextAccessor.HttpContext.Session.GetString("IsAdmin");
+    var unitId = HttpContextAccessor.HttpContext.Session.GetInt32("UnitId");
+    var parentUnitId = HttpContextAccessor.HttpContext.Session.GetInt32("ParentUnitId");
+}
+
+
+<script src="~/leaflet/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="~/leaflet/sidebar/js/leaflet-sidebar.js"></script>
+
+<div id="sidebar" class="leaflet-sidebar collapsed" style="margin-top: -8px;margin-right: -10px;">
+    <!-- Nav tabs -->
+    <div class="leaflet-sidebar-tabs">
+        <ul role="tablist">
+            <li>
+                <a id="sideBarBars" href="#VehicleDetail" role="tab"><i class="fa fa-bars"></i></a>
+            </li>
+            <li>
+                <a href="#speedHistory" role="tab"><i class="fa fa-tachometer"></i></a>
+            </li>
+            <li>
+                <a href="#DebitHistory" role="tab"><i class="fa fa-envelope"></i></a>
+            </li>
+        </ul>
+
+        <ul role="tablist">
+            <li>
+                <a href="#settings" role="tab"><i class="fa fa-gear"></i></a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab panes -->
+    <div class="leaflet-sidebar-content">
+        <div class="leaflet-sidebar-pane" id="VehicleDetail">
+            <h1 class="leaflet-sidebar-header">
+                Filtreleme Seçenekleri
+                <span class="leaflet-sidebar-close">
+                    <i class="fa fa-caret-right"></i>
+                </span>
+            </h1>
+            <div class="form-group" id="FormSearchTable" style="width:83%">
+                <div class="row" style="margin-top:10px;">
+                    <div class="col-md-12">
+                        <label>Müdürlük :</label>
+                        <select id="mainPageParentUnitId"
+                                tabindex="3"
+                                onchange="changeGetUnitId()"
+                                class="select-search"
+                                table-id="comboBox-mainPageParentUnitId"
+                                table-model-url="/Combo/GetUnitJustParentCmbx"
+                                table-tool-type="comboBox"
+                                table-param="ParentUnitId"
+                                data-option-label="Müdürlük Seçiniz">
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:5px;">
+                    <div class="col-md-12">
+                        <label>Proje :</label>
+                        <select id="mainPageUnitId"
+                                tabindex="4"
+                                class="select-search"
+                                table-id="comboBox-mainPageUnitId"
+                                table-model-url=""
+                                table-param="UnitId"
+                                table-tool-type="comboBox"
+                                data-option-label="Proje Seçiniz">
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:5px;">
+                    <div class="col-md-12">
+                        <label>Zimmetli Sürücü :</label>
+                        <select id="select-userId"
+                                tabindex="1"
+                                table-param="DebitUserId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:5px;">
+                    <div class="col-md-12">
+                        <label>Araç Plaka :</label>
+                        <select id="select-Plate"
+                                tabindex="2"
+                                table-param="VehicleId"
+                                class="select2-container select2-selection--single">
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:5px;">
+                    <div class="col-md-12">
+                        <label>Şehir :</label>
+                        <select id="cityName"
+                                tabindex="7"
+                                class="select-search"
+                                table-param="CityId"
+                                table-id="comboBox-CityId"
+                                table-model-url="/Combo/GetCityCmbx"
+                                table-tool-type="comboBox"
+                                data-option-label="Şehir Seçiniz">
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:5px;">
+                    <div class="col-md-12">
+                        <label>Hız Tipi :</label>
+                        <select id="vehicleSpeedStatus"
+                                table-param="Status2"
+                                class="select-search"
+                                table-id="comboBox-StatusVehicle"
+                                table-model-url=""
+                                table-tool-type="comboBox"
+                                data-option-label="">
+                            <option value="0">Hız Tipi Seçiniz</option>
+                            <option value="1">Kontak Kapalı</option>
+                            <option value="2">Hız Sınırını Aşan</option>
+                            <option value="3">Aktif Sürüş</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:5px;">
+                    <label style="margin-left: 10px;">Hız Sınırı :</label>
+                    <div class="col-md-12" style="padding: 0;">
+                        <div class="col-md-6">
+                            <input id="minSpeed" type="number" placeholder="Min Hız" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <input id="maxSpeed" type="number" placeholder="Max Hız" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-top:15px;">
+                    <div class="col-md-6">
+                        <button type="button" style="width: 100%;" class="signalRBtn btn bg-danger-800 btn-xs" onclick="filterRemove()"><i class="icon-trash"></i> Temizle</button>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="button" style="float: left; width: 100%;" class="btn bg-teal-300 btn-xs" onclick="filter()"><i class="icon-search4"></i> Filtrele</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="leaflet-sidebar-pane" id="speedHistory">
+            <h1 class="leaflet-sidebar-header">
+                Hız Geçmişi
+                <span class="leaflet-sidebar-close">
+                    <i class="fa fa-caret-right"></i>
+                </span>
+            </h1>
+            <div class="table-responsive">
+                @*   <table class="table text-nowrap">
+                <thead>
+                <tr>
+                <th style="width: 50px">Tarih</th>
+                <th style="width: 300px;">Sürücü</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                <tr>
+                <td class="text-center">
+                <h6 class="no-margin">12 Ağustos<small class="display-block text-size-small no-margin">2024</small></h6>
+                </td>
+                <td>
+                <div class="media-left media-middle">
+                <a href="#" class="btn bg-teal-400 btn-rounded btn-icon btn-xs">
+                <span class="letter-icon">A</span>
+                </a>
+                </div>
+
+                <div class="media-body">
+                <a href="#" class="display-inline-block text-default text-semibold letter-icon-title">Annabelle Doney</a>
+                <div class="text-muted text-size-small"><span class="status-mark border-blue position-left"></span> Active</div>
+                </div>
+                </td>
+                </tr>
+
+                <tr>
+                <td class="text-center">
+                <h6 class="no-margin">16 <small class="display-block text-size-small no-margin">hours</small></h6>
+                </td>
+                <td>
+                <div class="media-left media-middle">
+                <a href="#"><img src="assets/images/placeholder.jpg" class="img-circle img-xs" alt=""></a>
+                </div>
+
+                <div class="media-body">
+                <a href="#" class="display-inline-block text-default text-semibold letter-icon-title">Chris Macintyre</a>
+                <div class="text-muted text-size-small"><span class="status-mark border-blue position-left"></span> Active</div>
+                </div>
+                </td>
+                </tr>
+
+
+                </tbody>
+                </table> *@
+            </div>
+        </div>
+
+        <div class="leaflet-sidebar-pane" id="DebitHistory">
+            <h1 class="leaflet-sidebar-header">
+                Zimmet Geçmişi
+                <span class="leaflet-sidebar-close">
+                    <i class="fa fa-caret-right"></i>
+                </span>
+            </h1>
+        </div>
+
+        <div class="leaflet-sidebar-pane" id="settings">
+            <h1 class="leaflet-sidebar-header">
+                Settings<span class="leaflet-sidebar-close">
+                    <i class="fa fa-caret-right"></i>
+                </span>
+            </h1>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="width: 103%; margin: 2px 0px -5px -46px;">
+    <div class="col-md-12">
+        <button class="btn btn-success btn-labeled top-button" onclick="toggleDiv()"><span class="arrow">&#9660;</span></button>
+    </div>
+</div>
+
+<div class="row sliding-div" id="slidingDiv">
+    <div class="col-md-3" style="cursor: pointer;" onclick="funcClearFilterTable()">
+        <div class="panel panel-body bg-teal-300 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="allVehicleText">0 Araç</h3>
+                    <span class="text-uppercase text-size-mini">Tüm Araçlar</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-bubbles4 icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3" style="cursor: pointer;" onclick="fastButtonClick(3)">
+        <div class="panel panel-body bg-success-300 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-left media-middle">
+                    <i class="icon-enter6 icon-3x opacity-75"></i>
+                </div>
+
+                <div class="media-body text-right">
+                    <h3 class="no-margin" id="activeVehicleText">0 Araç</h3>
+                    <span class="text-uppercase text-size-mini">Aktif Sürüş</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3" style="cursor: pointer;" onclick="fastButtonClick(1)">
+        <div class="panel panel-body bg-blue-300 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-body">
+                    <h3 class="no-margin" id="rolantiVehicleText">0 Araç</h3>
+                    <span class="text-uppercase text-size-mini">Kontak Kapalı</span>
+                </div>
+
+                <div class="media-right media-middle">
+                    <i class="icon-bag icon-3x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3" style="cursor: pointer;" onclick="fastButtonClick(2)">
+        <div class="panel panel-body bg-danger-300 has-bg-image">
+            <div class="media no-margin">
+                <div class="media-left media-middle">
+                    <i class="icon-pointer icon-3x opacity-75"></i>
+                </div>
+
+                <div class="media-body text-right">
+                    <h3 class="no-margin" id="speedVehicleText">0 Araç</h3>
+                    <span class="text-uppercase text-size-mini">Hız Sınırını Aşan</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="map"></div>
+<script src="~/js/jsutilities/signalrmapfunction.js" defer></script>
+<script>
+        var map = L.map('map').setView([38.265791, 35.143366], 6);
+        setTimeout(() => { map.invalidateSize(); }, 100);
+        var markers = L.markerClusterGroup();
+        L.control.sidebar({ container: "sidebar", position: "right" }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="#">Canlı Harita</a>'
+        }).addTo(map);
+
+
+        var isFilter = false;
+        function filter(){
+            isFilter = true;
+
+            loadVehicles(dataFirst);
+        }
+
+        function filterRemove(){
+            isFilter = true;
+
+            funcClearFilterTable('FormSearchTable')
+            loadVehicles(dataSecond);
+        }
+
+        var dataFirst = [],dataSecond=[];
+        function loadVehicles(data) {
+            if(!isFilter){
+                dataFirst = data;
+                dataSecond = data;
+            }
+
+            markers.clearLayers();
+            var unitId = $('#mainPageUnitId').val();
+            var parentUnitId = $('#mainPageParentUnitId').val();
+            var debitUserId = $('#select-userId').val();
+            var vehicleId = $('#select-Plate').val();
+            var minSpeed = $('#minSpeed').val();
+            var maxSpeed = $('#maxSpeed').val();
+            var status = $('#vehicleSpeedStatus').val();
+
+            var cityName = $('#cityName').find("option:selected").text();
+            cityName = cityName !== 'Şehir Seçiniz' ? cityName : "";
+
+            if (parentUnitId > 0)
+              data = data.filter(f => f.parentUnitId === parseInt(parentUnitId));
+
+            if (unitId > 0)
+              data = data.filter(f => f.unitId === parseInt(unitId));
+
+            if (debitUserId)
+              data = data.filter(f => f.debitUserId === parseInt(debitUserId));
+
+            if (vehicleId)
+              data = data.filter(f => f.vehicleId === parseInt(vehicleId));
+
+            if (minSpeed)
+              data = data.filter(f => f.speed >= parseInt(minSpeed));
+
+            if (maxSpeed)
+              data = data.filter(f => f.speed <= parseInt(maxSpeed));
+
+            if(cityName != "")
+              data = data.filter(f => f.address.includes(cityName));
+
+            if (parseInt(status) > 0){
+                if (parseInt(status) == 1)
+                   data = data.filter(f => f.speed === 0);
+                else if (parseInt(status) == 2)
+                    data = data.filter(f => f.speed > f.maxSpeed);
+                else if (parseInt(status) == 3)
+                    data = data.filter(f => f.speed > 0);
+            }
+
+
+            if (data.length) {
+                data.forEach(vehicle => {
+                    var speed = vehicle.speed;
+                    var iconColor = speed === 0 ? 'blue' : (vehicle.maxSpeed < speed ? 'red' : 'green');
+
+                    var html = speed > 0 ?
+                        `<div class="marker-label">${vehicle.licensePlate}/${speed}</div><img src="/leaflet/images/${iconColor}.png" style="height: 35px;" />` :
+                        `<div class="marker-label">${vehicle.licensePlate}</div><img src="/leaflet/images/${iconColor}.png" style="height: 35px;" />`;
+
+                    var customIcon = L.divIcon({
+                        className: 'marker-with-text',
+                        html: html,
+                        iconSize: [35, 35],
+                        iconAnchor: [17, 35]
+                    });
+
+                    var marker = L.marker([vehicle.latitudeY, vehicle.longitudeX], { icon: customIcon })
+                        .bindPopup(`${vehicle.debitNameSurname} <br/> ${vehicle.licensePlate} - ${vehicle.localDateTime}`);
+
+                    if (data.length > 5)
+                        markers.addLayer(marker);
+                    else
+                        marker.addTo(map);
+
+
+                    marker.on('mouseover', function () {
+                        this.openPopup();
+                    });
+                });
+
+                $("#allVehicleText").fadeOut(500, function () {
+                    $(this).text(data.length + " Araç").fadeIn(500);
+                });
+
+                $("#speedVehicleText").fadeOut(500, function () {
+                    $(this).text(data.filter(f => f.maxSpeed < f.speed).length + " Araç").fadeIn(500);
+                });
+
+                $("#rolantiVehicleText").fadeOut(500, function () {
+                    $(this).text(data.filter(f => f.speed === 0).length + " Araç").fadeIn(500);
+                });
+
+                $("#activeVehicleText").fadeOut(500, function () {
+                    $(this).text(data.filter(f => f.speed > 0).length + " Araç").fadeIn(500);
+                });
+
+                if (data.length > 30) {
+                    map.addLayer(markers);
+                }
+
+                setTimeout(() => { map.invalidateSize(); }, 100);
+            }
+        }
+
+        function setCenterViewAnimation(coor, zoom) {
+            map.flyTo(coor, zoom, {
+                animate: true,
+                duration: 2,
+                easeLinearity: 0.25
+            });
+        }
+
+        function findCenter(coords) {
+            if (!coords.length) return [38.265791, 35.143366];
+
+            let latSum = 0, lngSum = 0;
+            coords.forEach(coord => {
+                latSum += coord.latitudeY;
+                lngSum += coord.longitudeX;
+            });
+
+            return [latSum / coords.length, lngSum / coords.length];
+        }
+
+        function loadGeoLocation() {
+            var customPane = map.createPane('customPane');
+            customPane.style.zIndex = 650;
+
+            fetch('https://raw.githubusercontent.com/cihadturhan/tr-geojson/master/geo/tr-cities-utf8.json')
+                .then(response => response.json())
+                .then(data => {
+                    L.geoJSON(data, {
+                        style: { color: "#00BCD4", weight: 2, opacity: 0.6 }
+                    }).addTo(map);
+                });
+
+        }
+
+        function fastButtonClick(type) {
+            funcClearFilterTable();
+            setTimeout(() => {
+                $('#vehicleSpeedStatus').val(type).change();
+                setTimeout(() => { loadVehicles(true); }, 100);
+            }, 100);
+        }
+
+        function changeGetUnitId() {
+            var parentUnitId = $('#mainPageParentUnitId').val();
+            sendAjxForm({ parentId: parentUnitId }, "/Combo/GetUnitChildCmbx",
+                function (e) { funcCustomComboBox(e, "mainPageUnitId", "Proje Seçiniz"); }, "GET");
+        }
+
+        function funcClearFilterTable() {
+            setCenterViewAnimation([38.265791, 35.143366], 6);
+            FormAllInputsClear('#FormSearchTable [table-param]');
+            loadVehicles([]);
+            $("#vehicleSpeedStatus").val("0").trigger("change");
+        }
+
+        function toggleDiv() {
+            var div = document.getElementById("slidingDiv");
+            var arrow = document.querySelector(".arrow");
+
+            if (div.style.maxHeight) {
+                div.style.maxHeight = null;
+                arrow.classList.remove("rotate");
+            } else {
+                div.style.maxHeight = div.scrollHeight - 19 + "px";
+                arrow.classList.add("rotate");
+            }
+        }
+
+        $(document).ready(() => { $(".sidebar-control").click(); });
+</script>
+
+@* <script src="~/admin/select2/select2.min.js"></script> *@
+<script type="text/javascript">
+    $('#select-userId').select2({
+        placeholder: 'Zimmetli Adı,Soyadı veya Telefon Numarası',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleDebitUserCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+
+    $('#select-Plate').select2({
+        placeholder: 'Plaka Giriniz',
+        minimumInputLength: 3,
+        language: "tr",
+        ajax: {
+            url: '/Combo/GetVehicleCmbx',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+            cache: true
+        }
+    });
+
+    document.getElementById("sideBarBars").addEventListener("click", function () {
+        $('.select2-dropdown').remove();
+    });
+
+</script>
+
+<style>
+    #map {
+        width: 102%;
+        height: 90vh;
+        z-index: 0;
+        margin-left: -26px;
+        margin-top: 4px;
+    }
+
+    /* Marker üstüne yazı eklemek için stil */
+    .marker-with-text {
+        position: relative;
+        font-size: 11px;
+        font-weight: bold;
+        color: black;
+        margin-left: -10px;
+    }
+
+        /* Yazı için stil */
+        .marker-with-text .marker-label {
+            position: absolute;
+            top: -17px; /* Marker'ın üstüne yerleştir */
+            left: -10px;
+            white-space: nowrap;
+        }
+    /* Leaflet Popup Özelleştirme */
+    .leaflet-popup-content-wrapper {
+        background-color: #66BB6A; /* Arka plan rengi */
+        color: #fff; /* Metin rengi */
+        border-radius: 5px; /* Kenarlık yuvarlaklığı */
+        //padding: 10px; /* İç dolgu */
+        border: 2px solid #283229; /* Kenarlık rengi ve kalınlığı */
+        margin-bottom: 23px;
+    }
+
+    .leaflet-popup-tip-container {
+        visibility: hidden; /* Popup'ın altındaki küçük okları gizler */
+    }
+
+    .leaflet-popup-content {
+        font-size: 14px; /* Metin boyutu */
+        text-align: center; /* Metni ortala */
+    }
+
+    .top-button {
+        margin: 2px 0px -2px 10px;
+        width: 100%;
+        padding: 12px;
+        color: white;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        outline: none;
+        font-size: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    .sliding-div {
+        width: 103%;
+        margin: 10px 0px 0px -36px;
+        max-height: 0;
+        overflow: hidden;
+        background-color: #f1f1f1;
+        transition: max-height 0.5s ease-out;
+    }
+
+    .arrow {
+        margin-left: 10px;
+        transition: transform 0.3s ease;
+        position: absolute;
+        animation: bounce 5s infinite;
+    }
+
+    @@keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(5px);
+        }
+    }
+
+    .arrow.rotate {
+        transform: rotate(180deg);
+        animation: none;
+    }
+</style>

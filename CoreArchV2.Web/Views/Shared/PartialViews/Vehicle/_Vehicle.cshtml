@@ -1,0 +1,80 @@
+﻿@using CoreArchV2.Core.Enum
+<div class="panel-body" style="padding: 0px !important">
+    <div class="tabbable">
+        <ul class="nav nav-tabs nav-tabs-bottom nav-justified">
+            <li id="li_rent" class="active">
+                <a id="VehicleRent_toggle" href="#Vehicle_Rent" data-toggle="tab" style="color: green; font-family: initial; font-size: 14px;"><i class="icon-unfold position-left wysiwyg-color-green"></i>Kiralık</a>
+            </li>
+            <li id="li_fix">
+                <a id="VehicleFixture_toggle" href="#Vehicle_Fixture" data-toggle="tab" style="color: green; font-family: initial; font-size: 14px;"><i class="icon-portfolio position-left wysiwyg-color-green"></i>Mülkiyet</a>
+            </li>
+        </ul>
+        <div class="tab-content" style="padding: 20px;">
+            <input type="text" id="vehicle_Id" table-param="Id" hidden />
+            <div class="tab-pane active" id="Vehicle_Rent">
+                @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleRent.cshtml")
+            </div>
+            <div class="tab-pane" id="Vehicle_Fixture">
+                @await Html.PartialAsync("~/Views/Shared/PartialViews/Vehicle/_VehicleFixture.cshtml")
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+    var editButtonClick = false;
+    var isRentCarType = false; //düzenle butonu kiralık araç tipi seçildi
+
+    function funcEditVehicle(vehicleId) {
+        var model = { id: vehicleId };
+        sendAjxForm(model,
+            "/Vehicle/GetByIdVehicle",
+            function(e) {
+                if (e.Id > 0) {
+                    $('#ModalTitleId').html("<span class='text-bold text-brown'>" + e.Plate+"-" + e.Id + "</span> Plakalı Araç Bilgileri");
+                    menuButtonActive();
+                    $('#VehicleAll_FormId').click();
+                    $('#vehicle_Id').val(e.Id);
+                    clearPages();
+                    if (e.FixtureTypeId == @((int) FixtureType.ForRent)) { //Kiralık
+                        var model = {
+                            selector: "#VehicleRent_FormId [table-param]",
+                            data: e
+                        };
+                        FormSetAllValue(model);
+                        setUser(e.ConfirmUserId, "select-ConfirmUserId");
+                        forRentSetting();
+                        $('#EditInsertModal').modal("show");
+                    } else if (e.FixtureTypeId == @((int) FixtureType.Ownership)) { //Mülkiyet
+                        var model = {
+                            selector: "#VehicleFixture_FormId [table-param]",
+                            data: e
+                        };
+                        FormSetAllValue(model);
+                        forFixSetting();
+                        $('#EditInsertModal').modal("show");
+                    }
+                } else
+                    ShowMessage("error", "Bilgi", e);
+            },'GET');
+    }
+
+    function forRentSetting() {
+        $('#VehicleRent_toggle').click();
+        $('#li_fix').addClass('invisible');
+        $('#li_rent').removeClass('invisible');
+        isRentCarType = true;
+        //document.getElementById("liAttr_6").classList.remove('disabled');
+    }
+
+    function forFixSetting() {
+        $('#VehicleFixture_toggle').click();
+        $('#li_rent').addClass('invisible');
+        $('#li_fix').removeClass('invisible');
+        isRentCarType = false;
+        //document.getElementById("liAttr_6").classList.add('disabled');
+    }
+
+</script>

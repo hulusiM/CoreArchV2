@@ -1,0 +1,257 @@
+﻿@using CoreArchV2.Core.Enum
+
+<div id="ImportExcelModal" class="modal fade" data-backdrop="static">
+    <div class="modal-dialog modal-full">
+        <div class="modal-content">
+            <div class="modal-header bg-orange">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h6 class="modal-title">Excel'den Yakıt Verisi Ekle</h6>
+            </div>
+            <div class="modal-body">
+                <div id="ImportExcel_FormId">
+                    <div class="form-group">
+                        <div class="row">
+                            <div id="PublishExcelFuel_FormId" class="form-group">
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <label>Tedarikçi Firma (*) :</label>
+                                        <select id="FuelStationIdExcel"
+                                                class="select-search"
+                                                tabindex="1"
+                                                table-param="FuelStationId"
+                                                table-id="comboBox-FuelStationIdExcel"
+                                                table-model-url="/Combo/GetByLookUpListTypeId?typeId=@((int) TypeList.FuelStationIdType)"
+                                                table-tool-type="comboBox"
+                                                table-description="Tedarikçi Firma"
+                                                data-option-label="Tedarikçi Firma Seçiniz" required>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>İskonto :</label>
+                                        <input table-param="DiscountPercent" tabindex="2" type="text" class="form-control moneyCurrency5Places" autocomplete="off" table-description="İskonto Tutarı" placeholder="Yüzdelik İskonto giriniz">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Tarih (*):</label>
+                                        <input id="fuelDateForExcel" table-param="TransactionDate" tabindex="7" class="form-control" type="date" placeholder="Tarih seçiniz" table-description="Tarih" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>Excel Dosya :</label>
+                                        <input type="file" id="fuelExcelfileupload" class="form-control" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label>-</label>
+                                        <input type="button" value="Ön İzleme" id="uploadExcelPreview" class="btn btn-success full-width" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <span style="margin-bottom: 5px;" class="label bg-success-300">Sistemde kayıtlı plaka <b id="span_true" class="badge bg-orange-300 faa-flash animated faa-slow">0</b> Adet</span>
+                                        <span class="label bg-orange-300"><b id="span_TotalAmountTrue" class="badge bg-orange-300">Toplam: 0 ₺</b></span>
+                                        <div style="height: 360px; overflow: scroll;">
+                                            <table class="table-striped table-hover table table-xxs datatable-basic"
+                                                   id="dataTableImportExcelFuel_true"
+                                                   table-id="dataTable-dataTableImportExcelFuel_true"
+                                                   table-model-url=""
+                                                   table-DatabaseName="/Fuel"
+                                                   table-tool-type="dataTable">
+                                                <thead style="position: sticky; top: 0; background-color: gainsboro;">
+                                                    <tr class="filters">
+                                                        <th style="text-align: center; width: 1%;">No</th>
+                                                        <th style="text-align: center;">
+                                                            Plaka(*)
+                                                        </th>
+                                                        <th style="text-align: center;">
+                                                            Tutar(*)
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="excelPrew_true"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span style="margin-bottom: 5px;" class="label bg-danger-300">Sistem kayıtlı olmayanlar plaka <b id="span_false" class="badge bg-orange-300 faa-flash animated faa-slow">0</b> Adet</span>
+                                        <span class="label bg-orange-300"><b id="span_TotalAmountFalse" class="badge bg-orange-300">Toplam: 0 ₺</b></span>
+                                        <div style="height: 360px; overflow: scroll;">
+                                            <table class="table-striped table-hover table table-xxs datatable-basic"
+                                                   id="dataTableImportExcelFuel_false"
+                                                   table-id="dataTable-dataTableImportExcelFuel_false"
+                                                   table-model-url=""
+                                                   table-DatabaseName="/Fuel"
+                                                   table-tool-type="dataTable">
+                                                <thead style="position: sticky; top: 0; background-color: gainsboro;">
+                                                    <tr class="filters">
+                                                        <th style="text-align: center; width: 1%;">No</th>
+                                                        <th style="text-align: center;">
+                                                            Plaka(*)
+                                                        </th>
+                                                        <th style="text-align: center;">
+                                                            Tutar(*)
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="excelPrew_false"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="alert bg-info alert-styled-left">
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>×</span><span class="sr-only">Uyarıyı Kapat</span>
+                        </button>
+                        <span class="text-semibold">Not: Excel içindeki aynı plakaların tutarları toplanacaktır.</span>
+                    </div>
+                </div>
+            </div>
+            <style>
+                #excelPrew_true tr {
+                    text-align: center;
+                }
+
+                #excelPrew_false tr {
+                    text-align: center;
+                }
+            </style>
+            <div style="margin-top: -25px;" class="modal-footer">
+                <div class="form-group">
+                    <div class="col-sm-4 col-md-4">
+                        <button type="button" tabindex="16" class="btn btn-warning full-width" onclick="excelModalClear()"><i class="fa fa-times"></i> Ekranı Temizle</button>
+                    </div>
+                    <div class="col-sm-4 col-md-4">
+                        <button type="button" tabindex="16" class="btn btn-danger full-width" onclick="funcCancelModal('#ImportExcel_FormId [table-param]')"><i class="fa fa-times"></i> İptal</button>
+                    </div>
+                    <div class="col-sm-4 col-md-4">
+                        <button tabindex="15" type="submit" class="btn btn-primary full-width" onclick="insertFromExcelData()"><i class="fa fa-check"></i> Sisteme Aktar</button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    var previewButtonClick = false;
+    function excelModalOpen() {
+        excelModalClear();
+        $('#ImportExcelModal').modal('show');
+    }
+    function excelModalClear() {
+        FormAllInputsClearNoCloseModal("#PublishExcelFuel_FormId [table-param]");
+        $("#fuelExcelfileupload").val('');
+        removeText();
+    }
+
+    function insertFromExcelData() {
+        if (!previewButtonClick) {
+            ShowMessage("info", "Bilgi", "Excel seçtikten sonra ön izleme butonuna basıp kontrol ettikten sonra sisteme aktarabilirsiniz");
+            return;
+        }
+
+        var model = FormGetAllValue("#PublishExcelFuel_FormId [table-param]");
+        if (model != null) {
+            $('#loadingEffect').css("display", "flex");
+            setTimeout(function () {
+                var fileUpload = $("#fuelExcelfileupload").get(0);
+                var files = fileUpload.files;
+                var fdata = new FormData();
+                fdata.append(files[0].name, files[0]);
+                fdata.append("fuelStationId", parseInt(model.FuelStationId));
+                fdata.append("discountPercent", model.DiscountPercent);
+                fdata.append("fuelDate", model.TransactionDate);
+                sendAjxFormFileUpload(fdata, "/Fuel/ReadExcelForInsertFuel",
+                    function (e) {
+                        if (e == 'NotAuthorizationCore')
+                            ShowMessage("warning", "Bilgi", "Bu işlemi yapmaya yetkiniz bulunmamaktadır");
+                        else if (e.IsSuccess) {
+                            funcFilterTable();
+                            excelModalClear();
+                            $('#ImportExcelModal').modal('hide')
+                            ShowMessage("success", "Bilgi", "Kayıt başarılı");
+                        }
+                        else
+                            ShowMessage("warning", "Bilgi", e.Message);
+                    }, "POST");
+                $('#loadingEffect').css("display", "none");
+            }, 50);
+        }
+    }
+
+    $("#uploadExcelPreview").click(function () {
+        previewButtonClick = true;
+        dataFillExcel();
+    });
+
+    $("#fuelExcelfileupload").on('change', function () {
+        previewButtonClick = false;
+        removeText();
+    });
+
+    function removeText() {
+        $('#excelPrew_true tr').remove();
+        $('#excelPrew_false tr').remove();
+        $('#span_true').html("0");
+        $('#span_TotalAmountTrue').html("0 ₺");
+        $('#span_false').html("0");
+        $('#span_TotalAmountFalse').html("0 ₺");
+    }
+
+    function dataFillExcel() {
+        removeText();
+        var fuelDate = $('#fuelDateForExcel').val();
+        if (fuelDate == '') {
+            ShowMessage("warning", "Bilgi", "Yakıt tarihi seçiniz");
+            return;
+        }
+
+        var fileUpload = $("#fuelExcelfileupload").get(0);
+        var files = fileUpload.files;
+        if (files.length > 0) {
+            $('#loadingEffect').css("display", "flex");
+            setTimeout(function () {
+                var fdata = new FormData();
+                fdata.append(files[0].name, files[0]);
+                fdata.append("fuelDate", fuelDate);
+                sendAjxFormFileUpload(fdata, "/Fuel/ReadExcelForFuel",
+                    function (response) {
+                        if (response == 'NotAuthorizationCore')
+                            ShowMessage("info", "Bilgi", "Bu işlemi yapmaya yetkiniz bulunmamaktadır");
+                        else if (response.HtmlString != "" && response.HtmlString != null) {
+                            //Sistemde olan plakalar
+                            $('#excelPrew_true').html(response.HtmlString[0]);
+                            setTimeout(function () {
+                                $('#span_true').html($('#excelPrew_true tr').length - 1);
+                                $('#span_TotalAmountTrue').html($('#totalAmount_True').text());
+                            }, 500);
+                            //Sistemde olmayan plakalar
+                            $('#excelPrew_false').html(response.HtmlString[1]);
+                            setTimeout(function () {
+                                $('#span_TotalAmountFalse').html($('#totalAmount_False').text());
+                                var notFoundPlate = $('#excelPrew_false tr').length - 1;
+                                if (notFoundPlate > 0)
+                                    ShowMessage("warning", "Bilgi", ("Sistemde bulunmayan <b>" + notFoundPlate + "</b> adet plaka bulundu!"), 10000);
+                                $('#span_false').html(notFoundPlate);
+                            }, 500);
+                        }
+                        else
+                            ShowMessage("warning", "Hatalı Excel Format", "Örnek Format: <b style='color:black;'>Plaka,Tutar</b> sıralamasında olmalıdır", 20000);
+
+                        $('#loadingEffect').css("display", "none");
+                    }, 'POST', function (err) {
+                        ShowMessage("warning", "Hatalı Excel Format", "Örnek Format: <b style='color:black;'>Plaka,Tutar</b> sıralamasında olmalıdır", 20000);
+                        $('#loadingEffect').css("display", "none");
+                    });
+            }, 50);
+        } else
+            ShowMessage("warning", "Bilgi", "Excel dosyası seçiniz");
+    }
+
+</script>
