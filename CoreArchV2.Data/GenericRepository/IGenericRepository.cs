@@ -29,7 +29,7 @@ namespace CoreArchV2.Data.GenericRepository
         TEntity FirstOrDefaultNoTracking(Expression<Func<TEntity, bool>> filter);
         Task<TEntity> FirstOrDefaultNoTrackingAsync(Expression<Func<TEntity, bool>> filter);
         IQueryable<TEntity> GetAll();
-        IEnumerable<TEntity> Where(Expression<Func<TEntity, bool>> predicate);
+        IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> predicate);
         int Count(Expression<Func<TEntity, bool>> predicate);
         TEntity Find(int id);
         TEntity FindForInsertUpdateDelete(int id);

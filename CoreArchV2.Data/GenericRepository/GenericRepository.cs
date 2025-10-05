@@ -99,9 +99,9 @@ namespace CoreArchV2.Data.GenericRepository
             return _dbSet.AsNoTracking();
         }
 
-        public IEnumerable<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
+        public IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
         {
-            return _context.Set<TEntity>().Where(predicate).ToList();
+            return _context.Set<TEntity>().Where(predicate);
         }
 
         public int Count(Expression<Func<TEntity, bool>> predicate)
