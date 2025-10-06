@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreArchV2.Utilies", "CoreA
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreArchV2.Api", "CoreArchV2.Api\CoreArchV2.Api.csproj", "{36768300-BF8A-4001-AFF9-E34385E0ECCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CoreArchV2.Hangfire", "CoreArchV2.Hangfire\CoreArchV2.Hangfire.csproj", "{F61A86CE-572C-4E25-A19B-F54B94E031E8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{36768300-BF8A-4001-AFF9-E34385E0ECCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36768300-BF8A-4001-AFF9-E34385E0ECCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36768300-BF8A-4001-AFF9-E34385E0ECCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F61A86CE-572C-4E25-A19B-F54B94E031E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F61A86CE-572C-4E25-A19B-F54B94E031E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F61A86CE-572C-4E25-A19B-F54B94E031E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F61A86CE-572C-4E25-A19B-F54B94E031E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
