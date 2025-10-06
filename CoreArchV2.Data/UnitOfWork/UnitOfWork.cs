@@ -1,5 +1,4 @@
 ﻿using CoreArchV2.Data.GenericRepository;
-using System.Data.Entity;
 
 namespace CoreArchV2.Data.UnitOfWork
 {
@@ -7,7 +6,6 @@ namespace CoreArchV2.Data.UnitOfWork
     {
         private readonly CoreArchDbContext _context;
         private bool disposed;
-        private DbContextTransaction transaction;
 
         public UnitOfWork(CoreArchDbContext context)
         {

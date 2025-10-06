@@ -1,5 +1,4 @@
 ﻿using CoreArchV2.Data.GenericRepository;
-using System.Data.Entity;
 
 namespace CoreArchV2.Data.UnitOfWorkLicence
 {
@@ -7,7 +6,6 @@ namespace CoreArchV2.Data.UnitOfWorkLicence
     {
         private readonly LicenceDbContext _context;
         private bool disposed;
-        private DbContextTransaction transaction;
 
         public UowLicence(LicenceDbContext context)
         {

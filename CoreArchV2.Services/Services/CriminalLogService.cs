@@ -28,13 +28,13 @@ namespace CoreArchV2.Services.Services
         private readonly IGenericRepository<User> _userRepository;
         private readonly IGenericRepository<Vehicle> _vehicleRepository;
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
 
         public CriminalLogService(IUnitOfWork uow,
             IMapper mapper,
             ILogger<CriminalLogService> logger,
-            IHostingEnvironment env)
+            IWebHostEnvironment env)
         {
             _uow = uow;
             _env = env;
@@ -132,7 +132,7 @@ namespace CoreArchV2.Services.Services
             {
                 if (tempModel.CriminalDate.Date <= DateTime.Now.Date)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var model = _mapper.Map<CriminalLog>(tempModel);
                         model.CreatedBy = tempModel.CreatedBy;
@@ -177,7 +177,7 @@ namespace CoreArchV2.Services.Services
             {
                 if (tempModel.CriminalDate.Date <= DateTime.Now.Date)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var entity = _criminalLogRepository.Find(tempModel.Id);
                         var resultEntity = _mapper.Map(tempModel, entity);

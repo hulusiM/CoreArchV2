@@ -153,7 +153,7 @@ namespace CoreArchV2.Services.PO
                                 dbNoPlateList.Add(item.Plate);
                         }
 
-                        using (var scope = new TransactionScope())
+                        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
                             _fuelLogRepository.InsertRange(insertFuelList);
                             _uow.SaveChanges();

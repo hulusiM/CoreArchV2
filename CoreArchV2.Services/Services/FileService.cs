@@ -5,9 +5,7 @@ using CoreArchV2.Dto.ECommonDto;
 using CoreArchV2.Services.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Internal;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Transactions;
 
@@ -21,11 +19,11 @@ namespace CoreArchV2.Services.Services
         private readonly IUnitOfWork _uow;
         private readonly string[] suffixes = { "Bytes", "KB", "MB", "GB", "TB", "PB" };
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
 
         public FileService(IUnitOfWork uow,
-            IHostingEnvironment env)
+            IWebHostEnvironment env)
         {
             _uow = uow;
             _env = env;
@@ -70,7 +68,7 @@ namespace CoreArchV2.Services.Services
                         }
                     }
 
-                if (idNames.Length > 0)
+                if (idNames != null && idNames.Length > 0)
                     foreach (var item in idNames)//db'ye kaydetmeden klasöre kaydetmişse
                     {
                         if (File.Exists(GetPathAndFileName(item, folderName)))
@@ -105,7 +103,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //FileUpload Table delete
                     var fileUpload = _fileUploadRepository.FindForInsertUpdateDelete(fileUploadId);
@@ -134,7 +132,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var vehiclePhysicalImageId = _vehiclePhysicalImageFileGenericRepository.FirstOrDefault(w => w.FileUploadId == fileUploadId).VehiclePhysicalImageId;
 
@@ -248,14 +246,47 @@ namespace CoreArchV2.Services.Services
             return result;
         }
 
-        public IFormFile Base64ToFormFile(string equipmentFiles, string fileName)
+
+        public IFormFile Base64ToFormFile(string base64String, string fileName)
         {
-            byte[] bytes = Encoding.ASCII.GetBytes(equipmentFiles);
+            if (string.IsNullOrEmpty(base64String))
+                throw new ArgumentNullException(nameof(base64String));
+
+            // "data:image/png;base64,..." gibi prefix varsa ayıkla
+            var base64Parts = base64String.Split(',');
+            var pureBase64 = base64Parts.Length > 1 ? base64Parts[1] : base64Parts[0];
+
+            // Base64'ü byte dizisine çevir
+            byte[] bytes = Convert.FromBase64String(pureBase64);
+
+            // Stream oluştur
             var stream = new MemoryStream(bytes);
 
-            var file = new FormFile(stream, 0, bytes.Length, fileName, fileName);
+            // FormFile nesnesini oluştur
+            var file = new FormFile(stream, 0, bytes.Length, "file", fileName)
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = GetContentType(fileName)
+            };
+
             return file;
         }
+
+        // Dosya uzantısına göre content type belirleme
+        private string GetContentType(string fileName)
+        {
+            var ext = Path.GetExtension(fileName).ToLowerInvariant();
+            return ext switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                ".pdf" => "application/pdf",
+                ".txt" => "text/plain",
+                _ => "application/octet-stream"
+            };
+        }
+
 
         #endregion
 
@@ -267,7 +298,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //FileUpload Table delete
                     var fileUpload = _fileUploadRepository.FindForInsertUpdateDelete(fileUploadId);
@@ -371,7 +402,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //FileUpload Table delete
                     var fileUpload = _fileUploadRepository.FindForInsertUpdateDelete(fileUploadId);

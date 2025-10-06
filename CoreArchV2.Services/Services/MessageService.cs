@@ -13,7 +13,6 @@ namespace CoreArchV2.Services.Services
 {
     public class MessageService : IMessageService
     {
-
         private readonly IUnitOfWork _uow;
         private readonly IHubContext<SignalRHub> _hubContext;
         private readonly IGenericRepository<Role> _roleRepository;

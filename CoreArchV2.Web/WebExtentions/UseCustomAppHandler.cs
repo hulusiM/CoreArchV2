@@ -3,7 +3,6 @@ using CoreArchV2.Utilies.SessionOperations;
 using CoreArchV2.Web.Controllers;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Rewrite;
-using Microsoft.Extensions.FileProviders;
 using System.Text;
 
 namespace CoreArchV2.Web.WebExtentions

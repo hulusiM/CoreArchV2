@@ -33,7 +33,7 @@ namespace CoreArchV2.Core.Entity.Logistics
         public bool? IsLeasing { get; set; }
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
-        public string LastAddress { get; set; }
+        public string? LastAddress { get; set; }
         public double? LastSpeed { get; set; }
         public DateTime? LastCoordinateInfo { get; set; }
     }

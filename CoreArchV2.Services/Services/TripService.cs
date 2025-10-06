@@ -14,6 +14,7 @@ using CoreArchV2.Services.Arvento;
 using CoreArchV2.Services.Arvento.Dto;
 using CoreArchV2.Services.Interfaces;
 using CoreArchV2.Utilies;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Text;
 using System.Transactions;
@@ -63,7 +64,7 @@ namespace CoreArchV2.Services.Services
         }
 
         #region TripAuthorization
-        public PagedList<ETripDto> GetAllAuthWithPaged(int? page, ETripDto filterModel, bool isAdmin)
+        public async Task<PagedList<ETripDto>> GetAllAuthWithPaged(int? page, ETripDto filterModel, bool isAdmin)
         {
             //Sıra no için
             var pageStartCount = 0;
@@ -75,8 +76,8 @@ namespace CoreArchV2.Services.Services
             PagedList<ETripDto> result = null;
             if (!isAdmin)//yetkili olduğu birimin araçları listelenmeli
             {
-                var user = _userRepository.Find(filterModel.CreatedBy);
-                var unit = _unitRepository.Find(user.UnitId.Value);
+                var user = await _userRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == filterModel.CreatedBy);
+                var unit = await _unitRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == user.UnitId.Value);
                 var createdByList = unit.ParentId > 0 ? list.Where(w => w.ParentUnitId == unit.ParentId).ToList() : list.Where(w => w.ParentUnitId == unit.Id).ToList();
 
                 var teamDriver = list.Where(w => w.UserUnitId == user.UnitId).ToList().Where(w => createdByList.All(a => a.Id != w.Id)).ToList();
@@ -89,14 +90,17 @@ namespace CoreArchV2.Services.Services
 
             foreach (var item in result)
             {
-                var lastDebit = _vehicleDebitRepository.Where(w => w.VehicleId == item.VehicleId && w.State == (int)DebitState.Debit).OrderByDescending(o => o.Id).Take(1).FirstOrDefault();
+                var lastDebit = await _vehicleDebitRepository
+             .Where(w => w.VehicleId == item.VehicleId && w.State == (int)DebitState.Debit)
+             .OrderByDescending(o => o.Id)
+             .FirstOrDefaultAsync();
                 //var vehicle = _vehicleRepository.Find(item.VehicleId);
-                var plateUnit = _unitRepository.Find(lastDebit.UnitId.Value).ParentId;
-                var userUnit = _userRepository.Find(item.CreatedBy).UnitId;
-                var userParent = _unitRepository.Where(w => w.Id == userUnit).FirstOrDefault();
+                var plateUnit = await _unitRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == lastDebit.UnitId.Value);
+                var userUnit = await _userRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == item.CreatedBy);
+                var userParent = await _unitRepository.Where(w => w.Id == userUnit.UnitId).FirstOrDefaultAsync();
                 if (userParent.ParentId != null)
-                    userUnit = userParent.ParentId;
-                item.Plate = plateUnit == userUnit
+                    userUnit.UnitId = userParent.ParentId;
+                item.Plate = plateUnit.ParentId == userUnit.UnitId
                     ? ("<span class='label bg-primary-300'>" + item.Plate + "</span>")
                     : ("<span class='label bg-warning-300'>" + item.Plate + "-Farklı Birim</span>");
 
@@ -104,6 +108,7 @@ namespace CoreArchV2.Services.Services
                 item.StateName = SetStateTrip(item.State);
                 item.MissionName = item.MissionName + " (" + GetTripType(item.Type) + ")";
             }
+
             return result;
         }
         public IQueryable<ETripDto> GetAllAuthTrip(int? page, int pageStartCount, ETripDto filterModel, bool isAdmin = false)
@@ -203,7 +208,7 @@ namespace CoreArchV2.Services.Services
                 else
                 {
                     var entity = _tripRepository.Find(model.Id);
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //trip update
                         entity.IsManagerAllowed = model.IsManagerAllowed;
@@ -260,7 +265,7 @@ namespace CoreArchV2.Services.Services
                 var lastStartTripLog = GetLastTrip(entity.VehicleId);
                 if (entity.Id == lastStartTripLog.Id)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //tripLog passive
                         var tripLog = _tripLogRepository.Where(w => w.TripId == entity.Id).ToList();
@@ -328,6 +333,7 @@ namespace CoreArchV2.Services.Services
             }
             return result;
         }
+
         public IQueryable<ETripDto> GetAllTrip(int? page, int pageStartCount, ETripDto filterModel, bool isAdmin = false)
         {
             var list = (from t in _tripRepository.GetAll()
@@ -586,7 +592,7 @@ namespace CoreArchV2.Services.Services
                         return result;
                     }
 
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         getLastTrip.EndKm = model.StartKm;
                         _tripRepository.Update(getLastTrip);
@@ -622,15 +628,15 @@ namespace CoreArchV2.Services.Services
             catch (Exception e) { result.Message = "Kayıt sırasında hata oluştu"; }
             return result;
         }
-        public EVehicleDto GetVehicleLastKm(int vehicleId)
+        public async Task<EVehicleDto> GetVehicleLastKm(int vehicleId)
         {
-            var vehicle = _vehicleRepository.FirstOrDefault(f => f.Status && f.Id == vehicleId);
+            var vehicle = await _vehicleRepository.FirstOrDefaultNoTrackingAsync(f => f.Status && f.Id == vehicleId);
             var result = new EVehicleDto();
             if (vehicle is { LastKm: { } })
-                result = GetLastTripInfo(vehicleId);
+                result = await GetLastTripInfo(vehicleId);
             else
             {
-                var lastTrip = _tripRepository.Where(w => w.Status && w.VehicleId == vehicleId).OrderByDescending(o => o.Id).Take(1).FirstOrDefault();
+                var lastTrip = await _tripRepository.Where(w => w.Status && w.VehicleId == vehicleId).OrderByDescending(o => o.Id).Take(1).FirstOrDefaultAsync();
                 if (lastTrip != null)
                 {
                     bool isChange = false;
@@ -649,17 +655,17 @@ namespace CoreArchV2.Services.Services
                     {
                         _vehicleRepository.Update(vehicle);
                         _uow.SaveChanges();
-                        result = GetLastTripInfo(vehicleId);
+                        result = await GetLastTripInfo(vehicleId);
                     }
                 }
             }
             return result;
         }
 
-        public EVehicleDto GetLastTripInfo(int vehicleId)
+        public async Task<EVehicleDto> GetLastTripInfo(int vehicleId)
         {
             var result = new EVehicleDto();
-            var vehicle = _vehicleRepository.FirstOrDefault(f => f.Status && f.Id == vehicleId);
+            var vehicle = await _vehicleRepository.FirstOrDefaultNoTrackingAsync(f => f.Status && f.Id == vehicleId);
             var lastTrip = GetLastTripFinishedMission(vehicleId);
             if (lastTrip != null)
             {
@@ -674,61 +680,63 @@ namespace CoreArchV2.Services.Services
             return result;
         }
 
-        public ETripDto ActiveMissionControl(int driveId)
+        public async Task<ETripDto> ActiveMissionControl(int driveId)
         {
-            var activeTrip = _tripRepository.FirstOrDefault(f =>
+            var activeTrip = await _tripRepository.FirstOrDefaultNoTrackingAsync(f =>
                 f.Status && f.IsManagerAllowed != false && (f.State == (int)TripState.StartTrip || f.State == (int)TripState.AllowedForManager) && f.DriverId == driveId);
             if (activeTrip != null)
             {
                 var map = _mapper.Map<ETripDto>(activeTrip);
                 map.StartCityName = GetCityName(map.StartCityId);
-                map.Plate = _vehicleRepository.Find(map.VehicleId).Plate;
+                var vehicle = await _vehicleRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == map.VehicleId);
+                if (vehicle != null)
+                    map.Plate = vehicle.Plate;
                 return map;
             }
             else
                 return new ETripDto();
         }
-        public List<ETripDto> GetByTripIdHistory(int tripId)
+        public async Task<List<ETripDto>> GetByTripIdHistory(int tripId)
         {
-            var list = (from tl in _tripLogRepository.GetAll()
-                        join t in _tripRepository.GetAll() on tl.TripId equals t.Id
-                        join u in _userRepository.GetAll() on t.DriverId equals u.Id
-                        join uc in _userRepository.GetAll() on tl.CreatedBy equals uc.Id
-                        join v in _vehicleRepository.GetAll() on t.VehicleId equals v.Id
+            var list = await Task.FromResult((from tl in _tripLogRepository.GetAll()
+                                              join t in _tripRepository.GetAll() on tl.TripId equals t.Id
+                                              join u in _userRepository.GetAll() on t.DriverId equals u.Id
+                                              join uc in _userRepository.GetAll() on tl.CreatedBy equals uc.Id
+                                              join v in _vehicleRepository.GetAll() on t.VehicleId equals v.Id
 
-                        join unit in _unitRepository.GetAll() on u.UnitId equals unit.Id into unitL
-                        from unit in unitL.DefaultIfEmpty()
-                        join unit2 in _unitRepository.GetAll() on unit.ParentId equals unit2.Id into unit2L
-                        from unit2 in unit2L.DefaultIfEmpty()
+                                              join unit in _unitRepository.GetAll() on u.UnitId equals unit.Id into unitL
+                                              from unit in unitL.DefaultIfEmpty()
+                                              join unit2 in _unitRepository.GetAll() on unit.ParentId equals unit2.Id into unit2L
+                                              from unit2 in unit2L.DefaultIfEmpty()
 
-                        join unit3 in _unitRepository.GetAll() on t.UnitId equals unit3.Id into unit3L
-                        from unit3 in unit3L.DefaultIfEmpty()
-                        join unit4 in _unitRepository.GetAll() on unit3.ParentId equals unit4.Id into unit4L
-                        from unit4 in unit4L.DefaultIfEmpty()
+                                              join unit3 in _unitRepository.GetAll() on t.UnitId equals unit3.Id into unit3L
+                                              from unit3 in unit3L.DefaultIfEmpty()
+                                              join unit4 in _unitRepository.GetAll() on unit3.ParentId equals unit4.Id into unit4L
+                                              from unit4 in unit4L.DefaultIfEmpty()
 
-                        join c1 in _cityRepository.GetAll() on tl.CityId equals c1.Id into c1L
-                        from c1 in c1L.DefaultIfEmpty()
-                        join c2 in _cityRepository.GetAll() on c1.ParentId equals c2.Id into c2L
-                        from c2 in c2L.DefaultIfEmpty()
-                        where tl.Status && tl.TripId == tripId
-                        select new ETripDto()
-                        {
-                            Id = tl.Id,
-                            StartCityName = c2.Name + "-" + c1.Name,
-                            StartKm = tl.Km,
-                            CreatedNameSurname = uc.Name + " " + uc.Surname,
-                            StartDate = t.StartDate,
-                            TransactionDate2 = tl.TransactionDate,
-                            UnitName = unit2.Name != null ? (unit2.Name + "/" + unit.Name) : unit.Name,
-                            Plate = v.Plate + " (" + unit4.Code + "/" + unit3.Code + ")",
-                            State = tl.State,
-                            Type = t.Type,
-                            VehicleLastKm = v.LastKm,
-                            LogType = tl.Type,
-                            IsManagerAllowed = t.IsManagerAllowed,
-                            Description = tl.Description,
-                            NameSurname = u.Name + " " + u.Surname + " (" + u.MobilePhone + ")"
-                        }).OrderBy(o => o.Id).ToList();
+                                              join c1 in _cityRepository.GetAll() on tl.CityId equals c1.Id into c1L
+                                              from c1 in c1L.DefaultIfEmpty()
+                                              join c2 in _cityRepository.GetAll() on c1.ParentId equals c2.Id into c2L
+                                              from c2 in c2L.DefaultIfEmpty()
+                                              where tl.Status && tl.TripId == tripId
+                                              select new ETripDto()
+                                              {
+                                                  Id = tl.Id,
+                                                  StartCityName = c2.Name + "-" + c1.Name,
+                                                  StartKm = tl.Km,
+                                                  CreatedNameSurname = uc.Name + " " + uc.Surname,
+                                                  StartDate = t.StartDate,
+                                                  TransactionDate2 = tl.TransactionDate,
+                                                  UnitName = unit2.Name != null ? (unit2.Name + "/" + unit.Name) : unit.Name,
+                                                  Plate = v.Plate + " (" + unit4.Code + "/" + unit3.Code + ")",
+                                                  State = tl.State,
+                                                  Type = t.Type,
+                                                  VehicleLastKm = v.LastKm,
+                                                  LogType = tl.Type,
+                                                  IsManagerAllowed = t.IsManagerAllowed,
+                                                  Description = tl.Description,
+                                                  NameSurname = u.Name + " " + u.Surname + " (" + u.MobilePhone + ")"
+                                              }).OrderBy(o => o.Id).ToList());
 
             foreach (var item in list)
             {
@@ -799,12 +807,12 @@ namespace CoreArchV2.Services.Services
             //}
             return mapList;
         }
-        public EResultDto CloseTrip(ETripDto model)
+        public async Task<EResultDto> CloseTrip(ETripDto model)
         {
             var result = new EResultDto() { IsSuccess = false };
             try
             {
-                var trip = _tripRepository.Find(model.Id);
+                var trip = await _tripRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == model.Id);
                 var tripDayKm = Convert.ToInt32((DateTime.Now - trip.StartDate).TotalDays);
                 tripDayKm = tripDayKm == 0 ? 1 : tripDayKm;
                 tripDayKm *= 2000; //Günlük max 2000km
@@ -829,7 +837,7 @@ namespace CoreArchV2.Services.Services
                     result.Message = "Görev açılış tarihi: " + trip.StartDate.ToString("dd/MM/yyyy") + "<br/>Bu tarihten sonra kapatabilirsiniz";
                 else
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //Trip table
                         trip.State = (int)TripState.EndTrip;
@@ -855,8 +863,8 @@ namespace CoreArchV2.Services.Services
                             Description = model.Description,
                             State = (int)TripState.EndTrip
                         };
-                        _tripLogRepository.Insert(tripLog);
-                        _uow.SaveChanges();
+                        await _tripLogRepository.InsertAsync(tripLog);
+                        await _uow.SaveChangesAsync();
                         scope.Complete();
                         result.Message = "Görev kapatılmıştır";
                         result.IsSuccess = true;
@@ -900,7 +908,7 @@ namespace CoreArchV2.Services.Services
             catch (Exception e) { result.Message = "Kayıt sırasında hata oluştu"; }
             return result;
         }
-        public EResultDto TripInsert(ETripDto model)
+        public async Task<EResultDto> TripInsert(ETripDto model)
         {
             var result = new EResultDto() { IsSuccess = false };
             try
@@ -916,25 +924,26 @@ namespace CoreArchV2.Services.Services
                     return result;
                 }
 
-                var userActiveTrip = _tripRepository.FirstOrDefault(a =>
+                var userActiveTrip = await _tripRepository.FirstOrDefaultNoTrackingAsync(a =>
                     a.Status && a.EndDate == null && (a.State == (int)TripState.StartTrip || a.State == (int)TripState.AllowedForManager) && a.DriverId == model.CreatedBy);
-                var plateActiveTrip = _tripRepository.FirstOrDefault(f =>
+                var plateActiveTrip = await _tripRepository.FirstOrDefaultNoTrackingAsync(f =>
                     f.Status && f.State == (int)TripState.StartTrip && f.VehicleId == model.VehicleId);
                 var trip = _mapper.Map<Trip>(model);
 
                 if (userActiveTrip != null)
                 {
-                    var plate = _vehicleRepository.Find(userActiveTrip.VehicleId).Plate;
-                    result.Message = "Üzerinizde " + plate + " plakalı araç " + userActiveTrip.StartDate.ToString("g") + " tarihinde açılmış görev bulunmaktadır";
+                    var plate = await _vehicleRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == userActiveTrip.VehicleId);
+                    result.Message = "Üzerinizde " + plate.Plate + " plakalı araç " + userActiveTrip.StartDate.ToString("g") + " tarihinde açılmış görev bulunmaktadır";
                 }
                 else if (plateActiveTrip != null)
                 {
-                    var userTrip = _userRepository.Find(plateActiveTrip.DriverId);
+                    var userTrip = await _userRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == plateActiveTrip.DriverId);
                     result.Message = "Bu plakalı araç " + userTrip.Name + " " + userTrip.Surname + " adlı kulanıcı tarafından görevdedir";
                 }
                 else
                 {
-                    var getLastTrip = _tripRepository.Where(f => f.Status && f.VehicleId == model.VehicleId && f.IsManagerAllowed != false && f.EndDate != null).LastOrDefault();
+                    //var getLastTrip = _tripRepository.Where(f => f.Status && f.VehicleId == model.VehicleId && f.IsManagerAllowed != false && f.EndDate != null).LastOrDefault();
+                    var getLastTrip = _tripRepository.Where(f => f.Status && f.VehicleId == model.VehicleId && f.IsManagerAllowed != false && f.EndDate != null).OrderByDescending(f => f.EndDate).FirstOrDefault();
                     if (getLastTrip is { State: (int)TripState.StartTrip })//aracın ilk kaydı değil
                     {
                         result.Message = "Bu plaka zaten görevde";
@@ -958,7 +967,7 @@ namespace CoreArchV2.Services.Services
                     //    return result;
                     //}
 
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var dateNow = DateTime.Now;
                         var startDateAttach = model.StartDate.Date == dateNow.Date ? dateNow : model.StartDate;//bugünse saat ekle
@@ -989,7 +998,7 @@ namespace CoreArchV2.Services.Services
                             Description = model.Description,
                             State = (int)TripState.StartTrip
                         };
-                        _tripLogRepository.Insert(tripLog);
+                        await _tripLogRepository.InsertAsync(tripLog);
                         result.Message = !SendMailInsertTrip(getLastTrip, trip, vehicleEnt) ? "Hata oluştu,yöneticiye onay maili gönderilemedi" : "İşlem Başarılı";
                         _uow.SaveChanges();
                         scope.Complete();
@@ -1000,12 +1009,12 @@ namespace CoreArchV2.Services.Services
             catch (Exception e) { result.Message = "Kayıt sırasında hata oluştu"; }
             return result;
         }
-        public EResultDto TripUpdate(ETripDto model)
+        public async Task<EResultDto> TripUpdate(ETripDto model)
         {
             var result = new EResultDto() { IsSuccess = false };
             try
             {
-                var entity = _tripRepository.Find(model.Id);
+                var entity = await _tripRepository.FindAsync(model.Id);
                 //if (model.StartDate < entity.CreatedDate)
                 //{
                 //    result.Message = "Bu görev " + entity.CreatedDate + " tarihinde açılmıştır.<br/>Bu yüzden önceki tarihe görev girilemez";
@@ -1025,9 +1034,9 @@ namespace CoreArchV2.Services.Services
                 }
                 else
                 {
-                    var firstVehicle = _vehicleRepository.Find(entity.VehicleId);
-                    var vehicleEnt = _vehicleRepository.Find(model.VehicleId);
-                    var addressLog = _tripLogRepository.Any(a =>
+                    var firstVehicle = await _vehicleRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == entity.VehicleId);
+                    var vehicleEnt = await _vehicleRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == model.VehicleId);
+                    var addressLog = await _tripLogRepository.AnyAsync(a =>
                         a.Status && a.TripId == model.Id && a.State == (int)TripState.AddAddress);
                     if (firstVehicle.Plate != vehicleEnt.Plate)
                     {
@@ -1050,9 +1059,9 @@ namespace CoreArchV2.Services.Services
                         return result;
                     }
 
-                    var user = _userRepository.Find(entity.CreatedBy);
-                    var firstCity = _cityRepository.Find(entity.StartCityId);
-                    var lastCity = _cityRepository.Find(model.StartCityId);
+                    var user = await _userRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == entity.CreatedBy);
+                    var firstCity = await _cityRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == entity.StartCityId);
+                    var lastCity = await _cityRepository.FirstOrDefaultNoTrackingAsync(f => f.Id == model.StartCityId);
 
                     var body = "<b><u>Önceki Bilgiler:</u></b>" +
                                "<br />Adı Soyadı: " + user.Name + " " + user.Surname + " ➤➤➤ <a href='tel:" + user.MobilePhone + "'>Ara ☎</a>" +
@@ -1087,7 +1096,7 @@ namespace CoreArchV2.Services.Services
                         //    result.Message = "Bu aracın son görevi tarihinde sonlandığı için,bu tarihten sonra görev açılabilir";
                         else
                         {
-                            using (var scope = new TransactionScope())
+                            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                             {
                                 //Trip table
                                 var newEnt = _tripRepository.FindForInsertUpdateDelete(model.Id);
@@ -1101,7 +1110,8 @@ namespace CoreArchV2.Services.Services
                                 _tripRepository.Update(trip);
 
                                 //TripLog table
-                                _tripLogRepository.DeleteRange(_tripLogRepository.Where(f => f.TripId == trip.Id).ToList());
+                                var listD = await _tripLogRepository.Where(f => f.TripId == trip.Id).ToListAsync();
+                                _tripLogRepository.DeleteRange(listD);
                                 var tripLog = new TripLog()
                                 {
                                     CreatedBy = model.CreatedBy,
@@ -1112,7 +1122,7 @@ namespace CoreArchV2.Services.Services
                                     Description = model.Description,
                                     State = (int)TripState.StartTrip
                                 };
-                                _tripLogRepository.Insert(tripLog);
+                                await _tripLogRepository.InsertAsync(tripLog);
 
                                 result.Message = !SendMailForTrip(vehicleEnt, "Görev Revize Edildi", body) ? "Hata oluştu, yöneticiye onay maili gönderilemedi" : "İşlem Başarılı";
                                 _uow.SaveChanges();
@@ -1215,7 +1225,7 @@ namespace CoreArchV2.Services.Services
 
             return result;
         }
-        public EResultDto Delete(int id, bool isAdmin, int createdBy)
+        public async Task<EResultDto> Delete(int id, bool isAdmin, int createdBy)
         {
             var result = new EResultDto() { IsSuccess = false };
             try
@@ -1243,7 +1253,7 @@ namespace CoreArchV2.Services.Services
                     result.Message = "Kapalı görev silinemez";
                 else
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //tripLog passive
                         var tripLog = _tripLogRepository.Where(w => w.TripId == entity.Id).ToList();

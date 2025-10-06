@@ -29,13 +29,13 @@ namespace CoreArchV2.Services.Services
         private readonly IGenericRepository<User> _userRepository;
         private readonly IGenericRepository<Vehicle> _vehicleRepository;
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
 
         public TireLogService(IUnitOfWork uow,
             IMapper mapper,
             ILogger<TireLogService> logger,
-            IHostingEnvironment env)
+            IWebHostEnvironment env)
         {
             _uow = uow;
             _env = env;
@@ -162,7 +162,7 @@ namespace CoreArchV2.Services.Services
                 var wareHouseEmptyTireList = GetWareHouseTireEmptyList(model);
                 if (wareHouseEmptyTireList.Count >= model.TireCount)//Boşta lastik sayısı >= istenen lastik sayısı
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //Tire update
                         wareHouseEmptyTireList.Take(model.TireCount).ToList().ForEach(f =>
@@ -466,7 +466,7 @@ namespace CoreArchV2.Services.Services
                 }
                 else if (debitTireList.Count >= model.TireCount)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //Tire Update
                         debitTireList.Take(model.TireCount).ToList().ForEach(f =>

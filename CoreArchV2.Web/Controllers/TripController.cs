@@ -40,10 +40,10 @@ namespace CoreArchV2.Web.Controllers
         public IActionResult DriverReport() => View();
 
         #region TripAuthorization
-        public IActionResult TripAuthGetAll(int? page, ETripDto filterModel)
+        public async Task<IActionResult> TripAuthGetAll(int? page, ETripDto filterModel)
         {
             filterModel.CreatedBy = _loginUserInfo.Id;
-            var result = _tripService.GetAllAuthWithPaged(page, filterModel, _loginUserInfo.IsAdmin);
+            var result = await _tripService.GetAllAuthWithPaged(page, filterModel, _loginUserInfo.IsAdmin);
             HttpContext.Session.SetString("PageList", MvcHelper.Pager(result, "/Trip/TripAuthGetAll"));
             return Json(result);
         }
@@ -79,7 +79,11 @@ namespace CoreArchV2.Web.Controllers
             tempModel.IsAdmin = _loginUserInfo.IsAdmin;
             return Json(_tripService.TripAddCity(tempModel));
         }
-        public IActionResult GetByTripIdHistory(int tripId) => Json(_tripService.GetByTripIdHistory(tripId));
+        public async Task<IActionResult> GetByTripIdHistory(int tripId)
+        {
+            var list = await _tripService.GetByTripIdHistory(tripId);
+            return Json(list);
+        }
         public IActionResult GetByTripIdHistoryMap(int tripId)
         {
             var trip = _tripRepository.Find(tripId);
@@ -100,22 +104,22 @@ namespace CoreArchV2.Web.Controllers
             tempModel.IsAdmin = _loginUserInfo.IsAdmin;
             return Json(_tripService.CloseTrip(tempModel));
         }
-        public IActionResult ActiveMissionControl() => Json(_tripService.ActiveMissionControl(_loginUserInfo.Id));
-        public IActionResult TripInsertUpdate(ETripDto tempModel)
+        public async Task<IActionResult> ActiveMissionControl() => Json(await _tripService.ActiveMissionControl(_loginUserInfo.Id));
+        public async Task<IActionResult> TripInsertUpdate(ETripDto tempModel)
         {
             tempModel.IsAdmin = _loginUserInfo.IsAdmin;
             tempModel.CreatedBy = _loginUserInfo.Id;
             tempModel.InsertType = (int)TripInsertType.Web;
             EResultDto result;
             if (tempModel.Id > 0)
-                result = _tripService.TripUpdate(tempModel);
+                result = await _tripService.TripUpdate(tempModel);
             else
-                result = _tripService.TripInsert(tempModel);
+                result = await _tripService.TripInsert(tempModel);
 
             return Json(result);
         }
         public IActionResult GetById(int id) => Json(_tripService.GetById(id));
-        public IActionResult Delete(int id) => Json(_tripService.Delete(id, _loginUserInfo.IsAdmin, _loginUserInfo.Id));
+        public async Task<IActionResult> Delete(int id) => Json(await _tripService.Delete(id, _loginUserInfo.IsAdmin, _loginUserInfo.Id));
         public async Task<IActionResult> GetReport(ETripDto tempModel)
         {
             tempModel.CreatedBy = _loginUserInfo.Id;

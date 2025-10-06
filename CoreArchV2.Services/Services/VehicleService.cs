@@ -55,7 +55,7 @@ namespace CoreArchV2.Services.Services
         private readonly IReportService _reportService;
         private readonly ICacheService _cacheService;
         private readonly ILicenceWebService _licenceService;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private readonly IMailService _mailService;
         #endregion
 
@@ -67,7 +67,7 @@ namespace CoreArchV2.Services.Services
             IHubContext<SignalRHub> hubContext,
             IReportService reportService,
             IMailService mailService,
-            IHostingEnvironment env,
+            IWebHostEnvironment env,
             ILicenceWebService licenceService)
         {
             _uow = uow;
@@ -558,7 +558,7 @@ namespace CoreArchV2.Services.Services
                             result = ArventoNoControl(tempModel.ArventoNo, null);
                             if (result.IsSuccess)
                             {
-                                using (var scope = new TransactionScope())
+                                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                                 {
                                     //Vehicle
                                     var entity = InsertVehicleTable(tempModel);
@@ -630,7 +630,7 @@ namespace CoreArchV2.Services.Services
                         result = ArventoNoControl(tempModel.ArventoNo, tempModel.Id);
                         if (result.IsSuccess)
                         {
-                            using (var scope = new TransactionScope())
+                            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                             {
                                 if (tempModel.FixtureTypeId == (int)FixtureType.ForRent) //Kiralık
                                 {
@@ -721,7 +721,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                //using (var scope = new TransactionScope())
+                //using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 //{
                 var allActiveVehicle = await Task.FromResult(_vehicleRepository.Where(w => w.Status && w.FixtureTypeId == (int)FixtureType.Ownership).ToList());
 
@@ -833,7 +833,7 @@ namespace CoreArchV2.Services.Services
                 result = VehicleActivePassiveControl(model.VehicleId);
                 if (result.IsSuccess)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var vehicleEntity = _vehicleRepository.Find(model.VehicleId);
                         var oldEndtity = _vehicleDebitRepository.Where(w => w.VehicleId == model.VehicleId)
@@ -926,7 +926,7 @@ namespace CoreArchV2.Services.Services
                             .OrderByDescending(o => o.Id).Take(1).FirstOrDefault();
                         if (lastDebit.Id == model.Id)//son zimmetli bilgilerini değişebilir
                         {
-                            using (var scope = new TransactionScope())
+                            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                             {
                                 var debit = _mapper.Map(model, oldDebit);
                                 _vehicleDebitRepository.Update(debit);
@@ -1090,7 +1090,7 @@ namespace CoreArchV2.Services.Services
                     }
                     else
                     {
-                        using (var scope = new TransactionScope())
+                        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
                             //Vehicle last değerler güncelleniyor
                             var vehicle = _vehicleRepository.Find(model.VehicleId);
@@ -1173,7 +1173,7 @@ namespace CoreArchV2.Services.Services
                         }
                         else
                         {
-                            using (var scope = new TransactionScope())
+                            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                             {
                                 //Vehicle last değerler güncelleniyor
                                 var vehicle = _vehicleRepository.Find(model.VehicleId);
@@ -1240,7 +1240,7 @@ namespace CoreArchV2.Services.Services
                     else
                     {
 
-                        using (var scope = new TransactionScope())
+                        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
                             lastDebit.Id = 0;
                             lastDebit.State = (int)DebitState.Debit;
@@ -1287,7 +1287,7 @@ namespace CoreArchV2.Services.Services
         //                var lastVehicleDebit = _vehicleDebitRepository.Where(w => w.VehicleId == model.VehicleId)
         //                                   .OrderByDescending(o => o.Id).Take(1).FirstOrDefault();
 
-        //                using (var scope = new TransactionScope())
+        //                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
         //                {
         //                    bool isDebitInsert = true;
         //                    var vehicle = _vehicleRepository.FindForInsertUpdateDelete(model.VehicleId);
@@ -1420,7 +1420,7 @@ namespace CoreArchV2.Services.Services
 
                     //if (entity.State == (int)DebitState.InService)//silinen data servis kayıtları
                     //{
-                    //    using (var scope = new TransactionScope())
+                    //    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     //    {
                     //        //VehicleDebit ilgili satır siliniyor
                     //        _vehicleDebitRepository.Delete(entity);
@@ -1438,7 +1438,7 @@ namespace CoreArchV2.Services.Services
                     //}
                     //else
                     //{
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //VehicleDebit ilgili satır siliniyor
                         _vehicleDebitRepository.Delete(entity);
@@ -1587,7 +1587,7 @@ namespace CoreArchV2.Services.Services
                             return result;
                         }
 
-                        using (var scope = new TransactionScope())
+                        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
                             //VehicleDebit set EndDate
                             var vehicleDebit = _vehicleDebitRepository.Where(w => w.VehicleId == IncomingModel.VehicleId)
@@ -1911,7 +1911,7 @@ namespace CoreArchV2.Services.Services
                             }
                             else if (lastRecord.StartDate < model.StartDate && model.StartDate < lastRecord.EndDate)
                             {
-                                using (var scope = new TransactionScope())
+                                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                                 {
                                     //eski kaydın endDate tarihi güncelleniyor
                                     lastRecord.EndDate = model.StartDate;
@@ -2087,7 +2087,7 @@ namespace CoreArchV2.Services.Services
                     }
                     else
                     {
-                        using (var scope = new TransactionScope())
+                        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
                             if (lastEntity != null)
                             {
@@ -2293,7 +2293,7 @@ namespace CoreArchV2.Services.Services
                 result = VehicleActivePassiveControl(vehicleId);
                 if (result.IsSuccess)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var contractAmountList = _vehicleAmountRepository.Where(w => w.VehicleContractId == vehicleContractId);//sözleşme altındaki tüm tutarlar
                         var amount = contractAmountList.FirstOrDefault(w => w.Id == vehicleAmountId);//silinecek olan tutar

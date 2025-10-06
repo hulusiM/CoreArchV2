@@ -37,7 +37,7 @@ namespace CoreArchV2.Services.Services
         private readonly IGenericRepository<TenderDetailPriceHistory> _tenderDetailPriceHistoryRepository;
         private readonly IMessageService _messageService;
         private readonly IGenericRepository<Unit> _unitRepository;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private readonly IUnitOfWork _uow;
         private readonly IMapper _mapper;
 
@@ -46,7 +46,7 @@ namespace CoreArchV2.Services.Services
             IMessageService messageService,
             IMapper mapper,
             IHubContext<SignalRHub> hubContext,
-            IHostingEnvironment env)
+            IWebHostEnvironment env)
         {
             _uow = uow;
             _env = env;
@@ -193,7 +193,7 @@ namespace CoreArchV2.Services.Services
                     var salesNumber = CreateNewSalesNumber(tempModel.CreatedBy);
                     if (salesNumber.IsSuccess)
                     {
-                        using (var scope = new TransactionScope())
+                        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
                             var model = _mapper.Map<Tender>(tempModel);
                             model.SalesNumber = salesNumber.Message;
@@ -243,7 +243,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var oldEntity = _tenderRepository.Find(entity.Id);
                     var newEntity = _mapper.Map(entity, oldEntity);
@@ -356,7 +356,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //Eski kayıtlar siliniyor
                     var oldContactList = _tenderContactRepository.Where(w => w.TenderId == model.TenderId).ToList();
@@ -425,7 +425,7 @@ namespace CoreArchV2.Services.Services
                 {
                     var oldTenderDetailList = _tenderDetailRepository.Where(w => w.TenderId == tempModel.TenderId).ToList();
                     var tenderDetailFileList = new List<FileUpload>();
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         tender.FooterInfo = tempModel.Tender.FooterInfo; //tender Update
                         if (oldTenderDetailList.Any())//kuruma gönderildiyse revize log kaydı
@@ -800,7 +800,7 @@ namespace CoreArchV2.Services.Services
                     result.Message = "Fiyat alanı boş olamaz";
                 else
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var priceHistoryEntity = new TenderDetailPriceHistory()
                         {

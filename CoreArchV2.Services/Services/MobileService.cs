@@ -9,6 +9,7 @@ using CoreArchV2.Dto.ELogisticsDto;
 using CoreArchV2.Services.Interfaces;
 using CoreArchV2.Utilies;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
@@ -34,13 +35,13 @@ namespace CoreArchV2.Services.Services
         private readonly IGenericRepository<FileUpload> _fileUploadRepository;
         private readonly IGenericRepository<VehiclePhysicalImage> _vehiclePhysicalImageRepository;
         private readonly IGenericRepository<VehiclePhysicalImageFile> _vehiclePhysicalImageFileRepository;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
         private readonly IMailService _mailService;
 
 
 
         public MobileService(IUnitOfWork uow,
-            IHostingEnvironment env,
+            IWebHostEnvironment env,
             IMailService mailService,
             IOptions<WebSendPushNotification> webSendPushNotificationSetting,
             IMapper mapper)
@@ -225,7 +226,7 @@ namespace CoreArchV2.Services.Services
             {
                 if (model.PhotoList.Any())
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var ids = 0;
                         result.Ids = new int[model.PhotoList.Count];
@@ -237,7 +238,6 @@ namespace CoreArchV2.Services.Services
                             fileName += extention;
 
                             var contentByte = System.Convert.FromBase64String(item);
-
                             var formFile = fs.Base64ToFormFile(item, fileName);
 
                             //prod
@@ -366,7 +366,7 @@ namespace CoreArchV2.Services.Services
         //        result = fs.FileUploadInsertVehiclePhysicalImage(model.PhotoList);
         //        if (result.IsSuccess && result.Ids.Length > 0)
         //        {
-        //            using (var scope = new TransactionScope())
+        //            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
         //            {
         //                var imageRep = _vehiclePhysicalImageRepository.Insert(new VehiclePhysicalImage()
         //                {

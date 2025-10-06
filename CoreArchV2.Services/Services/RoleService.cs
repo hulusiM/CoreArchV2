@@ -129,7 +129,7 @@ namespace CoreArchV2.Services.Services
                 }
                 else
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var roleAuthList = _roleAuthorizationRepository.GetAll().Where(w => w.RoleId == id).ToList();
                         foreach (var item in roleAuthList)
@@ -216,7 +216,7 @@ namespace CoreArchV2.Services.Services
 
         public bool Update(ERoleAuthorizationDto model)
         {
-            using (var scope = new TransactionScope())
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 if (UpdateRoleWithTransactionScope(model))
                     scope.Complete();

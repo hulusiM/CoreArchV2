@@ -27,25 +27,25 @@ namespace CoreArchV2.Services.Services
         public async Task<List<ECoordinateDto>> GetAllForMapVehicle(EVehicleDto model)
         {
             var list = from v in _vehicleRepository.GetAll()
-                        join unit in _unitRepository.GetAll() on v.LastUnitId equals unit.Id into unitL
-                        from unit in unitL.DefaultIfEmpty()
-                        join u2 in _userRepository.GetAll() on v.LastUserId equals u2.Id into uL
-                        from u2 in uL.DefaultIfEmpty()
-                        where v.Status && v.Latitude > 0 && v.LastCoordinateInfo != null
-                        select new ECoordinateDto()
-                        {
-                            UnitId = unit.Id,
-                            ParentUnitId = unit.ParentId,
-                            VehicleId = v.Id,
-                            DebitNameSurname = u2.Name + " " + u2.Surname + "/" + u2.MobilePhone,
-                            LatitudeY = v.Latitude,
-                            LongitudeX = v.Longitude,
-                            licensePlate = v.Plate,
-                            Speed = v.LastSpeed,
-                            MaxSpeed = v.MaxSpeed,
-                            Address = v.LastAddress,
-                            LocalDateTime = v.LastCoordinateInfo.Value.ToString("dd-MM-yyyy HH:mm:ss")
-                        };
+                       join unit in _unitRepository.GetAll() on v.LastUnitId equals unit.Id into unitL
+                       from unit in unitL.DefaultIfEmpty()
+                       join u2 in _userRepository.GetAll() on v.LastUserId equals u2.Id into uL
+                       from u2 in uL.DefaultIfEmpty()
+                       where v.Status && v.Latitude > 0 && v.LastCoordinateInfo != null
+                       select new ECoordinateDto()
+                       {
+                           UnitId = unit.Id,
+                           ParentUnitId = unit.ParentId,
+                           VehicleId = v.Id,
+                           DebitNameSurname = u2.Name + " " + u2.Surname + "/" + u2.MobilePhone,
+                           LatitudeY = v.Latitude,
+                           LongitudeX = v.Longitude,
+                           licensePlate = v.Plate,
+                           Speed = v.LastSpeed,
+                           MaxSpeed = v.MaxSpeed,
+                           Address = v.LastAddress,
+                           LocalDateTime = v.LastCoordinateInfo.Value.ToString("dd-MM-yyyy HH:mm:ss")
+                       };
 
             if (!model.IsAdmin)//admin değilse sadece yetkili olduğu müdürlüğü listele
             {

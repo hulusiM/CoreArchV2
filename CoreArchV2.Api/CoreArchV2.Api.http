@@ -1,0 +1,6 @@
+@CoreArchV2.Api_HostAddress = http://localhost:5110
+
+GET {{CoreArchV2.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

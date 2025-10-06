@@ -32,14 +32,14 @@ namespace CoreArchV2.Services.Services
         private readonly IReportService _reportService;
         private readonly IGenericRepository<Tire> _tireRepository;
 
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
 
         public MaintenanceService(IUnitOfWork uow,
             IMapper mapper,
             IReportService reportService,
             ILogger<MaintenanceService> logger,
-            IHostingEnvironment env)
+            IWebHostEnvironment env)
         {
             _uow = uow;
             _env = env;
@@ -169,7 +169,7 @@ namespace CoreArchV2.Services.Services
                     result.Message = "Girilen kayıt zimmet aralığında değildir, ilgili plakanın zimmettini kontrol ediniz.";
                 else
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var model = _mapper.Map<Maintenance>(tempModel);
                         model.CreatedBy = tempModel.CreatedBy;
@@ -222,7 +222,7 @@ namespace CoreArchV2.Services.Services
                     result.Message = "Kullanıcı hata tutarı, genel toplam tutarını geçemez.";
                 else
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //Eski maintenanceType table bilgileri siliniyor
                         var maintenanceTypeIds = _maintenanceTypeRepository.GetAll()

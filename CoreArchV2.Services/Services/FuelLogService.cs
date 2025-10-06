@@ -168,7 +168,7 @@ namespace CoreArchV2.Services.Services
                         }
                     }
 
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         await _fuelLogRepository.InsertRangeAsync(entities);
                         _uow.SaveChanges();

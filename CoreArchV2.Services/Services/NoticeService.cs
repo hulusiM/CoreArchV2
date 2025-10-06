@@ -38,11 +38,11 @@ namespace CoreArchV2.Services.Services
         private readonly IGenericRepository<NoticeUnitFile> _noticeUnitFileRepository;
         private readonly IGenericRepository<FileUpload> _fileUploadRepository;
         private readonly IGenericRepository<User> _userRepository;
-        private readonly IHostingEnvironment _env;
+        private readonly IWebHostEnvironment _env;
 
 
         public NoticeService(IUnitOfWork uow,
-            IHostingEnvironment env,
+            IWebHostEnvironment env,
             IMapper mapper)
         {
             _mapper = mapper;
@@ -369,7 +369,7 @@ namespace CoreArchV2.Services.Services
                         }
                     }
 
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         await _noticeRepository.InsertRangeAsync(entities);
                         _uow.SaveChanges();
@@ -636,7 +636,7 @@ namespace CoreArchV2.Services.Services
                 var user = _userRepository.Find(tempModel.CreatedBy);
                 if (user.UnitId > 0)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         //NoticeUnit insert
                         var noticeUnitEnt = new NoticeUnit()
@@ -746,7 +746,7 @@ namespace CoreArchV2.Services.Services
                     result.Message = "Kapalı ihbar üzerinden işlem yapılamaz";
                 else
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         if (oldEntity.State == tempModel.State)
                         {
@@ -854,7 +854,7 @@ namespace CoreArchV2.Services.Services
             try
             {
                 var noticeUnit = _noticeUnitRepository.FindForInsertUpdateDelete(model.NoticeUnitId.Value);
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var noticeList = _noticeRepository.Where(w => w.NoticeUnitId == model.NoticeUnitId).ToList();
                     if (model.IsReleaseSubNotice)//alttaki notice'leri sonraki kullanım için serbest bırak
@@ -967,7 +967,7 @@ namespace CoreArchV2.Services.Services
                                       select new ENoticeUnitDto() { Id = nu.Id }).Any();
                 if (isAnswerRecord)
                 {
-                    using (var scope = new TransactionScope())
+                    using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                     {
                         var noticeUnitHistory = new NoticeUnitHistory()
                         {
@@ -1266,7 +1266,7 @@ namespace CoreArchV2.Services.Services
 
                     if (NoticeCompareOldNew(noticeList, sendNoticeList) && NoticeCompareOldNew(noticeList, notSendNoticeList)) //Kontrol
                     {
-                        using (var scope = new TransactionScope())
+                        using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
                             var notSendNoticeEntity = notSendNoticeList.Select(item => _noticeRepository.FindForInsertUpdateDelete(item.Id)).ToList();
                             notSendNoticeEntity.ForEach(f => { f.State = (int)NoticeState.RedirectToCancelled; });
@@ -1351,7 +1351,7 @@ namespace CoreArchV2.Services.Services
                     }
                 }
 
-                using (var scope = new TransactionScope())
+                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     foreach (var item in sendNoticeList)
                     {
