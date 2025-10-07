@@ -4,12 +4,12 @@ namespace CoreArchV2.Services.Arvento
 {
     public interface IArventoService
     {
-        EPlateFromNodeDto GetLicensePlateFromNode(string node);
-        List<EGeneralReport2Dto> GeneralReport(DateTime start, DateTime end, string node);
-        List<EVehicleArventoDto> GetArventoPlateList();
-        void Arvento2ErpNodeGuncelle();
-        void ArventoPlakaKoordinatEkle();
-        void InsertPlateCoordinateRange();
+        Task<EPlateFromNodeDto> GetLicensePlateFromNode(string node);
+        Task<List<EGeneralReport2Dto>> GeneralReport(DateTime start, DateTime end, string node);
+        Task InsertPlateCoordinateRange();
+        Task<List<EVehicleArventoDto>> GetArventoPlateList();
+        Task Arvento2ErpNodeGuncelle();
+        Task ArventoPlakaKoordinatEkle();
         Task ArventoPlakaHiziSorgula();
         Task ArventoMesaiDisiKullanimRaporu();
         Task ArventoMesaiIciKullanimRaporu();

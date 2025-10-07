@@ -33,55 +33,12 @@ namespace CoreArchV2.Services.PO
             _mailService = mailService;
         }
 
-        //public void FuelInsert()
-        //{
-        //    //Sürekli çalışan job
-        //    var date = DateTime.Now.AddDays(-1);
-        //    DateTime startDate, endDate;
-        //    var logJob = _jobRepository.GetAll().OrderByDescending(o => o.Id).FirstOrDefault();
-        //    if (logJob == null)//ilk kayıtsa bir önceki günü al
-        //    {
-        //        date = DateTime.Now.AddDays(-1);
-        //        startDate = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0);
-        //        endDate = new DateTime(date.Year, date.Month, date.Day, 23, 59, 59);
-        //    }
-        //    else//en son kaydın bitiş tarihi,başlangıç tarihi olarak al
-        //    {
-        //        date = logJob.EndDate.Value;
-        //        startDate = date;
-        //        endDate = DateTime.Now;
-        //    }
-
-        //    GetRangeDateFuel(startDate, endDate);
-
-        //    //Ayda 2 kez çalışan kod
-        //    //var dateNow = DateTime.Now.AddDays(-20); //todo: sadece datetime.now kalacak
-        //    //if (dateNow.Day == 1 || dateNow.Day == 17)//Ayda sadece 2 kere çalışacak 1-16 ve 16-30 arası datalar için
-        //    //{
-        //    //    DateTime startDate = dateNow.AddDays(-1);
-        //    //    DateTime endDate = dateNow;
-        //    //    if (dateNow.Day >= 1 && dateNow.Day < 16) //1 ila 16. günse
-        //    //    {
-        //    //        dateNow = dateNow.AddMonths(-1);
-        //    //        DateTime dt_Ay_ilkGun = new DateTime(dateNow.Year, dateNow.Month, 1); // Ay ilk günü
-        //    //        startDate = new DateTime(dateNow.Year, dateNow.Month, 16);
-        //    //        endDate = dt_Ay_ilkGun.AddMonths(1).AddDays(-1);//Ayın son günü
-        //    //    }
-        //    //    else //16 ila 31. günse
-        //    //    {
-        //    //        startDate = new DateTime(dateNow.Year, dateNow.Month, 1);
-        //    //        endDate = new DateTime(dateNow.Year, dateNow.Month, 16);
-        //    //    }
-        //    //    GetRangeDateFuel(startDate, endDate);
-        //    //}
-        //}
-
         public async Task FuelInsert()
         {
             if (new ModeDetector().IsDebug)
                 return;
 
-            var taskScheduler = _jobRepository.FirstOrDefault(f => f.TypeId == 120 && f.Name == "PetrolOfisi");
+            var taskScheduler = await _jobRepository.FirstOrDefaultAsync(f => f.TypeId == 120 && f.Name == "PetrolOfisi");
             try
             {
                 if (taskScheduler != null)
@@ -115,11 +72,7 @@ namespace CoreArchV2.Services.PO
                     {
                         var fuelList = result.InvoiceDetailInfoList;
                         if (!fuelList.Any())
-                        {
-                            //var messageNoFuel = startDate + "-" + endDate + " tarihleri arasındaki yakıt verisi olmadığından veri eklenemedi";
-                            //FuelMailSender("Petrol Ofisi Yakıt Aktarımı Hk.", messageNoFuel);
                             return;
-                        }
 
                         var report = result.InvoiceDetailProductList;
                         var dbNoPlateList = new List<string>();
@@ -155,15 +108,15 @@ namespace CoreArchV2.Services.PO
 
                         using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
-                            _fuelLogRepository.InsertRange(insertFuelList);
-                            _uow.SaveChanges();
+                            await _fuelLogRepository.InsertRangeAsync(insertFuelList);
+                            await _uow.SaveChangesAsync();
                             scope.Complete();
                         }
 
                         taskScheduler.StartDate = startDate;
                         taskScheduler.EndDate = endDate;
                         taskScheduler.ErrorMessage = null;
-                        UpdateJob(taskScheduler);
+                        await UpdateJob(taskScheduler);
 
                         var message = "<b>Eklenen Yakıt Bilgileri</b> (" + startDate.ToString("dd/MM/yyyy HH:mm") + "-" + endDate.AddDays(1).ToString("dd/MM/yyyy HH:mm") + ")";
                         message += "<br/>Araç Sayısı: " + insertFuelList.GroupBy(g => g.VehicleId).ToList().Count + " Adet";
@@ -195,7 +148,7 @@ namespace CoreArchV2.Services.PO
                     else
                     {
                         taskScheduler.ErrorMessage = result.AutomaticResponseInfo.ResponseCode + "-" + result.AutomaticResponseInfo.ResponseMessage;
-                        UpdateJob(taskScheduler);
+                        await UpdateJob(taskScheduler);
                         var message = startDate + "-" + endDate + " tarihleri arasındaki yakıtları çekerken <b>hata</b> oluştu!!";
                         await FuelMailSender("Petrol Ofisi Yakıt Aktarımı Hk.", message);
                     }
@@ -216,22 +169,20 @@ namespace CoreArchV2.Services.PO
             catch (Exception ex)
             {
                 taskScheduler.ErrorMessage = ex.Message;
-                UpdateJob(taskScheduler);
+                await UpdateJob(taskScheduler);
                 await FuelMailSender("Petrol Ofisi Yakıt Aktarımı Hk.", "Hata İçeriği: " + ex.Message);
             }
         }
 
-        public void UpdateJob(TaskScheduler_ entity)
+        public async Task UpdateJob(TaskScheduler_ entity)
         {
             try
             {
                 _jobRepository.Update(entity);
-                _uow.SaveChanges();
+                await _uow.SaveChangesAsync();
             }
             catch (Exception)
             {
-
-                throw;
             }
         }
 

@@ -128,7 +128,7 @@ using (var scope = app.Services.CreateScope())
     RecurringJob.RemoveIfExists(nameof(arventoService.ArventoPlakaHiziSorgula));
     RecurringJob.AddOrUpdate(nameof(arventoService.ArventoPlakaHiziSorgula),
         () => arventoService.ArventoPlakaHiziSorgula(),
-        "*/3 * * * * *",
+        "01 12 * * *",//*/3 * * * * *
         TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time"));
 
     // Mesai İçi/Dışı Kullanım Raporu Mail

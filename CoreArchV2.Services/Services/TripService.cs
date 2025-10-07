@@ -17,6 +17,7 @@ using CoreArchV2.Utilies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.Text;
+using System.Threading.Tasks;
 using System.Transactions;
 
 namespace CoreArchV2.Services.Services
@@ -769,7 +770,7 @@ namespace CoreArchV2.Services.Services
             return list;
         }
 
-        public List<EGeneralReport2Dto> GetByTripIdHistoryMap(int tripId)
+        public async Task<List<EGeneralReport2Dto>> GetByTripIdHistoryMap(int tripId)
         {
             var trip = _tripRepository.Find(tripId);
             var vehicle = _vehicleRepository.Find(trip.VehicleId);
@@ -796,7 +797,7 @@ namespace CoreArchV2.Services.Services
             if (dbList.Any())//db'de kayıt varsa onu al yoksa arvento'dan çek
                 mapList = dbList;
             else
-                mapList = _arventoService.GeneralReport(startDate, endDate.Value, vehicle.ArventoNo);
+                mapList = await _arventoService.GeneralReport(startDate, endDate.Value, vehicle.ArventoNo);
 
 
             //var tempTripEndDate = trip.EndDate == null ? DateTime.Now : trip.EndDate;

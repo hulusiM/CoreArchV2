@@ -15,9 +15,13 @@ using CoreArchV2.Utilies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using System;
 using System.Globalization;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
 using System.Xml;
 
 
@@ -25,9 +29,10 @@ namespace CoreArchV2.Services.Arvento
 {
     public class ArventoService : IArventoService
     {
-        string rootUrl = "http://ws.arvento.com/v1/report.asmx/";
-        string userName = string.Empty;
-        string password = string.Empty;
+        private static readonly HttpClient _httpClient = new HttpClient();
+        string _rootUrl = "http://ws.arvento.com/v1/report.asmx/";
+        string _userName = string.Empty;
+        string _password = string.Empty;
 
         private readonly IUnitOfWork _uow;
         private readonly IMailService _mailService;
@@ -57,8 +62,8 @@ namespace CoreArchV2.Services.Arvento
             _reportService = reportService;
             _mobileService = mobileService;
             _arventoSetting = arventoSetting.Value;
-            userName = _arventoSetting.UserName;
-            password = _arventoSetting.Password;
+            _userName = _arventoSetting.UserName;
+            _password = _arventoSetting.Password;
             _unitRepository = uow.GetRepository<Unit>();
             _tripRepository = uow.GetRepository<Trip>();
             _cityRepository = uow.GetRepository<City>();
@@ -75,93 +80,130 @@ namespace CoreArchV2.Services.Arvento
 
         #region Arvento Metotlar
         //Node göre plaka listeler
-        public EPlateFromNodeDto GetLicensePlateFromNode(string node)
+        public async Task<EPlateFromNodeDto> GetLicensePlateFromNode(string node)
         {
-            var url = rootUrl + "GetLicensePlateFromNode";
-            var httpRequest = (HttpWebRequest)WebRequest.Create(url);
-            httpRequest.Method = "POST";
-            httpRequest.ContentType = "application/json";
-            var data = new
+            if (string.IsNullOrWhiteSpace(node))
+                return null;
+
+            var url = $"{_rootUrl}GetLicensePlateFromNode";
+
+            var payload = new
             {
-                Username = userName,
-                PIN1 = password,
-                PIN2 = password,
+                Username = _userName,
+                PIN1 = _password,
+                PIN2 = _password,
                 Node = node
             };
 
-            using (var streamWriter = new StreamWriter(httpRequest.GetRequestStream()))
+            try
             {
-                streamWriter.Write(JsonConvert.SerializeObject(data));
-            }
+                // HttpClient reuse edilmeli (örneğin sınıfın içinde static olarak tutulabilir)
+                using var client = new HttpClient();
 
-            var httpResponse = (HttpWebResponse)httpRequest.GetResponse();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                var json = JsonConvert.SerializeObject(payload);
+                using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync(url, content);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var responseBody = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(responseBody))
+                    return null;
+
+                // Bazı Arvento endpoint’leri JSON yerine XML benzeri içerik dönebiliyor
+                if (responseBody.TrimStart().StartsWith("<"))
+                    return null;
+
+                var result = JsonConvert.DeserializeObject<EPlateFromNodeDto>(responseBody);
+                return result;
+            }
+            catch (Exception ex)
             {
-                using (var jsonTextReader = new JsonTextReader(streamReader))
-                {
-                    //JavaScriptSerializer jsonSerializer = new JavaScriptSerializer();
-                    var serializer = new JsonSerializer();
-                    var result = serializer.Deserialize<EPlateFromNodeDto>(jsonTextReader);
-                    return result;
-                }
+                return null;
             }
         }
 
         //Verilen tarihe göre plakanın koordinatlarını listeler
-        public List<EGeneralReport2Dto> GeneralReport(DateTime start, DateTime end, string node)
+        public async Task<List<EGeneralReport2Dto>> GeneralReport(DateTime start, DateTime end, string node)
         {
+            var list = new List<EGeneralReport2Dto>();
+
             try
             {
-                var url = rootUrl + $"GeneralReport2?Username={userName}&PIN1={password}&PIN2={password}&" +
-             "StartDate=" + start.ToString("MMddyyyyHHmmss") +
-             "&EndDate=" + end.ToString("MMddyyyyHHmmss") +
-             "&Node=" + node +
-             "&Group=&Compress=&chkLocation=1&chkSpeed=1&chkPause=1&chkMotion=1&chkRegion=1&txtSpeedMin=&txtSpeedMax=&chkTemperatureSensor1=1&chkTemperatureSensorPer1=1&chkTemperatureSensorAlm1=1&chkTemperatureSensor2=1&chkTemperatureSensorPer2=1&chkTemperatureSensorAlm2=1&txtTemperatureMin=&txtTemperatureMax=&chkEmergency=1&chkDoor=1&chkPauseTime=1&chkContactAlarm=1&chkIdlingTime=1&chkIdlingAlarm=1&chkFuelLevel=1&chkPower=1&chkDriverIdentification=1&chkPossibleAccident=1&chkAcceleration=1&chkVehicleMovedWithoutDriverCard=1&MinuteDif=UTC+02:00&Language=0";
-                var httpRequest = (HttpWebRequest)WebRequest.Create(url);
-                var httpResponse = (HttpWebResponse)httpRequest.GetResponse();
-                List<EGeneralReport2Dto> list = new List<EGeneralReport2Dto>();
-                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+                var url = _rootUrl + $"GeneralReport2?Username={_userName}&PIN1={_password}&PIN2={_password}&" +
+                 "StartDate=" + start.ToString("MMddyyyyHHmmss") +
+                 "&EndDate=" + end.ToString("MMddyyyyHHmmss") +
+                 "&Node=" + node +
+                 "&Group=&Compress=&chkLocation=1&chkSpeed=1&chkPause=1&chkMotion=1&chkRegion=1&txtSpeedMin=&txtSpeedMax=&chkTemperatureSensor1=1&chkTemperatureSensorPer1=1&chkTemperatureSensorAlm1=1&chkTemperatureSensor2=1&chkTemperatureSensorPer2=1&chkTemperatureSensorAlm2=1&txtTemperatureMin=&txtTemperatureMax=&chkEmergency=1&chkDoor=1&chkPauseTime=1&chkContactAlarm=1&chkIdlingTime=1&chkIdlingAlarm=1&chkFuelLevel=1&chkPower=1&chkDriverIdentification=1&chkPossibleAccident=1&chkAcceleration=1&chkVehicleMovedWithoutDriverCard=1&MinuteDif=UTC+02:00&Language=0";
+
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(30);
+
+                var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                if (!response.IsSuccessStatusCode)
+                    return list;
+
+                var result = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(result))
+                    return list;
+
+                var doc = new XmlDocument();
+                try
                 {
-                    var result = streamReader.ReadToEnd();
-                    XmlDocument doc = new XmlDocument();
                     doc.LoadXml(result);
-                    foreach (XmlNode child in doc.ChildNodes)
+                }
+                catch (Exception xmlEx)
+                {
+                    return new List<EGeneralReport2Dto>();
+                }
+
+                foreach (XmlNode child in doc.ChildNodes)
+                {
+                    foreach (XmlNode child2 in child.ChildNodes)
                     {
-                        foreach (XmlNode child2 in child.ChildNodes)
+                        foreach (XmlNode child3 in child2.ChildNodes)
                         {
-                            foreach (XmlNode child3 in child2.ChildNodes)
+                            if (child3.Name == "NewDataSet")
                             {
-                                if (child3.Name == "NewDataSet")
+                                foreach (XmlNode item in child3.ChildNodes)
                                 {
-                                    foreach (XmlNode item in child3.ChildNodes)
+                                    if (item.SelectSingleNode("Enlem") != null && item.SelectSingleNode("Boylam") != null)
                                     {
-                                        if (item.SelectSingleNode("Enlem") != null && item.SelectSingleNode("Boylam") != null)
-                                        {
-                                            var model = new EGeneralReport2Dto();
-                                            if (item.SelectSingleNode("Kayıt_x0020_No") != null && item.SelectSingleNode("Kayıt_x0020_No").FirstChild != null)
-                                                model.KayitNo = Convert.ToInt32(item.SelectSingleNode("Kayıt_x0020_No").FirstChild.Value);
-                                            if (item.SelectSingleNode("Cihaz_x0020_No") != null && item.SelectSingleNode("Cihaz_x0020_No").FirstChild != null)
-                                                model.CihazNo = item.SelectSingleNode("Cihaz_x0020_No").FirstChild.Value;
-                                            if (item.SelectSingleNode("Plaka") != null && item.SelectSingleNode("Plaka").FirstChild != null)
-                                                model.Plaka = item.SelectSingleNode("Plaka").FirstChild.Value.Replace(" ", "");
-                                            if (item.SelectSingleNode("Sürücü") != null && item.SelectSingleNode("Sürücü").FirstChild != null)
-                                                model.Surucu = item.SelectSingleNode("Sürücü").FirstChild.Value;
-                                            if (item.SelectSingleNode("Tarih_x002F_Saat") != null && item.SelectSingleNode("Tarih_x002F_Saat").FirstChild != null)
-                                                model.Tarih = Convert.ToDateTime(Convert.ToDateTime(item.SelectSingleNode("Tarih_x002F_Saat").FirstChild.Value).ToString("dd.MM.yyyy HH:mm"));
-                                            if (item.SelectSingleNode("Tür") != null && item.SelectSingleNode("Tür").FirstChild != null)
-                                                model.Tur = item.SelectSingleNode("Tür").FirstChild.Value;
-                                            if (item.SelectSingleNode("Hız_x0020_km_x002F_s") != null && item.SelectSingleNode("Hız_x0020_km_x002F_s").FirstChild != null)
-                                                model.Hiz = item.SelectSingleNode("Hız_x0020_km_x002F_s").FirstChild.Value;
-                                            if (item.SelectSingleNode("Adres") != null && item.SelectSingleNode("Adres").FirstChild != null)
-                                                model.Adres = item.SelectSingleNode("Adres").FirstChild.Value;
+                                        var model = new EGeneralReport2Dto();
 
-                                            model.Enlem = item.SelectSingleNode("Enlem").FirstChild.Value;
-                                            model.Boylam = item.SelectSingleNode("Boylam").FirstChild.Value;
+                                        if (item.SelectSingleNode("Kayıt_x0020_No")?.FirstChild != null)
+                                            model.KayitNo = Convert.ToInt32(item.SelectSingleNode("Kayıt_x0020_No").FirstChild.Value);
 
-                                            if (item.SelectSingleNode("Duraklama_x0020_Süresi") != null && item.SelectSingleNode("Duraklama_x0020_Süresi").FirstChild != null)
-                                                model.DuraklamaSuresi = item.SelectSingleNode("Duraklama_x0020_Süresi").FirstChild.Value;
-                                            list.Add(model);
-                                        }
+                                        if (item.SelectSingleNode("Cihaz_x0020_No")?.FirstChild != null)
+                                            model.CihazNo = item.SelectSingleNode("Cihaz_x0020_No").FirstChild.Value;
+
+                                        if (item.SelectSingleNode("Plaka")?.FirstChild != null)
+                                            model.Plaka = item.SelectSingleNode("Plaka").FirstChild.Value.Replace(" ", "");
+
+                                        if (item.SelectSingleNode("Sürücü")?.FirstChild != null)
+                                            model.Surucu = item.SelectSingleNode("Sürücü").FirstChild.Value;
+
+                                        if (item.SelectSingleNode("Tarih_x002F_Saat")?.FirstChild != null)
+                                            model.Tarih = Convert.ToDateTime(Convert.ToDateTime(item.SelectSingleNode("Tarih_x002F_Saat").FirstChild.Value)
+                                                .ToString("dd.MM.yyyy HH:mm"));
+
+                                        if (item.SelectSingleNode("Tür")?.FirstChild != null)
+                                            model.Tur = item.SelectSingleNode("Tür").FirstChild.Value;
+
+                                        if (item.SelectSingleNode("Hız_x0020_km_x002F_s")?.FirstChild != null)
+                                            model.Hiz = item.SelectSingleNode("Hız_x0020_km_x002F_s").FirstChild.Value;
+
+                                        if (item.SelectSingleNode("Adres")?.FirstChild != null)
+                                            model.Adres = item.SelectSingleNode("Adres").FirstChild.Value;
+
+                                        model.Enlem = item.SelectSingleNode("Enlem")?.FirstChild?.Value;
+                                        model.Boylam = item.SelectSingleNode("Boylam")?.FirstChild?.Value;
+
+                                        if (item.SelectSingleNode("Duraklama_x0020_Süresi")?.FirstChild != null)
+                                            model.DuraklamaSuresi = item.SelectSingleNode("Duraklama_x0020_Süresi").FirstChild.Value;
+
+                                        list.Add(model);
                                     }
                                 }
                             }
@@ -169,41 +211,55 @@ namespace CoreArchV2.Services.Arvento
                     }
                 }
 
-                var groupCoordinate = list.GroupBy(g => new { g.Enlem, g.Boylam }).ToList().Select(s => new EGeneralReport2Dto()
-                {
-                    Enlem = s.Key.Enlem,
-                    Boylam = s.Key.Boylam,
-                    Plaka = s.FirstOrDefault().Plaka,
-                    Surucu = s.FirstOrDefault().Surucu,
-                    Tarih = s.OrderBy(o => o.Tarih).FirstOrDefault().Tarih,
-                    Hiz = s.FirstOrDefault().Hiz,
-                    DuraklamaSuresi = s.OrderByDescending(o => o.KayitNo).First().DuraklamaSuresi
-                }).ToList().GroupBy(a => a.Tarih).ToList().Select(b => new EGeneralReport2Dto()
-                {
-                    Enlem = b.First().Enlem,
-                    Boylam = b.First().Boylam,
-                    Plaka = b.First().Plaka,
-                    Surucu = b.First().Surucu,
-                    Tarih = b.First().Tarih,
-                    Hiz = b.First().Hiz,
-                    DuraklamaSuresi = b.First().DuraklamaSuresi
-                }).ToList();
+                var groupCoordinate = list
+                    .GroupBy(g => new { g.Enlem, g.Boylam })
+                    .Select(s => new EGeneralReport2Dto()
+                    {
+                        Enlem = s.Key.Enlem,
+                        Boylam = s.Key.Boylam,
+                        Plaka = s.FirstOrDefault()?.Plaka,
+                        Surucu = s.FirstOrDefault()?.Surucu,
+                        Tarih = s.OrderBy(o => o.Tarih).FirstOrDefault()?.Tarih ?? DateTime.MinValue,
+                        Hiz = s.FirstOrDefault()?.Hiz,
+                        DuraklamaSuresi = s.OrderByDescending(o => o.KayitNo).FirstOrDefault()?.DuraklamaSuresi
+                    })
+                    .GroupBy(a => a.Tarih)
+                    .Select(b => new EGeneralReport2Dto()
+                    {
+                        Enlem = b.First().Enlem,
+                        Boylam = b.First().Boylam,
+                        Plaka = b.First().Plaka,
+                        Surucu = b.First().Surucu,
+                        Tarih = b.First().Tarih,
+                        Hiz = b.First().Hiz,
+                        DuraklamaSuresi = b.First().DuraklamaSuresi
+                    }).ToList();
 
                 return groupCoordinate;
             }
-            catch (Exception)
+            catch (TaskCanceledException)
             {
-                var ss = 5;
+                return new List<EGeneralReport2Dto>();
             }
-            return new List<EGeneralReport2Dto>();
+            catch (HttpRequestException ex)
+            {
+                return new List<EGeneralReport2Dto>();
+            }
+            catch (Exception ex)
+            {
+                return new List<EGeneralReport2Dto>();
+            }
         }
 
         //Verilen günler arasındaki koordinatları çeker !!Manuel kullanım için
-        public void InsertPlateCoordinateRange()
+        public async Task InsertPlateCoordinateRange()
         {
             try
             {
-                var vehicleList = _vehicleRepository.Where(w => w.Status && !string.IsNullOrEmpty(w.ArventoNo)).ToList();
+                var vehicleList = _vehicleRepository
+                    .Where(w => w.Status && !string.IsNullOrEmpty(w.ArventoNo))
+                    .ToList();
+
                 var startDate1 = new DateTime(2022, 07, 17);
                 var endDate1 = DateTime.Now.Date;
 
@@ -212,14 +268,15 @@ namespace CoreArchV2.Services.Arvento
                 {
                     var startDate2 = startDate1.AddDays(i);
                     var endDate2 = startDate1.AddDays(i + 1);
+
                     foreach (var item in vehicleList)
                     {
                         var start = DateTime.Now;
-                        var coordinateList = GeneralReport(startDate2, endDate2, item.ArventoNo);
+                        var coordinateList = await GeneralReport(startDate2, endDate2, item.ArventoNo);
                         if (coordinateList.Any())
                         {
                             coordinateList = coordinateList.OrderBy(o => o.Tarih).ToList();
-                            var list = new List<VehicleCoordinate>();
+                            var list = new List<VehicleCoordinate>(coordinateList.Count);
 
                             foreach (var co in coordinateList)
                             {
@@ -233,21 +290,31 @@ namespace CoreArchV2.Services.Arvento
                                     LocalDate = co.Tarih
                                 });
                             }
+
                             var entities = list.OrderBy(o => o.LocalDate).ToList();
-                            _vehicleCoordinateRepository.InsertRange(entities);
-                            _uow.SaveChanges();
+                            await _vehicleCoordinateRepository.InsertRangeAsync(entities);
+                            await _uow.SaveChangesAsync();
 
                             var end = DateTime.Now;
-                            int diffSeconds = (int)(end - start).TotalSeconds;//arvento 30 sn'de bir istek kabul ediyor
+                            int diffSeconds = (int)(end - start).TotalSeconds;
+
+                            // Arvento API 30 saniyede bir istek kabul ediyor
                             if (diffSeconds < 30)
-                                Thread.Sleep((30 - diffSeconds) * 1000);
+                            {
+                                int delay = (30 - diffSeconds) * 1000;
+                                await Task.Delay(delay);
+                            }
+                        }
+                        else
+                        {
+                            await Task.Delay(5000);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                Thread.Sleep(30000);
+                await Task.Delay(30000);
             }
         }
 
@@ -256,7 +323,7 @@ namespace CoreArchV2.Services.Arvento
             var model = new VehicleOperatingReport();
             try
             {
-                var url = rootUrl + $"VehicleOperatingReport?Username={userName}&PIN1={password}&PIN2={password}&" +
+                var url = _rootUrl + $"VehicleOperatingReport?Username={_userName}&PIN1={_password}&PIN2={_password}&" +
                  "StartDate=" + start.ToString("MMddyyyyHHmmss") +
                  "&EndDate=" + end.ToString("MMddyyyyHHmmss") +
                  "&Node=" + node +
@@ -321,7 +388,7 @@ namespace CoreArchV2.Services.Arvento
             var list = new List<VehicleOperatingReport>();
             try
             {
-                var url = rootUrl + $"VehicleOperatingReport?Username={userName}&PIN1={password}&PIN2={password}&" +
+                var url = _rootUrl + $"VehicleOperatingReport?Username={_userName}&PIN1={_password}&PIN2={_password}&" +
                  "StartDate=" + start.ToString("MMddyyyyHHmmss") +
                  "&EndDate=" + end.ToString("MMddyyyyHHmmss") +
                  "&Node=" + node +
@@ -504,16 +571,11 @@ namespace CoreArchV2.Services.Arvento
                 return;
 
             var start = DateTime.Now;
-            if (start.Hour != 7 || start.DayOfWeek == DayOfWeek.Saturday)//Cumartesi çalışmayacak
+            if (start.Hour != 7 || start.DayOfWeek == DayOfWeek.Saturday)
                 return;
+
             try
             {
-                //if (IsJobRun())
-                //    return;
-
-                //JobSetTrueFalse("true");
-
-                #region Mesai Dışı Kullanım
                 var dateNow = DateTime.Now;
                 var startDate = dateNow;
                 var endDate = dateNow;
@@ -523,10 +585,13 @@ namespace CoreArchV2.Services.Arvento
 
                 var startDateEntity = startDate;
                 var endDateEntity = endDate;
-                if (dateNow.DayOfWeek == DayOfWeek.Monday) //Pazartesi günü gecesi dahil ediliyor. (00:00-07:00 arası)
+
+                // 🔹 Tarih aralıkları hesaplanıyor
+                if (dateNow.DayOfWeek == DayOfWeek.Monday)
                 {
+                    // Pazartesi sabahı: pazar gecesi dahil
                     startDate2 = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 0, 0, 0);
-                    endDate2 = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 07, 0, 0);
+                    endDate2 = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 7, 0, 0);
                     dateNow = dateNow.AddDays(-1);
                     unique = dateNow.ToString("ddMMyyyy");
                     startDate = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 0, 0, 0);
@@ -535,8 +600,9 @@ namespace CoreArchV2.Services.Arvento
                     startDateEntity = startDate;
                     endDateEntity = endDate2;
                 }
-                else if (dateNow.DayOfWeek == DayOfWeek.Sunday) //Cuma aksamı dahil ediliyor. (19:00-23:59 arası)
+                else if (dateNow.DayOfWeek == DayOfWeek.Sunday)
                 {
+                    // Pazar günü: cuma akşamı dahil
                     var friday = dateNow.AddDays(-2);
                     startDate = new DateTime(friday.Year, friday.Month, friday.Day, 19, 0, 0);
                     endDate = new DateTime(friday.Year, friday.Month, friday.Day, 23, 59, 59);
@@ -550,8 +616,9 @@ namespace CoreArchV2.Services.Arvento
                 }
                 else
                 {
+                    // Diğer günlerde: bir önceki günün 19:00–23:59 ve bugünün 00:00–07:00 arası
                     startDate2 = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 0, 0, 0);
-                    endDate2 = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 07, 0, 0);
+                    endDate2 = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 7, 0, 0);
                     dateNow = dateNow.AddDays(-1);
                     startDate = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 19, 0, 0);
                     endDate = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 23, 59, 59);
@@ -561,65 +628,67 @@ namespace CoreArchV2.Services.Arvento
                     endDateEntity = endDate2;
                 }
 
+                var vehicleList = _vehicleRepository
+                    .Where(w => w.Status && !string.IsNullOrEmpty(w.ArventoNo))
+                    .ToList();
 
-                var vehicleList = _vehicleRepository.Where(w => w.Status && !string.IsNullOrEmpty(w.ArventoNo)).ToList();
-                var datalist = new List<VehicleOperatingReport>();
-                dateNow = DateTime.Now;
                 foreach (var item in vehicleList)
                 {
                     try
                     {
                         var data = new VehicleOperatingReport();
-
                         var templist = new List<VehicleOperatingReport>();
 
+                        // 1️⃣ Akşam (19:00–23:59)
                         var firstRow = await VehicleOperatingReport(item.ArventoNo, startDate, endDate);
-                        if (firstRow != null && firstRow.MesafeKm != null && firstRow.MesafeKm != "0")
+                        if (firstRow != null && !string.IsNullOrEmpty(firstRow.MesafeKm) && firstRow.MesafeKm != "0")
                             templist.Add(firstRow);
 
                         start = DateTime.Now;
                         SearchSecondCheck(start);
 
+                        // 2️⃣ Sabah (00:00–07:00)
                         var secondRow = await VehicleOperatingReport(item.ArventoNo, startDate2, endDate2);
-                        if (secondRow != null && secondRow.MesafeKm != null && secondRow.MesafeKm != "0")
+                        if (secondRow != null && !string.IsNullOrEmpty(secondRow.MesafeKm) && secondRow.MesafeKm != "0")
                             templist.Add(secondRow);
 
                         start = DateTime.Now;
                         if (templist.Any())
                         {
                             data = await GetGroupBySingle(templist);
+
                             if (data != null)
                             {
-                                if (firstRow.MesafeKm != null && firstRow.MesafeKm != "0" && secondRow.MesafeKm != null && secondRow.MesafeKm != "0")
+                                if (!string.IsNullOrEmpty(firstRow?.MesafeKm) && firstRow.MesafeKm != "0" &&
+                                    !string.IsNullOrEmpty(secondRow?.MesafeKm) && secondRow.MesafeKm != "0")
                                 {
                                     data.IlkKontakAcildi = firstRow.IlkKontakAcildi;
                                     data.SonKontakKapandi = secondRow.SonKontakKapandi;
                                 }
-                                else if ((firstRow.MesafeKm == null || firstRow.MesafeKm == "0") && (secondRow.MesafeKm != null && secondRow.MesafeKm != "0"))
+                                else if (string.IsNullOrEmpty(firstRow?.MesafeKm) || firstRow.MesafeKm == "0")
                                 {
-                                    data.IlkKontakAcildi = secondRow.IlkKontakAcildi;
-                                    data.SonKontakKapandi = secondRow.SonKontakKapandi;
+                                    data.IlkKontakAcildi = secondRow?.IlkKontakAcildi;
+                                    data.SonKontakKapandi = secondRow?.SonKontakKapandi;
                                 }
-                                else if ((firstRow.MesafeKm != null && firstRow.MesafeKm != "0") && (secondRow.MesafeKm == null || secondRow.MesafeKm == "0"))
+                                else
                                 {
-                                    data.IlkKontakAcildi = firstRow.IlkKontakAcildi;
-                                    data.SonKontakKapandi = firstRow.SonKontakKapandi;
+                                    data.IlkKontakAcildi = firstRow?.IlkKontakAcildi;
+                                    data.SonKontakKapandi = firstRow?.SonKontakKapandi;
                                 }
                             }
                         }
 
-                        if (data != null && !string.IsNullOrEmpty(data.ArventoNo) && data.MesafeKm != null && data.MesafeKm != "0")
+                        if (data != null && !string.IsNullOrEmpty(data.ArventoNo) &&
+                            !string.IsNullOrEmpty(data.MesafeKm) && data.MesafeKm != "0")
                         {
                             data.StartDate = startDateEntity;
                             data.EndDate = endDateEntity;
                             data.VehicleId = item.Id;
                             data.ZimmetliPlaka = item.Plate;
-
                             data.LastDebitUserId = item.LastUserId;
                             data.LastDebitCityId = item.LastCityId;
                             data.LastDebitStatus = item.LastStatus;
                             data.LastUnitId = item.LastUnitId;
-
                             data.LastDebitKm = item.LastKm;
                             data.Type = 0;
                             data.UniqueLine = unique;
@@ -639,143 +708,160 @@ namespace CoreArchV2.Services.Arvento
 
                         SearchSecondCheck(start);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         SearchSecondCheck(start);
+                        continue;
                     }
                 }
-
-                #endregion
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //JobSetTrueFalse("false");
-                MailSender("ArventoMesaiDisiKullanimRaporu Hk.", "Araç raporu çekilirken hata oluştu. Method name: ArventoMesaiDisiKullanimRaporu");
+                MailSender("ArventoMesaiDisiKullanimRaporu Hk.",
+                    "Araç raporu çekilirken hata oluştu. Method name: ArventoMesaiDisiKullanimRaporu");
             }
-
-            //JobSetTrueFalse("false");
         }
-
         public async Task<VehicleOperatingReport> GetGroupBySingle(List<VehicleOperatingReport> list)
         {
             try
             {
-                if (list.Any())
+                if (list == null || !list.Any())
+                    return null;
+
+                // CPU-bound işlemi arka planda çalıştırıyoruz
+                return await Task.Run(() =>
                 {
                     var groupByList = list.GroupBy(g => g.ArventoNo).ToList();
+
                     var entity = groupByList
                         .Select(s => new VehicleOperatingReport()
                         {
-                            MesafeKm = s.Sum(s => Convert.ToDecimal(s?.MesafeKm?.Replace(".", ","))).ToString(),
-                            MaxHiz = s.Max(s => Convert.ToDecimal(s?.MaxHiz)).ToString(),
-                            //IlkKontakAcildi = s.FirstOrDefault()?.IlkKontakAcildi != null ? s.Min(s => Convert.ToDateTime(s.IlkKontakAcildi)).ToString("dd.MM.yyyy hh:mm") : null,
-                            //SonKontakKapandi = s.FirstOrDefault()?.SonKontakKapandi != null ? s.Max(s => Convert.ToDateTime(s.SonKontakKapandi)).ToString("dd.MM.yyyy hh:mm") : null,
+                            MesafeKm = s.Sum(x => SafeDecimal(x.MesafeKm)).ToString("0.##"),
+                            MaxHiz = s.Max(x => SafeDecimal(x.MaxHiz)).ToString("0.##"),
 
                             Tarih = s.FirstOrDefault()?.Tarih,
                             ArventoNo = s.FirstOrDefault()?.ArventoNo,
-                            ArventoPlaka = s.FirstOrDefault()?.ArventoPlaka.Replace(" ", "").ToUpper(),
-                            DuraklamaSuresiSaat = s.Sum(s => Convert.ToInt32(s?.DuraklamaSuresiSaat)),
-                            DuraklamaSuresiDakika = s.Sum(s => Convert.ToInt32(s?.DuraklamaSuresiDakika)),
-                            DuraklamaSuresiSaniye = s.Sum(s => Convert.ToInt32(s?.DuraklamaSuresiSaniye)),
-                            RolantiSuresiSaat = s.Sum(s => Convert.ToInt32(s?.RolantiSuresiSaat)),
-                            RolantiSuresiDakika = s.Sum(s => Convert.ToInt32(s?.RolantiSuresiDakika)),
-                            RolantiSuresiSaniye = s.Sum(s => Convert.ToInt32(s?.RolantiSuresiSaniye)),
-                            HareketSuresiSaat = s.Sum(s => Convert.ToInt32(s?.HareketSuresiSaat)),
-                            HareketSuresiDakika = s.Sum(s => Convert.ToInt32(s?.HareketSuresiDakika)),
-                            HareketSuresiSaniye = s.Sum(s => Convert.ToInt32(s?.HareketSuresiSaniye)),
-                            KontakAcikKalmaSuresiSaat = s.Sum(s => Convert.ToInt32(s?.KontakAcikKalmaSuresiSaat)),
-                            KontakAcikKalmaSuresiDakika = s.Sum(s => Convert.ToInt32(s?.KontakAcikKalmaSuresiDakika)),
-                            KontakAcikKalmaSuresiSaniye = s.Sum(s => Convert.ToInt32(s?.KontakAcikKalmaSuresiSaniye)),
+                            ArventoPlaka = s.FirstOrDefault()?.ArventoPlaka?.Replace(" ", "").ToUpper(),
+
+                            DuraklamaSuresiSaat = s.Sum(x => SafeInt(x.DuraklamaSuresiSaat)),
+                            DuraklamaSuresiDakika = s.Sum(x => SafeInt(x.DuraklamaSuresiDakika)),
+                            DuraklamaSuresiSaniye = s.Sum(x => SafeInt(x.DuraklamaSuresiSaniye)),
+
+                            RolantiSuresiSaat = s.Sum(x => SafeInt(x.RolantiSuresiSaat)),
+                            RolantiSuresiDakika = s.Sum(x => SafeInt(x.RolantiSuresiDakika)),
+                            RolantiSuresiSaniye = s.Sum(x => SafeInt(x.RolantiSuresiSaniye)),
+
+                            HareketSuresiSaat = s.Sum(x => SafeInt(x.HareketSuresiSaat)),
+                            HareketSuresiDakika = s.Sum(x => SafeInt(x.HareketSuresiDakika)),
+                            HareketSuresiSaniye = s.Sum(x => SafeInt(x.HareketSuresiSaniye)),
+
+                            KontakAcikKalmaSuresiSaat = s.Sum(x => SafeInt(x.KontakAcikKalmaSuresiSaat)),
+                            KontakAcikKalmaSuresiDakika = s.Sum(x => SafeInt(x.KontakAcikKalmaSuresiDakika)),
+                            KontakAcikKalmaSuresiSaniye = s.Sum(x => SafeInt(x.KontakAcikKalmaSuresiSaniye)),
+
                             AracSonDurumBilgileri = s.FirstOrDefault()?.AracSonDurumBilgileri,
-                            HizAlarm = s.Sum(s => Convert.ToInt32(s?.HizAlarm)).ToString(),
-                            SehirIciHizAlarm = s.Sum(s => Convert.ToInt32(s?.SehirIciHizAlarm)).ToString(),
-                            SehirDisiHizAlarm = s.Sum(s => Convert.ToInt32(s?.SehirDisiHizAlarm)).ToString(),
-                            OtoyolHizAlarm = s.Sum(s => Convert.ToInt32(s?.OtoyolHizAlarm)).ToString(),
-                            RolantiAlarm = s.Sum(s => Convert.ToInt32(s?.RolantiAlarm)).ToString(),
-                            DuraklamaAlarm = s.Sum(s => Convert.ToInt32(s?.DuraklamaAlarm)).ToString(),
-                            HareketAlarm = s.Sum(s => Convert.ToInt32(s?.HareketAlarm)).ToString(),
-                            KontakAcildiAlarm = s.Sum(s => Convert.ToInt32(s?.KontakAcildiAlarm)).ToString(),
-                            KontakKapandiAlarm = s.Sum(s => Convert.ToInt32(s?.KontakKapandiAlarm)).ToString(),
-                            AniHizlanmaAlarm = s.Sum(s => Convert.ToInt32(s?.AniHizlanmaAlarm)).ToString(),
-                            AniYavaslamaAlarm = s.Sum(s => Convert.ToInt32(s?.AniYavaslamaAlarm)).ToString(),
-                            MotorDevirAsimiAlarm = s.Sum(s => Convert.ToInt32(s?.MotorDevirAsimiAlarm)).ToString(),
-                        }).FirstOrDefault();
 
-                    var second = 60;
-                    #region 
-                    if (entity.DuraklamaSuresiSaniye >= second)
+                            HizAlarm = s.Sum(x => SafeInt(x.HizAlarm)).ToString(),
+                            SehirIciHizAlarm = s.Sum(x => SafeInt(x.SehirIciHizAlarm)).ToString(),
+                            SehirDisiHizAlarm = s.Sum(x => SafeInt(x.SehirDisiHizAlarm)).ToString(),
+                            OtoyolHizAlarm = s.Sum(x => SafeInt(x.OtoyolHizAlarm)).ToString(),
+                            RolantiAlarm = s.Sum(x => SafeInt(x.RolantiAlarm)).ToString(),
+                            DuraklamaAlarm = s.Sum(x => SafeInt(x.DuraklamaAlarm)).ToString(),
+                            HareketAlarm = s.Sum(x => SafeInt(x.HareketAlarm)).ToString(),
+                            KontakAcildiAlarm = s.Sum(x => SafeInt(x.KontakAcildiAlarm)).ToString(),
+                            KontakKapandiAlarm = s.Sum(x => SafeInt(x.KontakKapandiAlarm)).ToString(),
+                            AniHizlanmaAlarm = s.Sum(x => SafeInt(x.AniHizlanmaAlarm)).ToString(),
+                            AniYavaslamaAlarm = s.Sum(x => SafeInt(x.AniYavaslamaAlarm)).ToString(),
+                            MotorDevirAsimiAlarm = s.Sum(x => SafeInt(x.MotorDevirAsimiAlarm)).ToString(),
+                        })
+                        .FirstOrDefault();
+
+                    if (entity == null)
                     {
-                        var saniye = entity.DuraklamaSuresiSaniye;
-                        entity.DuraklamaSuresiSaniye = saniye % second;
-                        entity.DuraklamaSuresiDakika += saniye / second;
+                        Console.WriteLine("[Arvento] GetGroupBySingle: entity null döndü.");
+                        return null;
                     }
 
-                    if (entity.DuraklamaSuresiDakika >= second)
-                    {
-                        var dakika = entity.DuraklamaSuresiDakika;
-                        entity.DuraklamaSuresiDakika = dakika % second;
-                        entity.DuraklamaSuresiSaat += dakika / second;
-                    }
-                    #endregion
+                    // ✅ Property'leri local değişkenlere al -> ref olarak normalize et -> geri ata
+                    NormalizeEntityTimes(entity);
 
-                    #region 
-                    if (entity.RolantiSuresiSaniye >= second)
-                    {
-                        var saniye = entity.RolantiSuresiSaniye;
-                        entity.RolantiSuresiSaniye = saniye % second;
-                        entity.RolantiSuresiDakika += saniye / second;
-                    }
-
-                    if (entity.RolantiSuresiDakika >= second)
-                    {
-                        var dakika = entity.RolantiSuresiDakika;
-                        entity.RolantiSuresiDakika = dakika % second;
-                        entity.RolantiSuresiSaat += dakika / second;
-                    }
-                    #endregion
-
-                    #region 
-                    if (entity.HareketSuresiSaniye >= second)
-                    {
-                        var saniye = entity.HareketSuresiSaniye;
-                        entity.HareketSuresiSaniye = saniye % second;
-                        entity.HareketSuresiDakika += saniye / second;
-                    }
-
-                    if (entity.HareketSuresiDakika >= second)
-                    {
-                        var dakika = entity.HareketSuresiDakika;
-                        entity.HareketSuresiDakika = dakika % second;
-                        entity.HareketSuresiSaat += dakika / second;
-                    }
-                    #endregion
-
-                    #region 
-                    if (entity.KontakAcikKalmaSuresiSaniye >= second)
-                    {
-                        var saniye = entity.KontakAcikKalmaSuresiSaniye;
-                        entity.KontakAcikKalmaSuresiSaniye = saniye % second;
-                        entity.KontakAcikKalmaSuresiDakika += saniye / second;
-                    }
-
-                    if (entity.KontakAcikKalmaSuresiDakika >= second)
-                    {
-                        var dakika = entity.KontakAcikKalmaSuresiDakika;
-                        entity.KontakAcikKalmaSuresiDakika = dakika % second;
-                        entity.KontakAcikKalmaSuresiSaat += dakika / second;
-                    }
-                    #endregion
-
-
+                    Console.WriteLine($"[Arvento] GetGroupBySingle: entity oluşturuldu (Plaka: {entity.ArventoPlaka})");
                     return entity;
-                }
-
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Arvento ERROR] GetGroupBySingle hata: {ex.Message}");
                 return null;
             }
-            catch (Exception)
-            { }
-            return null;
         }
+        private static int SafeInt(object value)
+        {
+            if (value == null) return 0;
+            if (value is int i) return i;
+            if (int.TryParse(value.ToString(), out var result))
+                return result;
+            return 0;
+        }
+        private static decimal SafeDecimal(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return 0;
+
+            value = value.Replace(",", ".");
+            return decimal.TryParse(value, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var result)
+                ? result
+                : 0;
+        }
+        private static void NormalizeTime(int? saniye, int? dakika, int? saat)
+        {
+            int s = saniye ?? 0, d = dakika ?? 0, h = saat ?? 0;
+            NormalizeTime(s, d, h);
+            saniye = s; dakika = d; saat = h;
+        }
+
+        private static void NormalizeEntityTimes(VehicleOperatingReport entity)
+        {
+            // Duraklama
+            int dS = entity.DuraklamaSuresiSaniye ?? 0;
+            int dD = entity.DuraklamaSuresiDakika ?? 0;
+            int dH = entity.DuraklamaSuresiSaat ?? 0;
+            NormalizeTime(dS, dD, dH);
+            entity.DuraklamaSuresiSaniye = dS;
+            entity.DuraklamaSuresiDakika = dD;
+            entity.DuraklamaSuresiSaat = dH;
+
+            // Rölanti
+            int rS = entity.RolantiSuresiSaniye ?? 0;
+            int rD = entity.RolantiSuresiDakika ?? 0;
+            int rH = entity.RolantiSuresiSaat ?? 0;
+            NormalizeTime(rS, rD, rH);
+            entity.RolantiSuresiSaniye = rS;
+            entity.RolantiSuresiDakika = rD;
+            entity.RolantiSuresiSaat = rH;
+
+            // Hareket
+            int hS = entity.HareketSuresiSaniye ?? 0;
+            int hD = entity.HareketSuresiDakika ?? 0;
+            int hH = entity.HareketSuresiSaat ?? 0;
+            NormalizeTime(hS, hD, hH);
+            entity.HareketSuresiSaniye = hS;
+            entity.HareketSuresiDakika = hD;
+            entity.HareketSuresiSaat = hH;
+
+            // Kontak
+            int kS = entity.KontakAcikKalmaSuresiSaniye ?? 0;
+            int kD = entity.KontakAcikKalmaSuresiDakika ?? 0;
+            int kH = entity.KontakAcikKalmaSuresiSaat ?? 0;
+            NormalizeTime(kS, kD, kH);
+            entity.KontakAcikKalmaSuresiSaniye = kS;
+            entity.KontakAcikKalmaSuresiDakika = kD;
+            entity.KontakAcikKalmaSuresiSaat = kH;
+        }
+
+
+
         #endregion
 
         #region Mesai İçi
@@ -790,39 +876,36 @@ namespace CoreArchV2.Services.Arvento
                 if (dateNow.Hour != 19)
                     return;
 
-                //if (IsJobRun())
-                //    return;
-
-                if (dateNow.DayOfWeek == DayOfWeek.Saturday || dateNow.DayOfWeek == DayOfWeek.Sunday)//Haftasonu mesai dışına giriyor
+                if (dateNow.DayOfWeek == DayOfWeek.Saturday || dateNow.DayOfWeek == DayOfWeek.Sunday)
                     return;
 
-                //JobSetTrueFalse("true");
                 #region Mesai İçi Kullanım
+                var startDate = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 7, 0, 0); // 07:00
+                var endDate = new DateTime(startDate.Year, startDate.Month, startDate.Day, 19, 0, 0); // 19:00
 
-                var startDate = new DateTime(dateNow.Year, dateNow.Month, dateNow.Day, 7, 0, 0); //07:00
-                var endDate = new DateTime(startDate.Year, startDate.Month, startDate.Day, 19, 0, 0); //19:00
+                var vehicleList = _vehicleRepository
+                    .Where(w => w.Status && !string.IsNullOrEmpty(w.ArventoNo))
+                    .ToList();
 
-                var vehicleList = _vehicleRepository.Where(w => w.Status && !string.IsNullOrEmpty(w.ArventoNo)).ToList();
-                var datalist = new List<VehicleOperatingReport>();
                 foreach (var item in vehicleList)
                 {
                     try
                     {
-                        var data = await VehicleOperatingReport(item.ArventoNo, startDate, endDate);
                         var start = DateTime.Now;
-                        if (!string.IsNullOrEmpty(data.ArventoNo) && data.MesafeKm != null && data.MesafeKm != "0")
+                        var data = await VehicleOperatingReport(item.ArventoNo, startDate, endDate);
+
+                        if (data != null && !string.IsNullOrEmpty(data.ArventoNo) &&
+                            !string.IsNullOrEmpty(data.MesafeKm) && data.MesafeKm != "0")
                         {
                             data.StartDate = startDate;
                             data.EndDate = endDate;
                             data.VehicleId = item.Id;
                             data.ZimmetliPlaka = item.Plate;
-
                             data.LastDebitUserId = item.LastUserId;
                             data.LastDebitCityId = item.LastCityId;
                             data.LastDebitStatus = item.LastStatus;
                             data.LastUnitId = item.LastUnitId;
                             data.LastDebitKm = item.LastKm;
-
                             data.Type = 1;
                             data.UniqueLine = dateNow.ToString("ddMMyyyy");
                             data.TypeName = "Mesai İçi Kullanım";
@@ -840,61 +923,72 @@ namespace CoreArchV2.Services.Arvento
                         }
 
                         var end = DateTime.Now;
-                        int diffSeconds = (int)(end - start).TotalSeconds;//arvento 30 sn'de bir istek kabul ediyor
+                        int diffSeconds = (int)(end - start).TotalSeconds;
+
+                        // Arvento API 30 saniyede bir istek kabul ediyor
                         if (diffSeconds < 30)
-                            Thread.Sleep((30 - diffSeconds) * 1000);
+                        {
+                            int delayMs = (30 - diffSeconds) * 1000;
+                            await Task.Delay(delayMs);
+                        }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        Thread.Sleep(30 * 1000);
+                        await Task.Delay(30000);
                     }
                 }
-
-                //JobSetTrueFalse("false");
-
                 #endregion
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //JobSetTrueFalse("false");
-                MailSender("ArventoMesaiIciKullanimRaporu Hk.", "Araç raporu çekilirken hata oluştu. Method name: ArventoMesaiIciKullanimRaporu");
+                MailSender("ArventoMesaiIciKullanimRaporu Hk.",
+                    "Araç raporu çekilirken hata oluştu. Method name: ArventoMesaiIciKullanimRaporu");
             }
         }
+
         #endregion
 
         #region Arvento job çalışıyor mu ?
-        public bool IsJobRun()
+        public async Task<bool> IsJobRun()
         {
             try
             {
-                var param = _parameterRepository.FirstOrDefaultNoTracking(f => f.KeyP == "IsArventoJobRun");
+                var param = await _parameterRepository
+                    .FirstOrDefaultNoTrackingAsync(f => f.KeyP == "IsArventoJobRun");
+
+                if (param?.ValueP is null)
+                    return false;
+
+                if (bool.TryParse(param.ValueP.ToString(), out bool isRunning))
+                    return isRunning;
+
+                return Convert.ToBoolean(param.ValueP);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        public async Task JobSetTrueFalse(string val)
+        {
+            try
+            {
+                var param = await _parameterRepository
+                    .FirstOrDefaultAsync(f => f.KeyP == "IsArventoJobRun");
 
                 if (param == null)
-                    return false;
-                else if (Convert.ToBoolean(param.ValueP))
-                    return true;
-                else if (!Convert.ToBoolean(param.ValueP))
-                    return false;
+                    return;
+
+                param.ValueP = val;
+                _parameterRepository.Update(param);
+
+                await _uow.SaveChangesAsync();
             }
-            catch (Exception) { }
-
-            return false;
-        }
-
-        public void JobSetTrueFalse(string val)
-        {
-            try
+            catch (Exception ex)
             {
-                var param = _parameterRepository.FirstOrDefault(f => f.KeyP == "IsArventoJobRun");
-                if (param != null)
-                {
-                    param.ValueP = val;
-                    _parameterRepository.Update(param);
-                    _uow.SaveChanges();
-                }
             }
-            catch (Exception) { }
         }
+
         #endregion
 
         #region Mesai İçi/Dışı Kullanım Raporu Mail Gönder
@@ -903,303 +997,185 @@ namespace CoreArchV2.Services.Arvento
             if (new ModeDetector().IsDebug)
                 return;
 
-            var dateLastDay = DateTime.Now.AddDays(-1);
+            var now = DateTime.Now;
+            var dateLastDay = now.AddDays(-1);
+
+            if (dateLastDay.Hour != 12)
+                return;
 
             try
             {
-                if (dateLastDay.Hour != 12)
-                    return;
+                var list = await _vehicleOperationReportRepository
+                    .WhereAsync(w => w.Status && !w.IsSendMail && w.UniqueLine == dateLastDay.ToString("ddMMyyyy"));
 
-                var list = await _vehicleOperationReportRepository.WhereAsync(w => w.Status && !w.IsSendMail && w.UniqueLine == dateLastDay.ToString("ddMMyyyy"));
                 if (!list.Any())
                     return;
 
-                var dateNow = DateTime.Now.ToString("dd.MM.yyyy HH:mm");
-                var mailTemplate = await _parameterRepository.FirstOrDefaultAsync(f => f.KeyP == ParameterEnum.GorevDisiKullanimMailTemplate.ToString());
+                var dateNow = now.ToString("dd.MM.yyyy HH:mm");
+                var mailTemplate = await _parameterRepository
+                    .FirstOrDefaultAsync(f => f.KeyP == ParameterEnum.GorevDisiKullanimMailTemplate.ToString());
 
-                if (mailTemplate == null)
+                if (mailTemplate == null || string.IsNullOrEmpty(mailTemplate.ValueP))
                     return;
 
-                var template_ = mailTemplate.ValueP;
+                var baseTemplate = mailTemplate.ValueP
+                    .Replace("{dateNow}", dateNow);
 
-                #region Set Start/EndDate
-                var startDate_ic = list.FirstOrDefault(f => f.Type == 1);
-                var startDate_dis = list.FirstOrDefault(f => f.Type == 0);
+                // Tarih placeholderları dolduruluyor
+                var startDateIc = list.FirstOrDefault(f => f.Type == 1);
+                var startDateDis = list.FirstOrDefault(f => f.Type == 0);
 
-                template_ = template_.Replace("{dateNow}", dateNow);
-                if (startDate_ic != null)
-                    template_ = template_.Replace("{Mesai_Ici_Tarihi}", startDate_ic.StartDate?.ToString("dd MMMM HH:mm") + "<br>" + startDate_ic.EndDate?.ToString("dd MMMM HH:mm"));
-                else
-                    template_ = template_.Replace("{Mesai_Ici_Tarihi}", "-");
+                baseTemplate = baseTemplate
+                    .Replace("{Mesai_Ici_Tarihi}", startDateIc != null
+                        ? $"{startDateIc.StartDate:dd MMMM HH:mm}<br>{startDateIc.EndDate:dd MMMM HH:mm}"
+                        : "-")
+                    .Replace("{Mesai_Disi_Tarihi}", startDateDis != null
+                        ? $"{startDateDis.StartDate:dd MMMM HH:mm}<br>{startDateDis.EndDate:dd MMMM HH:mm}"
+                        : "-");
 
+                var groupedPlates = list.GroupBy(g => g.VehicleId).ToList();
 
-                if (startDate_dis != null)
-                    template_ = template_.Replace("{Mesai_Disi_Tarihi}", startDate_dis.StartDate?.ToString("dd MMMM HH:mm") + "<br>" + startDate_dis.EndDate?.ToString("dd MMMM HH:mm"));
-                else
-                    template_ = template_.Replace("{Mesai_Disi_Tarihi}", "-");
+                var disabledProjects = await GetDisabledProjectMailList();
+                var allUnits = await GetAllUnit();
 
-                #endregion
-
-                var gropedPlate = list.GroupBy(g => g.VehicleId).ToList();//Tüm birimler için burası açılacak
-
-                #region Şimdilik milked araçlarına bildirim gidecek. Region komple silinecek
-                //var milkedAraclari = await GetVehicleListByUnitId(11);//todo: silinecek
-                //var vehicleIds = milkedAraclari.Select(s => s.Id).ToList();//todo: silinecek
-                //var gropedPlate = list.Where(w => vehicleIds.Contains(w.VehicleId)).GroupBy(g => g.VehicleId).ToList();//todo: silinecek
-                #endregion
-
-
-                var disabledProjectMailList = GetDisabledProjectMailList(); //Mail gönderilmeyecek birimler
-                var allUnit = GetAllUnit(); //Tüm araçlar çekiliyor
-                foreach (var item in gropedPlate)
+                foreach (var group in groupedPlates)
                 {
-                    var unitVehicle = allUnit.FirstOrDefault(f => f.Id == item.FirstOrDefault().LastUnitId);
-                    if (unitVehicle == null)
-                        continue;
+                    var first = group.FirstOrDefault();
+                    if (first == null) continue;
 
-                    var notSendMailMudurluk = disabledProjectMailList.FirstOrDefault(f => f.Id == unitVehicle.ParentId);
-                    if (notSendMailMudurluk != null)//Müdürlüğü kontrol ediliyor
-                        continue;
+                    var unit = allUnits.FirstOrDefault(f => f.Id == first.LastUnitId);
+                    if (unit == null) continue;
 
-                    var notSendMailProject = disabledProjectMailList.FirstOrDefault(f => f.Id == unitVehicle.Id);
-                    if (notSendMailProject != null)//proje kontrol ediliyor
+                    if (disabledProjects.Any(x => x.Id == unit.Id || x.Id == unit.ParentId))
                         continue;
 
                     try
                     {
-                        #region Parametreler
-                        var vehicleId = item.Key;
-                        var KontakAcmaKapamaSaati_ic = "✘";
-                        var ArventoKm_ic = "✘";
-                        var GorevAcildiMi_ic = "✘";
-                        var GorevBasBitIl_ic = "✘";
-                        var GorevSuresi_ic = "✘";
-                        var GorevdeYaptigiKm_ic = "✘";
+                        var mesaiIci = group.FirstOrDefault(f => f.Type == 1);
+                        var mesaiDisi = group.FirstOrDefault(f => f.Type == 0);
 
-                        var KontakAcmaKapamaSaati_dis = "✘";
-                        var ArventoKm_dis = "✘";
-                        var GorevAcildiMi_dis = "✘";
-                        var GorevBasBitIl_dis = "✘";
-                        var GorevSuresi_dis = "✘";
-                        var GorevdeYaptigiKm_dis = "✘";
+                        var mailContent = await BuildMailTemplateAsync(baseTemplate, mesaiIci, mesaiDisi, group.Key);
+                        if (mailContent == null)
+                            continue;
 
-                        var mesaiIciMaxHiz = "✘";
-                        var mesaiDisiMaxHiz = "✘";
-                        #endregion
+                        var userId = mesaiIci?.LastDebitUserId ?? mesaiDisi?.LastDebitUserId;
+                        if (userId <= 0)
+                            continue;
 
-                        #region Mesai İçi Parametresi
-                        var mesaiIci = item.FirstOrDefault(f => f.Type == 1);
-                        if (mesaiIci != null)
+                        var result = await SendMailFromTrip(userId.Value, mailContent, first.ArventoPlaka);
+                        if (result.IsSuccess)
                         {
-                            if (mesaiIci != null && (!string.IsNullOrEmpty(mesaiIci.IlkKontakAcildi) || !string.IsNullOrEmpty(mesaiIci.SonKontakKapandi)))
-                                KontakAcmaKapamaSaati_ic = (mesaiIci.IlkKontakAcildi ?? "✘") + "<br>" + (mesaiIci.SonKontakKapandi ?? "✘");
+                            foreach (var entity in group)
+                                entity.IsSendMail = true;
 
-                            if (!string.IsNullOrEmpty(mesaiIci.MesafeKm))
-                                ArventoKm_ic = mesaiIci.MesafeKm + " Km";
-
-                            var mesaiIciGorev = _tripRepository.Where(f => f.Status && f.VehicleId == vehicleId && mesaiIci.StartDate <= f.StartDate && f.StartDate <= mesaiIci.EndDate).OrderByDescending(o => o.Id).Take(1).FirstOrDefault();
-                            if (mesaiIciGorev != null)
-                            {
-                                TimeSpan openClosedDate = mesaiIciGorev.State == (int)TripState.EndTrip ? (mesaiIciGorev.EndDate.Value - mesaiIciGorev.StartDate) : (DateTime.Now - mesaiIciGorev.StartDate);
-                                var days = (openClosedDate.Days + " Gün, " + openClosedDate.Hours + " Saat, " + openClosedDate.Minutes + " Dk");
-                                GorevSuresi_ic = mesaiIciGorev.State == (int)TripState.EndTrip ? (days + " (Görev Kapatıldı)") : (days + " (Görev Açık)");
-
-                                GorevBasBitIl_ic = GetCityName(mesaiIciGorev.StartCityId) + "<br>" + (mesaiIciGorev.State == (int)TripState.EndTrip ? GetCityName(mesaiIciGorev.EndCityId.Value) : "Devam Ediyor");
-                                GorevAcildiMi_ic = "<div style='color:green;'>✔ Evet</div>";
-                                GorevdeYaptigiKm_ic = mesaiIciGorev.Type == (int)TripType.Mission ? "(Görev)-" : "<div style='color:red;'>(Görev Dışı)</div>-";
-                                GorevdeYaptigiKm_ic += mesaiIciGorev.State == (int)TripState.EndTrip ? (Convert.ToInt32(mesaiIciGorev.EndKm.Value - mesaiIciGorev.StartKm) + " Km") : "Devam Ediyor";
-                                mesaiIciMaxHiz = mesaiIci.MaxHiz + " Km/h";
-                            }
-                            else
-                                GorevAcildiMi_ic = "<div style='color:red;'>✘</div>";
-                        }
-                        #endregion
-
-                        #region Mesai Dışı Parametresi
-                        var mesaiDisi = item.FirstOrDefault(f => f.Type == 0);
-                        if (mesaiDisi != null)
-                        {
-                            if (mesaiDisi != null && (!string.IsNullOrEmpty(mesaiDisi.IlkKontakAcildi) || !string.IsNullOrEmpty(mesaiDisi.SonKontakKapandi)))
-                                KontakAcmaKapamaSaati_dis = (mesaiDisi.IlkKontakAcildi ?? "✘") + "<br>" + (mesaiDisi.SonKontakKapandi ?? "✘");
-
-                            if (!string.IsNullOrEmpty(mesaiDisi.MesafeKm))
-                                ArventoKm_dis = mesaiDisi.MesafeKm + " Km";
-
-                            var mesaiDisiGorev = _tripRepository.Where(f => f.Status && f.VehicleId == vehicleId && mesaiDisi.StartDate <= f.StartDate && f.StartDate <= mesaiDisi.EndDate).OrderByDescending(o => o.Id).Take(1).FirstOrDefault();
-                            if (mesaiDisiGorev != null)
-                            {
-                                TimeSpan openClosedDate = mesaiDisiGorev.State == (int)TripState.EndTrip ? (mesaiDisiGorev.EndDate.Value - mesaiDisiGorev.StartDate) : (DateTime.Now - mesaiDisiGorev.StartDate);
-                                var days = (openClosedDate.Days + " Gün, " + openClosedDate.Hours + " Saat, " + openClosedDate.Minutes + " Dk");
-                                GorevSuresi_dis = mesaiDisiGorev.State == (int)TripState.EndTrip ? (days + " (Görev Kapatıldı)") : (days + " (Görev Açık)");
-
-                                GorevBasBitIl_dis = GetCityName(mesaiDisiGorev.StartCityId) + "<br>" + (mesaiDisiGorev.State == (int)TripState.EndTrip ? GetCityName(mesaiDisiGorev.EndCityId.Value) : "Devam Ediyor");
-                                GorevAcildiMi_dis = "<div style='color:green;'>✔ Evet</div>";
-                                GorevdeYaptigiKm_dis = mesaiDisiGorev.Type == (int)TripType.Mission ? "(Görev)-" : "(Görev Dışı)-";
-                                GorevdeYaptigiKm_dis += mesaiDisiGorev.State == (int)TripState.EndTrip ? (Convert.ToInt32(mesaiDisiGorev.EndKm.Value - mesaiDisiGorev.StartKm) + " Km") : "Devam Ediyor";
-                                mesaiDisiMaxHiz = mesaiDisi.MaxHiz + " Km/h";
-                            }
-                            else
-                                GorevAcildiMi_dis = "<div style='color:red;'>✘</div>";
-                        }
-                        #endregion
-
-                        //--Mesai içi/dışı aynı kullanıcıysa
-                        if (mesaiIci != null && mesaiDisi != null && mesaiIci.LastDebitUserId == mesaiDisi.LastDebitUserId)
-                        {
-                            #region Replace
-                            var template = template_;
-                            //template = template.Replace("{Mesai_Ici_Tarihi}", mesaiIci.StartDate?.ToString("dd MMMM HH:mm", culture) + "<br>" + mesaiIci.EndDate?.ToString("dd MMMM HH:mm", culture));
-                            //template = template.Replace("{Mesai_Disi_Tarihi}", mesaiDisi.StartDate?.ToString("dd MMMM HH:mm", culture) + "<br>" + mesaiDisi.EndDate?.ToString("dd MMMM HH:mm", culture));
-
-                            template = template.Replace("{KontakAcmaKapamaSaati_ic}", KontakAcmaKapamaSaati_ic);
-                            template = template.Replace("{ArventoKm_ic}", ArventoKm_ic);
-                            template = template.Replace("{GorevAcildiMi_ic}", GorevAcildiMi_ic);
-                            template = template.Replace("{GorevBasBitIl_ic}", GorevBasBitIl_ic);
-                            template = template.Replace("{GorevSuresi_ic}", GorevSuresi_ic);
-                            template = template.Replace("{GorevdeYaptigiKm_ic}", GorevdeYaptigiKm_ic);
-                            template = template.Replace("{Max_hiz_ic}", mesaiIciMaxHiz);
-
-                            template = template.Replace("{KontakAcmaKapamaSaati_dis}", KontakAcmaKapamaSaati_dis);
-                            template = template.Replace("{ArventoKm_dis}", ArventoKm_dis);
-                            template = template.Replace("{GorevAcildiMi_dis}", GorevAcildiMi_dis);
-                            template = template.Replace("{GorevBasBitIl_dis}", GorevBasBitIl_dis);
-                            template = template.Replace("{GorevSuresi_dis}", GorevSuresi_dis);
-                            template = template.Replace("{GorevdeYaptigiKm_dis}", GorevdeYaptigiKm_dis);
-                            template = template.Replace("{Max_hiz_dis}", mesaiDisiMaxHiz);
-                            #endregion
-
-                            try
-                            {
-                                if (mesaiIci.LastDebitUserId > 0)
-                                {
-                                    var result = await SendMailFromTrip(mesaiIci.LastDebitUserId.Value, template, item.FirstOrDefault()?.ArventoPlaka);
-                                    if (result.IsSuccess)
-                                    {
-                                        var entites = item.ToList();
-                                        entites.ForEach(f => f.IsSendMail = true);
-                                        _vehicleOperationReportRepository.UpdateRange(entites);
-                                        await _uow.SaveChangesAsync();
-                                    }
-                                }
-                            }
-                            catch (Exception) { }
-                        }
-                        else
-                        {
-                            if (mesaiIci != null && mesaiIci.LastDebitUserId > 0)
-                            {
-                                #region Mesai içi
-                                var template_ic = template_;
-                                //template_ic = template_ic.Replace("{Mesai_Ici_Tarihi}", mesaiIci.StartDate?.ToString("dd MMMM HH:mm", culture) + "<br>" + mesaiIci.EndDate?.ToString("dd MMMM HH:mm", culture));
-                                template_ic = template_ic.Replace("{KontakAcmaKapamaSaati_ic}", KontakAcmaKapamaSaati_ic);
-                                template_ic = template_ic.Replace("{ArventoKm_ic}", ArventoKm_ic);
-                                template_ic = template_ic.Replace("{GorevAcildiMi_ic}", GorevAcildiMi_ic);
-                                template_ic = template_ic.Replace("{GorevBasBitIl_ic}", GorevBasBitIl_ic);
-                                template_ic = template_ic.Replace("{GorevSuresi_ic}", GorevSuresi_ic);
-                                template_ic = template_ic.Replace("{GorevdeYaptigiKm_ic}", GorevdeYaptigiKm_ic);
-                                template_ic = template_ic.Replace("{Max_hiz_ic}", mesaiIciMaxHiz);
-
-                                template_ic = template_ic.Replace("{KontakAcmaKapamaSaati_dis}", "-");
-                                template_ic = template_ic.Replace("{ArventoKm_dis}", "-");
-                                template_ic = template_ic.Replace("{GorevAcildiMi_dis}", "-");
-                                template_ic = template_ic.Replace("{GorevBasBitIl_dis}", "-");
-                                template_ic = template_ic.Replace("{GorevSuresi_dis}", "-");
-                                template_ic = template_ic.Replace("{GorevdeYaptigiKm_dis}", "-");
-                                template_ic = template_ic.Replace("{Max_hiz_dis}", "-");
-
-                                try
-                                {
-                                    if (mesaiIci.LastDebitUserId > 0)
-                                    {
-                                        var result = await SendMailFromTrip(mesaiIci.LastDebitUserId.Value, template_ic, item.FirstOrDefault()?.ArventoPlaka);
-
-                                        if (result.IsSuccess)
-                                        {
-                                            var entites = item.Where(w => w.Type == 1).ToList();
-                                            entites.ForEach(f => f.IsSendMail = true);
-                                            _vehicleOperationReportRepository.UpdateRange(entites);
-                                            await _uow.SaveChangesAsync();
-                                        }
-                                    }
-                                }
-                                catch (Exception) { }
-                                #endregion
-                            }
-
-                            if (mesaiDisi != null && mesaiDisi.LastDebitUserId > 0)
-                            {
-                                #region Mesai dışı
-                                var template_dis = template_;
-                                //template_dis = template_dis.Replace("{Mesai_Disi_Tarihi}", mesaiDisi.StartDate?.ToString("dd MMMM HH:mm", culture) + "<br>" + mesaiDisi.EndDate?.ToString("dd MMMM HH:mm", culture));
-
-                                template_dis = template_dis.Replace("{KontakAcmaKapamaSaati_ic}", "-");
-                                template_dis = template_dis.Replace("{ArventoKm_ic}", "-");
-                                template_dis = template_dis.Replace("{GorevAcildiMi_ic}", "-");
-                                template_dis = template_dis.Replace("{GorevBasBitIl_ic}", "-");
-                                template_dis = template_dis.Replace("{GorevSuresi_ic}", "-");
-                                template_dis = template_dis.Replace("{GorevdeYaptigiKm_ic}", "-");
-                                template_dis = template_dis.Replace("{Max_hiz_ic}", "-");
-
-                                template_dis = template_dis.Replace("{KontakAcmaKapamaSaati_dis}", KontakAcmaKapamaSaati_dis);
-                                template_dis = template_dis.Replace("{ArventoKm_dis}", ArventoKm_dis);
-                                template_dis = template_dis.Replace("{GorevAcildiMi_dis}", GorevAcildiMi_dis);
-                                template_dis = template_dis.Replace("{GorevBasBitIl_dis}", GorevBasBitIl_dis);
-                                template_dis = template_dis.Replace("{GorevSuresi_dis}", GorevSuresi_dis);
-                                template_dis = template_dis.Replace("{GorevdeYaptigiKm_dis}", GorevdeYaptigiKm_dis);
-                                template_dis = template_dis.Replace("{Max_hiz_dis}", mesaiDisiMaxHiz);
-
-                                try
-                                {
-                                    if (mesaiDisi.LastDebitUserId > 0)
-                                    {
-                                        var result = await SendMailFromTrip(mesaiDisi.LastDebitUserId.Value, template_dis, item.FirstOrDefault()?.ArventoPlaka);
-                                        if (result.IsSuccess)
-                                        {
-                                            var entites = item.Where(w => w.Type == 0).ToList();
-                                            entites.ForEach(f => f.IsSendMail = true);
-                                            _vehicleOperationReportRepository.UpdateRange(entites);
-                                            await _uow.SaveChangesAsync();
-                                        }
-                                    }
-                                }
-                                catch (Exception) { }
-                                #endregion
-                            }
+                            _vehicleOperationReportRepository.UpdateRange(group);
+                            await _uow.SaveChangesAsync();
                         }
                     }
-                    catch (Exception) { }
+                    catch (Exception ex)
+                    {
+                    }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+            }
         }
-        public List<Unit> GetDisabledProjectMailList()
+        private async Task<string> BuildMailTemplateAsync(string baseTemplate, VehicleOperatingReport? mesaiIci, VehicleOperatingReport? mesaiDisi, int vehicleId)
         {
-            var list = (from vo in _vehicleOpParam.GetAll()
-                        join un in _unitRepository.GetAll() on vo.UnitId equals un.Id into unitL
-                        from un in unitL.DefaultIfEmpty()
-                        join un2 in _unitRepository.GetAll() on un.ParentId equals un2.Id into unit2L
-                        from un2 in unit2L.DefaultIfEmpty()
-                        where vo.Status
-                        select new Unit
-                        {
-                            Id = un.Id,
-                            ParentId = un2.Id,
-                            Name = un2.Name + "/" + un.Name,
-                        }).ToList();
+            var template = new StringBuilder(baseTemplate);
+
+            string Replace(string key, string value) =>
+                template.Replace(key, value ?? "-").ToString();
+
+            try
+            {
+                var culture = new System.Globalization.CultureInfo("tr-TR");
+
+                // Mesai içi
+                if (mesaiIci != null)
+                {
+                    var gorevIci = _tripRepository
+                        .Where(f => f.Status && f.VehicleId == vehicleId && mesaiIci.StartDate <= f.StartDate && f.StartDate <= mesaiIci.EndDate)
+                        .OrderByDescending(o => o.Id)
+                        .FirstOrDefault();
+
+                    Replace("{ArventoKm_ic}", $"{mesaiIci.MesafeKm} Km");
+                    Replace("{Max_hiz_ic}", $"{mesaiIci.MaxHiz} Km/h");
+                    Replace("{GorevAcildiMi_ic}", gorevIci != null ? "✔ Evet" : "✘");
+
+                    if (gorevIci != null)
+                    {
+                        var timespan = (gorevIci.State == (int)TripState.EndTrip)
+                            ? (gorevIci.EndDate!.Value - gorevIci.StartDate)
+                            : (DateTime.Now - gorevIci.StartDate);
+
+                        var sure = $"{timespan.Days} Gün, {timespan.Hours} Saat, {timespan.Minutes} Dk";
+                        Replace("{GorevSuresi_ic}", sure);
+                        Replace("{GorevdeYaptigiKm_ic}", $"{gorevIci.EndKm - gorevIci.StartKm} Km");
+                    }
+                }
+
+                // Mesai dışı
+                if (mesaiDisi != null)
+                {
+                    var gorevDisi = _tripRepository
+                        .Where(f => f.Status && f.VehicleId == vehicleId && mesaiDisi.StartDate <= f.StartDate && f.StartDate <= mesaiDisi.EndDate)
+                        .OrderByDescending(o => o.Id)
+                        .FirstOrDefault();
+
+                    Replace("{ArventoKm_dis}", $"{mesaiDisi.MesafeKm} Km");
+                    Replace("{Max_hiz_dis}", $"{mesaiDisi.MaxHiz} Km/h");
+                    Replace("{GorevAcildiMi_dis}", gorevDisi != null ? "✔ Evet" : "✘");
+
+                    if (gorevDisi != null)
+                    {
+                        var timespan = (gorevDisi.State == (int)TripState.EndTrip)
+                            ? (gorevDisi.EndDate!.Value - gorevDisi.StartDate)
+                            : (DateTime.Now - gorevDisi.StartDate);
+
+                        var sure = $"{timespan.Days} Gün, {timespan.Hours} Saat, {timespan.Minutes} Dk";
+                        Replace("{GorevSuresi_dis}", sure);
+                        Replace("{GorevdeYaptigiKm_dis}", $"{gorevDisi.EndKm - gorevDisi.StartKm} Km");
+                    }
+                }
+
+                return template.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MailTemplateHata] AraçId={vehicleId}, Hata: {ex.Message}");
+                return null;
+            }
+        }
+        public async Task<List<Unit>> GetDisabledProjectMailList()
+        {
+            var list = await (from vo in _vehicleOpParam.GetAll()
+                              join un in _unitRepository.GetAll() on vo.UnitId equals un.Id into unitL
+                              from un in unitL.DefaultIfEmpty()
+                              join un2 in _unitRepository.GetAll() on un.ParentId equals un2.Id into unit2L
+                              from un2 in unit2L.DefaultIfEmpty()
+                              where vo.Status
+                              select new Unit
+                              {
+                                  Id = un.Id,
+                                  ParentId = un2.Id,
+                                  Name = un2.Name + "/" + un.Name,
+                              }).ToListAsync();
 
             return list;
         }
-        public List<EUnitDto> GetAllUnit()
+        public async Task<List<EUnitDto>> GetAllUnit()
         {
-            var list = (from u in _unitRepository.GetAll()
-                        join u2 in _unitRepository.GetAll() on u.ParentId equals u2.Id into unit2L
-                        from u2 in unit2L.DefaultIfEmpty()
-                        select new EUnitDto
-                        {
-                            Id = u.Id,
-                            ParentId = u.ParentId,
-                            Name = u.Name + "/" + u2.Name
-                        }).ToList();
+            var list = await (from u in _unitRepository.GetAll()
+                              join u2 in _unitRepository.GetAll() on u.ParentId equals u2.Id into unit2L
+                              from u2 in unit2L.DefaultIfEmpty()
+                              select new EUnitDto
+                              {
+                                  Id = u.Id,
+                                  ParentId = u.ParentId,
+                                  Name = u.Name + "/" + u2.Name
+                              }).ToListAsync();
 
             return list;
         }
@@ -1253,7 +1229,7 @@ namespace CoreArchV2.Services.Arvento
 
             try
             {
-                var url = rootUrl + $"GetVehicleStatusJSON?Username={userName}&PIN1={password}&PIN2={password}&callBack=c";
+                var url = _rootUrl + $"GetVehicleStatusJSON?Username={_userName}&PIN1={_password}&PIN2={_password}&callBack=c";
                 HttpClient client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Accept.Clear();
@@ -1296,7 +1272,7 @@ namespace CoreArchV2.Services.Arvento
         public async Task<List<ECoordinateDto>> GetAracSonKoordinatList()
         {
             var vehicleList = new List<ECoordinateDto>();
-            var url = rootUrl + $"GetVehicleStatusJSON?Username={userName}&PIN1={password}&PIN2={password}&callBack=c";
+            var url = _rootUrl + $"GetVehicleStatusJSON?Username={_userName}&PIN1={_password}&PIN2={_password}&callBack=c";
             HttpClient client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Accept.Clear();
@@ -1372,243 +1348,219 @@ namespace CoreArchV2.Services.Arvento
         }
         #endregion
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         #region Hız Bildirimi
         public async Task ArventoPlakaHiziSorgula()
         {
             if (new ModeDetector().IsDebug)
                 return;
 
-            var date = DateTime.Now.AddSeconds(-3);
+            var checkDate = DateTime.UtcNow.AddSeconds(-5); // bir tık daha güvenli aralık
+            string url = $"{_rootUrl}GetVehicleAlarmStatusJson?Username={_userName}&PIN1={_password}&PIN2={_password}&Language=0";
+
             try
             {
-                var url = rootUrl + $"GetVehicleAlarmStatusJson?Username={userName}&PIN1={password}&PIN2={password}&Language=0";
-                HttpClient client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
                 request.Headers.Accept.Clear();
                 request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                using (var response = await client.SendAsync(request))
-                {
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var datastring = await response.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrEmpty(datastring))
-                            datastring = datastring.Substring(1, datastring.Length - 3);
-                        var list = JsonConvert.DeserializeObject<List<ESpeedDto>>(datastring);
+                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                if (!response.IsSuccessStatusCode) return;
 
-                        var speedList = list.Where(w => w.AlarmType == "Harita Hız Alarmı" && w.GmtDateTime >= date).OrderByDescending(o => o.GmtDateTime).ToList();
-                        if (speedList.Any())
-                            await Task.Run(() => InsertNotice(speedList));
+                var dataString = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(dataString))
+                    return;
 
-                        var coordinateList = list.Where(w => w.AlarmType == "Konum Bilgisi" && w.GmtDateTime >= date).OrderByDescending(o => o.GmtDateTime).ToList();
-                        if (coordinateList.Any())
-                            await Task.Run(() => InsertPlateCoordinate(coordinateList));
-                    }
-                }
+                // JSON temizleme
+                dataString = dataString.Trim();
+                if (dataString.StartsWith("\"")) dataString = dataString.Substring(1);
+                if (dataString.EndsWith("\"")) dataString = dataString.Substring(0, dataString.Length - 1);
+                dataString = dataString.Replace("\\\"", "\"");
+
+                var list = JsonConvert.DeserializeObject<List<ESpeedDto>>(dataString);
+                if (list == null || !list.Any()) return;
+
+                // sadece son 5 saniye içindeki kayıtlar
+                var filtered = list.Where(w => w.GmtDateTime >= checkDate).ToList();
+                if (!filtered.Any()) return;
+
+                var speedList = filtered.Where(w => w.AlarmType == "Harita Hız Alarmı").ToList();
+                var coordinateList = filtered.Where(w => w.AlarmType == "Konum Bilgisi").ToList();
+
+                var tasks = new List<Task>();
+                if (speedList.Any())
+                    tasks.Add(InsertNotice(speedList));
+
+                if (coordinateList.Any())
+                    tasks.Add(InsertPlateCoordinate(coordinateList));
+
+                await Task.WhenAll(tasks);
             }
-            catch (Exception) { }
+            catch (Exception ex) { }
         }
 
-        public async Task InsertNotice(List<ESpeedDto> speedList)
+        private async Task InsertNotice(List<ESpeedDto> speedList)
         {
             try
             {
                 var vehicleList = _vehicleRepository.Where(w => w.Status && w.ArventoNo != null).ToList();
-                var arventoNoList = speedList.GroupBy(g => g.DeviceNo).Select(s => s.Key).ToList();
                 var cityList = _cityRepository.Where(w => w.ParentId == null).ToList();
 
-                foreach (var item in arventoNoList)
+                foreach (var group in speedList.GroupBy(g => g.DeviceNo))
                 {
-                    var vehicle = vehicleList.FirstOrDefault(f => f.ArventoNo == item);
-                    if (vehicle != null)
+                    var deviceNo = group.Key;
+                    var vehicle = vehicleList.FirstOrDefault(f => f.ArventoNo == deviceNo);
+                    if (vehicle == null) continue;
+
+                    var maxSpeed = (vehicle.MaxSpeed ?? 120) * 1.2m;
+                    var topSpeed = group.OrderByDescending(o => o.Speed)
+                                        .FirstOrDefault(o => o.Speed >= (double)maxSpeed);
+
+                    if (topSpeed == null) continue;
+
+                    var address = topSpeed.Address ?? "";
+                    var addressParts = address.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                    var cityName = addressParts.Length >= 2 ? addressParts[^2].Trim().ToLowerInvariant() : "";
+                    var cityId = cityList.FirstOrDefault(c => c.Name.ToLowerInvariant().Contains(cityName))?.Id;
+
+                    var notice = new Notice
                     {
-                        var maxSpeed = vehicle.MaxSpeed.GetValueOrDefault(120);
-                        maxSpeed += maxSpeed * 20 / 100;
+                        CreatedBy = 1,
+                        VehicleId = vehicle.Id,
+                        CityId = cityId,
+                        NoticeType = (int)NoticeType.Speed,
+                        TransactionDate = topSpeed.GmtDateTime,
+                        Speed = (decimal)topSpeed.Speed,
+                        Address = address,
+                        ImportType = (int)ImportType.Arvento,
+                        State = (int)NoticeState.Draft,
+                        LastDebitUserId = vehicle.LastUserId,
+                        LastUnitId = vehicle.LastUnitId,
+                        LastDebitStatus = vehicle.LastStatus,
+                        LastDebitKm = vehicle.LastKm
+                    };
 
-                        var topSpeed = speedList.Where(f => f.DeviceNo == vehicle.ArventoNo && f.Speed >= maxSpeed)
-                            .OrderByDescending(o => o.Speed).Take(1).FirstOrDefault();
+                    await _noticeRepository.InsertAsync(notice);
+                    await _uow.SaveChangesAsync();
 
-                        if (topSpeed != null)
-                        {
-                            var speed = (decimal)(topSpeed.Speed);
-                            var address = topSpeed.Address;
-                            var addArr = address.Split(',').ToArray();
-                            var speedDate = topSpeed.GmtDateTime;
-
-                            var cityId = cityList.FirstOrDefault(w => w.Name.ToLower().Contains(addArr[addArr.Length - 2].Replace(" ", "").ToLower()))?.Id;
-
-                            await _noticeRepository.InsertAsync(new Notice()
-                            {
-                                CreatedBy = 1,
-                                VehicleId = vehicle.Id,
-                                CityId = cityId,
-                                NoticeType = (int)NoticeType.Speed,
-                                TransactionDate = topSpeed.GmtDateTime,
-                                Speed = speed,
-                                Address = address,
-                                ImportType = (int)ImportType.Arvento,
-                                State = (int)NoticeState.Draft,
-
-                                LastDebitUserId = vehicle.LastUserId,
-                                LastUnitId = vehicle.LastUnitId,
-                                LastDebitStatus = vehicle.LastStatus,
-                                LastDebitKm = vehicle.LastKm
-                            });
-                            await _uow.SaveChangesAsync();
-
-                            if (vehicle.LastUserId > 0)
-                            {
-                                #region Push Notification
-                                await Task.Run(() =>
-                                 _mobileService.PushNotificationAsync(new EMessageLogDto()
-                                 {
-                                     Subject = "Hız Limiti Aşımı",
-                                     Body = vehicle.Plate + " plakalı araç için hız " + speed + ". Adres: " + address,
-                                     Type = (int)MessageLogType.PushNotification,
-                                     UserId = vehicle.LastUserId.Value,
-                                 }));
-
-                                //todo:silinecek
-                                await Task.Run(() =>
-                                _mobileService.PushNotificationAsync(new EMessageLogDto()
-                                {
-                                    Subject = "Hız Limiti Aşımı",
-                                    Body = vehicle.Plate + " plakalı araç için hız " + speed + ". Adres: " + address,
-                                    Type = (int)MessageLogType.PushNotification,
-                                    UserId = 439,
-                                }));
-                                #endregion
-
-                                #region Email
-                                var driveUser = await _userRepository.FindAsync(vehicle.LastUserId.Value);
-                                if (driveUser != null && !string.IsNullOrEmpty(driveUser.Email))
-                                {
-                                    string mailCc = "";
-
-                                    #region Müdür ekleniyor
-                                    try
-                                    {
-                                        if (driveUser.Flag != (int)Flag.Manager && driveUser.UnitId > 0)
-                                        {
-                                            var driveUnit = await _unitRepository.FindAsync(driveUser.UnitId.Value);//kullanıcı birim
-
-                                            var parentId = driveUnit.ParentId > 0 ? driveUnit.ParentId : driveUnit.Id;//kullanıcı müdürlük bazın yetki verildiyse id değeri alınır
-
-                                            var manager = (from u in _userRepository.GetAll()
-                                                           join ur in _userRoleRepository.GetAll() on u.Id equals ur.UserId
-                                                           where u.Status &&
-                                                           u.IsSendMail &&
-                                                           u.UnitId == parentId &&
-                                                           u.Flag == (int)Flag.Manager &&
-                                                           !string.IsNullOrEmpty(u.Email)
-                                                           select new User() { Email = u.Email }).ToList();
-
-                                            if (manager.Any())
-                                                mailCc = String.Join(";", manager.Select(s => s.Email).Distinct().ToList());
-                                        }
-                                    }
-                                    catch (Exception) { }
-                                    #endregion
-
-                                    #region Görev&Zimmetli farklı kişiyle o damaile ekleniyor
-                                    try
-                                    {
-                                        var dateNow = DateTime.Now;
-                                        var trip = _tripRepository.Where(f => f.Status && f.VehicleId == vehicle.Id && f.StartDate > dateNow && dateNow <= (f.EndDate ?? dateNow)).FirstOrDefault();
-                                        if (trip.DriverId != vehicle.LastUserId)
-                                        {
-                                            var tripUser = _userRepository.Find(trip.DriverId);
-                                            if (!string.IsNullOrEmpty(tripUser.Email))
-                                                mailCc += mailCc == "" ? tripUser.Email : (";" + tripUser.Email);
-                                        }
-                                    }
-                                    catch (Exception) { }
-                                    #endregion
-
-                                    var bodyMail = "Merhabalar,<br/>";
-                                    bodyMail += vehicle.Plate + " plakalı araç için aşırı hız algılandı. <br/>Mevcut hızınız <b>" + speed + " km/h</b> olarak görünüyor.<br/>";
-                                    bodyMail += "Güvenliğiniz için hız limitine uyunuz.<br/><br/>";
-                                    bodyMail += "Hız İhlali : <br/>";
-                                    bodyMail += "Adres : <b>" + address + "</b><br/>";
-                                    bodyMail += "Tarih : <b>" + speedDate + "</b><br/><br/>";
-                                    bodyMail += "<a href='https://basaranerp.com/'>basaranerp.com</a> tarafından otomatik gönderilmiştir. Lütfen yanıtlamayınız.";
-
-                                    if (string.IsNullOrEmpty(mailCc))
-                                        mailCc = "mehmetpehlivan@basaranteknoloji.net";
-                                    else
-                                        mailCc = "mehmetpehlivan@basaranteknoloji.net;" + mailCc;
-
-                                    await Task.Run(() =>
-                                    _mobileService.SendMailAsync(new EMessageLogDto()
-                                    {
-                                        Subject = "Hız Limiti Aşımı",
-                                        Body = bodyMail,
-                                        Type = (int)MessageLogType.EMail,
-                                        Email = driveUser.Email,
-                                        MailCc = mailCc,
-                                        //MailBcc = "eyup.yesilova@basaranteknoloji.net;onerozkara@basaranteknoloji.net;raziyeorhan@basaranteknoloji.net" //todo:silinecek
-                                    }));
-                                }
-                                #endregion
-                            }
-                        }
-                    }
+                    if (vehicle.LastUserId.HasValue)
+                        _ = NotifyDriver(vehicle, topSpeed, cityId);
                 }
             }
-            catch (Exception)
-            { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[InsertNotice ERROR] {ex.Message}");
+            }
         }
 
-        public async Task InsertPlateCoordinate(List<ESpeedDto> speedList)
+        private async Task NotifyDriver(Vehicle vehicle, ESpeedDto topSpeed, int? cityId)
         {
             try
             {
-                var dateNow = DateTime.Now;
-                var vehicleList = await Task.FromResult(_vehicleRepository.Where(w => w.Status && w.ArventoNo != null).ToList());
-                var arventoNoList = speedList.GroupBy(g => g.DeviceNo).Select(s => s.Key).ToList();
+                var speed = (decimal)topSpeed.Speed;
+                var address = topSpeed.Address;
+                var date = topSpeed.GmtDateTime;
 
-                var list = new List<VehicleCoordinate>();
-                foreach (var item in arventoNoList)
+                // Push Notification
+                await _mobileService.PushNotificationAsync(new EMessageLogDto
                 {
-                    var vehicle = vehicleList.FirstOrDefault(f => f.ArventoNo == item);
-                    if (vehicle != null)
-                    {
-                        var coordinateList = speedList.Where(w => w.GmtDateTime != null && w.DeviceNo == item).Select(s => new VehicleCoordinate
-                        {
-                            VehicleId = vehicle.Id,
-                            Latitude = s.Latitude.ToString(),
-                            Longitude = s.Longitude.ToString(),
-                            Speed = s.Speed.ToString(),
-                            LocalDate = s.GmtDateTime.Value
-                        }).ToList();
-                        list.AddRange(coordinateList);
-                    }
-                }
+                    Subject = "Hız Limiti Aşımı",
+                    Body = $"{vehicle.Plate} plakalı araç için hız {speed} km/h. Adres: {address}",
+                    Type = (int)MessageLogType.PushNotification,
+                    UserId = vehicle.LastUserId.Value
+                });
 
-                var entities = list.Distinct().OrderBy(o => o.LocalDate).ToList();
-                await _vehicleCoordinateRepository.InsertRangeAsync(entities);
-                await _uow.SaveChangesAsync();
+                // Email
+                var driver = await _userRepository.FindAsync(vehicle.LastUserId.Value);
+                if (driver == null || string.IsNullOrEmpty(driver.Email)) return;
+
+                var bodyMail = $@"
+                Merhabalar,<br/>
+                {vehicle.Plate} plakalı araç için aşırı hız algılandı.<br/>
+                Mevcut hızınız <b>{speed} km/h</b> olarak görünüyor.<br/>
+                <b>Adres:</b> {address}<br/>
+                <b>Tarih:</b> {date}<br/><br/>
+                <a href='https://basaranerp.com/'>basaranerp.com</a> tarafından otomatik gönderilmiştir.
+            ";
+
+                await _mobileService.SendMailAsync(new EMessageLogDto
+                {
+                    Subject = "Hız Limiti Aşımı",
+                    Body = bodyMail,
+                    Type = (int)MessageLogType.EMail,
+                    Email = driver.Email
+                });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"[NotifyDriver ERROR] {ex.Message}");
             }
         }
+
+        private async Task InsertPlateCoordinate(List<ESpeedDto> list)
+        {
+            try
+            {
+                var vehicles = _vehicleRepository.Where(w => w.Status && w.ArventoNo != null).ToList();
+                var entities = new List<VehicleCoordinate>();
+
+                foreach (var g in list.GroupBy(g => g.DeviceNo))
+                {
+                    var vehicle = vehicles.FirstOrDefault(f => f.ArventoNo == g.Key);
+                    if (vehicle == null) continue;
+
+                    entities.AddRange(g.Where(w => w.GmtDateTime.HasValue)
+                                       .Select(s => new VehicleCoordinate
+                                       {
+                                           VehicleId = vehicle.Id,
+                                           Latitude = s.Latitude.ToString(),
+                                           Longitude = s.Longitude.ToString(),
+                                           Speed = s.Speed.ToString(),
+                                           LocalDate = s.GmtDateTime.Value
+                                       }));
+                }
+
+                if (entities.Count > 0)
+                {
+                    await _vehicleCoordinateRepository.InsertRangeAsync(entities.Distinct().OrderBy(e => e.LocalDate).ToList());
+                    await _uow.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[InsertPlateCoordinate ERROR] {ex.Message}");
+            }
+        }
+
         #endregion
 
         #region Arvento No Güncelleme
-        public void Arvento2ErpNodeGuncelle()
+        public async Task Arvento2ErpNodeGuncelle()
         {
             try
             {
-                if (IsJobRun())
+                if (await IsJobRun())
                     return;
 
-                JobSetTrueFalse("true");
+                await JobSetTrueFalse("true");
 
                 var date = DateTime.Now;
-                var nodeList = GetArventoPlateList();
+                var nodeList = await GetArventoPlateList();
 
-                JobSetTrueFalse("false");
+                await JobSetTrueFalse("false");
 
                 if (nodeList.Count == 1 && nodeList[0].Node == null)
                 {
@@ -1616,7 +1568,7 @@ namespace CoreArchV2.Services.Arvento
                     return;
                 }
 
-                var vehicleList = _vehicleRepository.Where(w => w.Status).ToList();
+                var vehicleList = await _vehicleRepository.Where(w => w.Status).ToListAsync();
                 var isChanged = false;
                 foreach (var item in nodeList)
                 {
@@ -1635,49 +1587,57 @@ namespace CoreArchV2.Services.Arvento
             }
             catch (Exception)
             {
-                JobSetTrueFalse("false");
+                await JobSetTrueFalse("false");
                 MailSender("Arvento Plaka Node Aktarımı Hk.", "Plakaya bağlı node bilgileri veritabana güncellenirken hata oluştu");
             }
-
         }
-
-        public List<EVehicleArventoDto> GetArventoPlateList()
+        public async Task<List<EVehicleArventoDto>> GetArventoPlateList()
         {
-            var url = rootUrl + $"GetIMSIList?Username={userName}&PIN1={password}&PIN2={password}";
-            var httpRequest = (HttpWebRequest)WebRequest.Create(url);
+            var list = new List<EVehicleArventoDto>();
 
-            var httpResponse = (HttpWebResponse)httpRequest.GetResponse();
-            List<EVehicleArventoDto> list = new List<EVehicleArventoDto>();
-            using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
+            try
             {
-                var result = streamReader.ReadToEnd();
-                XmlDocument doc = new XmlDocument();
-                doc.LoadXml(result);
-                foreach (XmlNode child in doc.ChildNodes)
+                var url = $"{_rootUrl}GetIMSIList?Username={_userName}&PIN1={_password}&PIN2={_password}";
+
+                using var httpClient = new HttpClient();
+                using var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+
+                if (!response.IsSuccessStatusCode)
+                    return list;
+
+                var xmlString = await response.Content.ReadAsStringAsync();
+                if (string.IsNullOrWhiteSpace(xmlString))
+                    return list;
+
+                var xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(xmlString);
+
+                var nodes = xmlDoc.SelectNodes("//NewDataSet/*");
+                if (nodes == null || nodes.Count == 0)
+                    return list;
+
+                foreach (XmlNode node in nodes)
                 {
-                    foreach (XmlNode child2 in child.ChildNodes)
+                    var model = new EVehicleArventoDto
                     {
-                        foreach (XmlNode child3 in child2.ChildNodes)
-                        {
-                            if (child3.Name == "NewDataSet")
-                            {
-                                foreach (XmlNode item in child3.ChildNodes)
-                                {
-                                    var model = new EVehicleArventoDto();
-                                    if (item.SelectSingleNode("Node") != null)
-                                        model.Node = item.SelectSingleNode("Node").FirstChild.Value;
-                                    if (item.SelectSingleNode("LicensePlate") != null)
-                                        model.Plate = item.SelectSingleNode("LicensePlate").FirstChild.Value.Replace(" ", "");
-                                    if (item.SelectSingleNode("Driver") != null)
-                                        model.Driver = item.SelectSingleNode("Driver").FirstChild.Value;
-                                    if (item.SelectSingleNode("IMSI") != null)
-                                        model.IMSI = item.SelectSingleNode("IMSI").FirstChild.Value;
-                                    list.Add(model);
-                                }
-                            }
-                        }
-                    }
+                        Node = node.SelectSingleNode("Node")?.InnerText?.Trim(),
+                        Plate = node.SelectSingleNode("LicensePlate")?.InnerText?.Replace(" ", ""),
+                        Driver = node.SelectSingleNode("Driver")?.InnerText,
+                        IMSI = node.SelectSingleNode("IMSI")?.InnerText
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(model.Node))
+                        list.Add(model);
                 }
+            }
+            catch (HttpRequestException ex)
+            {
+            }
+            catch (XmlException ex)
+            {
+            }
+            catch (Exception ex)
+            {
             }
 
             return list;
@@ -1685,7 +1645,7 @@ namespace CoreArchV2.Services.Arvento
         #endregion
 
         #region Aracın koordinatlarını günceller
-        public void ArventoPlakaKoordinatEkle()
+        public async Task ArventoPlakaKoordinatEkle()
         {
             try
             {
@@ -1693,10 +1653,10 @@ namespace CoreArchV2.Services.Arvento
                 if (dateNow.Hour == 17 || dateNow.Hour == 18 || dateNow.Hour == 19)//Mesai dışı çalışıyor 19:01'de
                     return;
 
-                if (IsJobRun())
+                if (await IsJobRun())
                     return;
 
-                JobSetTrueFalse("true");
+                await JobSetTrueFalse("true");
 
                 var taskScheduler = _jobRepository.FirstOrDefault(f => f.Name == "ArventoCoordinate");
                 if (taskScheduler != null)
@@ -1711,7 +1671,7 @@ namespace CoreArchV2.Services.Arvento
                         try
                         {
                             var start = DateTime.Now;
-                            var coordinateList = GeneralReport(startDate, endDate, item.ArventoNo);
+                            var coordinateList = await GeneralReport(startDate, endDate, item.ArventoNo);
 
                             var list = new List<VehicleCoordinate>();
                             foreach (var co in coordinateList)
@@ -1727,8 +1687,8 @@ namespace CoreArchV2.Services.Arvento
                                 });
                             }
                             var entities = list.OrderBy(o => o.LocalDate).ToList();
-                            _vehicleCoordinateRepository.InsertRange(entities);
-                            _uow.SaveChanges();
+                            await _vehicleCoordinateRepository.InsertRangeAsync(entities);
+                            await _uow.SaveChangesAsync();
 
                             var end = DateTime.Now;
                             int diffSeconds = (int)(end - start).TotalSeconds;//arvento 30 sn'de bir istek kabul ediyor
@@ -1751,21 +1711,21 @@ namespace CoreArchV2.Services.Arvento
             }
             catch (Exception ex)
             {
-                JobSetTrueFalse("false");
+                await JobSetTrueFalse("false");
                 MailSender("Arvento Koordinat Hk.", "Plakaya bağlı koordinat bilgileri veritabana eklenirken hata oluştu");
             }
 
-            JobSetTrueFalse("false");
+            await JobSetTrueFalse("false");
         }
 
         #endregion
 
         #region Mail İşlemleri
-        public void MailSender(string subject, string body)
+        public async Task MailSender(string subject, string body)
         {
             try
             {
-                var adminMailList = _parameterRepository.FirstOrDefault(f => f.KeyP == ParameterEnum.AdminMailList.ToString());
+                var adminMailList = await _parameterRepository.FirstOrDefaultNoTrackingAsync(f => f.KeyP == ParameterEnum.AdminMailList.ToString());
                 var mailList = adminMailList?.ValueP;
                 if (!string.IsNullOrEmpty(mailList))
                     _mailService.SendMail(mailList, subject, body);
@@ -1773,17 +1733,15 @@ namespace CoreArchV2.Services.Arvento
             catch (Exception ex) { }
         }
 
-        public void UpdateJob(TaskScheduler_ entity)
+        public async Task UpdateJob(TaskScheduler_ entity)
         {
             try
             {
                 _jobRepository.Update(entity);
-                _uow.SaveChanges();
+                await _uow.SaveChangesAsync();
             }
             catch (Exception)
             {
-
-                throw;
             }
         }
 
@@ -1796,15 +1754,15 @@ namespace CoreArchV2.Services.Arvento
                 Thread.Sleep((30 - diffSeconds) * 1000);
         }
 
-        public string GetCityName(int cityId)
+        public async Task<string> GetCityName(int cityId)
         {
-            var result = (from c1 in _cityRepository.GetAll()
-                          join c2 in _cityRepository.GetAll() on c1.ParentId equals c2.Id
-                          where c1.Id == cityId
-                          select new ETripDto()
-                          {
-                              StartCityName = c2.Name + "-" + c1.Name
-                          }).FirstOrDefault();
+            var result = await (from c1 in _cityRepository.GetAll()
+                                join c2 in _cityRepository.GetAll() on c1.ParentId equals c2.Id
+                                where c1.Id == cityId
+                                select new ETripDto()
+                                {
+                                    StartCityName = c2.Name + "-" + c1.Name
+                                }).FirstOrDefaultAsync();
 
             if (result != null)
                 return result.StartCityName;

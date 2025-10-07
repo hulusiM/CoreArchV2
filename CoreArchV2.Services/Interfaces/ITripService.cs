@@ -21,7 +21,7 @@ namespace CoreArchV2.Services.Interfaces
         Task<ETripDto> ActiveMissionControl(int driveId);
         Task<EResultDto> CloseTrip(ETripDto model);
         Task<List<ETripDto>> GetByTripIdHistory(int tripId);
-        List<EGeneralReport2Dto> GetByTripIdHistoryMap(int tripId);
+        Task<List<EGeneralReport2Dto>> GetByTripIdHistoryMap(int tripId);
         EResultDto TripAddCity(ETripDto model);
         Task<List<ETripDto>> GetReport(ETripDto filterModel);
         #endregion
