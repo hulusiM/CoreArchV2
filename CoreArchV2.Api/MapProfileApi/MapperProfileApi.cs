@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
 using CoreArchV2.Core.Entity.Common;
+using CoreArchV2.Core.Entity.Track;
 using CoreArchV2.Core.Entity.TripVehicle;
+using CoreArchV2.Dto.ATrackingDto;
 using CoreArchV2.Dto.EApiDto;
 using CoreArchV2.Dto.ETripDto;
 
@@ -23,6 +25,9 @@ namespace CoreArchV2.Api.MapProfileApi
                 .ForMember(f => f.CreatedDate, opt => opt.Ignore())
                 .ForMember(f => f.StartDate, opt => opt.Ignore())
                 .ForMember(f => f.State, opt => opt.Ignore());
+
+
+            CreateMap<AVehicleTrackingRequestDto, VehicleTracking>();
         }
     }
 }

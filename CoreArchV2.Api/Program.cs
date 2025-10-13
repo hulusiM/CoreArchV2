@@ -82,64 +82,64 @@ app.UseCustomApiErrorExtention();
 app.UseHttpsRedirection();
 
 #region Api'de alınan hatayı apk güncellemeden görmek için Log Middleware
-object _fileLock = new object();
-app.Use(async (context, next) =>
-{
-    var logFilePath = Path.Combine(AppContext.BaseDirectory, "log2.txt");
+//object _fileLock = new object();
+//app.Use(async (context, next) =>
+//{
+//    var logFilePath = Path.Combine(AppContext.BaseDirectory, "log2.txt");
 
-    try
-    {
-        context.Request.EnableBuffering();
+//    try
+//    {
+//        context.Request.EnableBuffering();
 
-        string bodyText = "";
-        using (var reader = new StreamReader(context.Request.Body, leaveOpen: true))
-        {
-            bodyText = await reader.ReadToEndAsync();
-            context.Request.Body.Position = 0;
-        }
+//        string bodyText = "";
+//        using (var reader = new StreamReader(context.Request.Body, leaveOpen: true))
+//        {
+//            bodyText = await reader.ReadToEndAsync();
+//            context.Request.Body.Position = 0;
+//        }
 
-        var reqLog = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] REQUEST {context.Request.Method} {context.Request.Path}\nBody: {bodyText}\n";
+//        var reqLog = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] REQUEST {context.Request.Method} {context.Request.Path}\nBody: {bodyText}\n";
 
-        lock (_fileLock)
-        {
-            using var stream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-            using var writer = new StreamWriter(stream);
-            writer.WriteLine(reqLog);
-        }
+//        lock (_fileLock)
+//        {
+//            using var stream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+//            using var writer = new StreamWriter(stream);
+//            writer.WriteLine(reqLog);
+//        }
 
-        var originalBody = context.Response.Body;
-        using var memStream = new MemoryStream();
-        context.Response.Body = memStream;
+//        var originalBody = context.Response.Body;
+//        using var memStream = new MemoryStream();
+//        context.Response.Body = memStream;
 
-        await next();
+//        await next();
 
-        memStream.Position = 0;
-        string responseBody = await new StreamReader(memStream).ReadToEndAsync();
-        memStream.Position = 0;
+//        memStream.Position = 0;
+//        string responseBody = await new StreamReader(memStream).ReadToEndAsync();
+//        memStream.Position = 0;
 
-        var resLog = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] RESPONSE {context.Response.StatusCode}\nBody: {responseBody}\n";
+//        var resLog = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] RESPONSE {context.Response.StatusCode}\nBody: {responseBody}\n";
 
-        lock (_fileLock)
-        {
-            using var stream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-            using var writer = new StreamWriter(stream);
-            writer.WriteLine(resLog);
-        }
+//        lock (_fileLock)
+//        {
+//            using var stream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+//            using var writer = new StreamWriter(stream);
+//            writer.WriteLine(resLog);
+//        }
 
-        await memStream.CopyToAsync(originalBody);
-        context.Response.Body = originalBody;
-    }
-    catch (Exception ex)
-    {
-        lock (_fileLock)
-        {
-            using var stream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-            using var writer = new StreamWriter(stream);
-            writer.WriteLine($"[ERROR {DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}");
-        }
-        throw;
-    }
-});
+//        await memStream.CopyToAsync(originalBody);
+//        context.Response.Body = originalBody;
+//    }
+//    catch (Exception ex)
+//    {
+//        lock (_fileLock)
+//        {
+//            using var stream = new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+//            using var writer = new StreamWriter(stream);
+//            writer.WriteLine($"[ERROR {DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}");
+//        }
+//        throw;
+//    }
+//});
 #endregion
 
 app.UseRouting();

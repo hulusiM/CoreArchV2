@@ -108,7 +108,7 @@ namespace CoreArchV2.Data
             #endregion
 
             #region Track
-            modelBuilder.Entity<Coordinate>().ToTable("Coordinate", "track");
+            modelBuilder.Entity<VehicleTracking>().ToTable("VehicleTracking", "track");
 
             #endregion
 
@@ -208,7 +208,7 @@ namespace CoreArchV2.Data
         #endregion
 
         #region Track
-        public virtual DbSet<Coordinate> Coordinate { get; set; }
+        public virtual DbSet<VehicleTracking> VehicleTracking { get; set; }
         #endregion
 
         #endregion

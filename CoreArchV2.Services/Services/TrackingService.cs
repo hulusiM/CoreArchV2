@@ -1,6 +1,8 @@
-﻿using CoreArchV2.Core.Entity.Track;
+﻿using AutoMapper;
+using CoreArchV2.Core.Entity.Track;
 using CoreArchV2.Data.GenericRepository;
 using CoreArchV2.Data.UnitOfWork;
+using CoreArchV2.Dto.ATrackingDto;
 using CoreArchV2.Services.Interfaces;
 
 namespace CoreArchV2.Services.Services
@@ -8,55 +10,42 @@ namespace CoreArchV2.Services.Services
     public class TrackingService : ITrackingService
     {
         private readonly IUnitOfWork _uow;
-        private readonly IGenericRepository<Coordinate> _coordinateRepository;
-        public TrackingService(IUnitOfWork uow)
+        private readonly IMapper _mapper;
+        private readonly IGenericRepository<VehicleTracking> _vehicleTrackingRepository;
+        public TrackingService(IUnitOfWork uow, IMapper mapper)
         {
             _uow = uow;
-            _coordinateRepository = uow.GetRepository<Coordinate>();
+            _mapper = mapper;
+            _vehicleTrackingRepository = uow.GetRepository<VehicleTracking>();
         }
 
-        public async Task InsertCoordinate(string param)
+        public async Task<bool> InsertVehicleTracking(AVehicleTrackingRequestDto request)
         {
+            var result = false;
             try
             {
-                var splits = param.Split("_").ToList();
+                var entities = _mapper.Map<VehicleTracking>(request);
+                entities.CreatedDate = DateTime.Now;
 
-                var entities = new List<Coordinate>();
-                var dateNow = DateTime.Now;
-                foreach (var item in splits)
-                {
-                    try
-                    {
-                        var arr = item.Split(",");
-                        entities.Add(new Coordinate()
-                        {
-                            CreatedDate = dateNow,
-                            Imei = arr[0],
-                            SignalDate = Convert.ToDateTime(arr[1]),
-                            Latitude = arr[2],
-                            Longitude = arr[3]
-                        });
-                    }
-                    catch (Exception)
-                    { }
-                }
-
-                await _coordinateRepository.InsertRangeAsync(entities);
+                await _vehicleTrackingRepository.InsertAsync(entities);
                 await _uow.SaveChangesAsync();
+                result = true;
             }
             catch (Exception)
             {
                 //hata maili
             }
+
+            return result;
         }
 
 
-        public async Task<List<Coordinate>> GetCoordinate()
+        public async Task<List<VehicleTracking>> GetCoordinate()
         {
-            var list = new List<Coordinate>();
+            var list = new List<VehicleTracking>();
             try
             {
-                list = await Task.FromResult(_coordinateRepository.GetAll().OrderByDescending(o => o.Id).Take(10).ToList());
+                list = await Task.FromResult(_vehicleTrackingRepository.GetAll().OrderByDescending(o => o.Id).Take(10).ToList());
             }
             catch (Exception)
             {
