@@ -6,7 +6,6 @@ namespace CoreArchV2.Services.Interfaces
 {
     public interface IRoleService
     {
-        SessionContext _workContext { get; set; }
         PagedList<ERoleDto> GetAllWithPaged(int? page, ERoleDto filterModel);
 
         List<EAuthorizationDto> RoleWithChildrenAuthorizationList(int roleId);

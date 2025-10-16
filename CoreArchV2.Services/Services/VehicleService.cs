@@ -14,6 +14,7 @@ using CoreArchV2.Utilies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Transactions;
@@ -617,7 +618,7 @@ namespace CoreArchV2.Services.Services
                 result = VehicleActivePassiveControl(tempModel.Id);
                 if (result.IsSuccess)
                 {
-                    var entity = _vehicleRepository.FindForInsertUpdateDelete(tempModel.Id);
+                    var entity = _vehicleRepository.Find(tempModel.Id);
                     if (entity.Plate != tempModel.Plate && _vehicleRepository.Any(a =>
                             a.Status && a.Id != tempModel.Id &&
                             a.Plate.ToUpper() == tempModel.Plate.Replace(" ", "").ToUpper()))
@@ -912,7 +913,7 @@ namespace CoreArchV2.Services.Services
                 result = VehicleActivePassiveControl(model.VehicleId);
                 if (result.IsSuccess)
                 {
-                    var oldDebit = _vehicleDebitRepository.FindForInsertUpdateDelete(model.Id);
+                    var oldDebit = _vehicleDebitRepository.Find(model.Id);
                     if (oldDebit != null)
                     {
                         if (oldDebit.StartDate != model.StartDate)
@@ -931,7 +932,7 @@ namespace CoreArchV2.Services.Services
                                 var debit = _mapper.Map(model, oldDebit);
                                 _vehicleDebitRepository.Update(debit);
 
-                                var vehicle = _vehicleRepository.FindForInsertUpdateDelete(model.VehicleId);
+                                var vehicle = _vehicleRepository.Find(model.VehicleId);
                                 vehicle.LastUnitId = debit.UnitId;
                                 vehicle.LastUserId = debit.DebitUserId;
                                 _vehicleRepository.Update(vehicle);
@@ -1148,7 +1149,7 @@ namespace CoreArchV2.Services.Services
 
                     if (model.Id > 0)//edit button
                     {
-                        var vehicleDebit = _vehicleDebitRepository.FindForInsertUpdateDelete(model.Id);
+                        var vehicleDebit = _vehicleDebitRepository.Find(model.Id);
                         //vehicleDebit.StartDate = model.StartDate;//tarihi güncelleyemez
                         vehicleDebit.Description = model.Description;
                         vehicleDebit.TempPlateNo = model.TempPlateNo;
@@ -1220,13 +1221,13 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto();
             try
             {
-                var debit = _vehicleDebitRepository.FindForInsertUpdateDelete(model.VehicleDebitId.Value);
+                var debit = _vehicleDebitRepository.Find(model.VehicleDebitId.Value);
                 result = VehicleActivePassiveControl(debit.VehicleId);
                 if (result.IsSuccess)
                 {
                     //servisten önceki son zimmetli bilgileri
                     var lastDebit = _vehicleDebitRepository.Where(w => w.VehicleId == debit.VehicleId && w.State != (int)DebitState.InService).OrderByDescending(o => o.Id).FirstOrDefault();
-                    var vehicle = _vehicleRepository.FindForInsertUpdateDelete(debit.VehicleId);
+                    var vehicle = _vehicleRepository.Find(debit.VehicleId);
                     if (vehicle.LastStatus != (int)DebitState.InService)
                     {
                         result.IsSuccess = false;
@@ -1290,7 +1291,7 @@ namespace CoreArchV2.Services.Services
         //                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
         //                {
         //                    bool isDebitInsert = true;
-        //                    var vehicle = _vehicleRepository.FindForInsertUpdateDelete(model.VehicleId);
+        //                    var vehicle = _vehicleRepository.Find(model.VehicleId);
         //                    if (model.Type == 1)//servise al
         //                    {
         //                        if (vehicle.IsService.GetValueOrDefault(false) && model.Id < 0)//IsService=true --> serviste
@@ -1310,7 +1311,7 @@ namespace CoreArchV2.Services.Services
         //                        if (model.Id > 0)//InService edit
         //                        {
         //                            isDebitInsert = false;
-        //                            var vehicleDebit = _vehicleDebitRepository.FindForInsertUpdateDelete(model.Id.Value);
+        //                            var vehicleDebit = _vehicleDebitRepository.Find(model.Id.Value);
         //                            vehicleDebit.StartDate = model.StartDate;
         //                            vehicleDebit.Description = model.Description;
         //                            vehicleDebit.TempPlateNo = model.TempPlateNo.Replace(" ", "");
@@ -2139,7 +2140,7 @@ namespace CoreArchV2.Services.Services
                     }
                     else
                     {
-                        var contract = _vehicleContractRepository.FindForInsertUpdateDelete(model.Id);
+                        var contract = _vehicleContractRepository.Find(model.Id);
                         if (contract != null)
                         {
                             var allContract = _vehicleContractRepository.Where(w => w.Status && w.VehicleId == model.VehicleId)
@@ -2454,6 +2455,84 @@ namespace CoreArchV2.Services.Services
         {
             var dateNow = DateTime.Now.Date;
             var add1Month = dateNow.AddDays(30);
+            var plateQuery = from v in _vehicleRepository.GetAll()
+                             join un in _unitRepository.GetAll() on v.LastUnitId equals un.Id into unL
+                             from un in unL.DefaultIfEmpty()
+                             join un1 in _unitRepository.GetAll() on un.ParentId equals un1.Id into un1L
+                             from un1 in un1L.DefaultIfEmpty()
+                             join vc in _vehicleContractRepository.GetAll() on v.Id equals vc.VehicleId into vcL
+                             from vc in vcL.DefaultIfEmpty()
+                             where v.Status && vc.Status && vc.EndDate <= add1Month
+                             select new EVehicleDto
+                             {
+                                 VehicleId = v.Id,
+                                 Plate = v.Plate,
+                                 UnitId = un.Id,
+                                 ParentUnitId = un1.Id,
+                                 DebitEndDate = vc.EndDate
+                             };
+
+            if (filterModel.ParentUnitId > 0)
+                plateQuery = plateQuery.Where(w => w.ParentUnitId == filterModel.ParentUnitId);
+            else if (filterModel.UnitId > 0)
+                plateQuery = plateQuery.Where(w => w.UnitId == filterModel.UnitId);
+
+            var plates = (await plateQuery.ToListAsync()).DistinctBy(d => d.VehicleId).ToList();
+
+            int countUpContract = 0, countDownContract = 0, timeUpDocumentACar = 0;
+            var contractPlateList = plates.DistinctBy(d => d.VehicleId).ToList();
+            foreach (var item in contractPlateList) //Sözleşme süreleri
+            {
+                var lastRecord = (await _vehicleContractRepository.WhereAsync(w => w.Status && w.VehicleId == item.VehicleId)).OrderByDescending(o => o.EndDate).Take(1).FirstOrDefault();
+                if (lastRecord != null)
+                {
+                    if (lastRecord.EndDate < dateNow)
+                        countUpContract++;
+                    else if (dateNow <= lastRecord.EndDate && lastRecord.EndDate <= add1Month)
+                        countDownContract++;
+                }
+            }
+
+            //-----------------------------------------------------------------------------------------------------------------//
+
+            dateNow = dateNow.AddDays(10).Date;
+            var documentPlateList = await (
+                 from ed in _vehicleExaminationDateRepository.GetAll()
+                 join v in _vehicleRepository.GetAll() on ed.VehicleId equals v.Id
+                 where v.Status && ed.Status &&
+                       (ed.KDocumentEndDate <= dateNow ||
+                        ed.ExaminationEndDate <= dateNow ||
+                        ed.KaskoEndDate <= dateNow ||
+                        ed.TrafficEndDate <= dateNow)
+                 select new EVehicleDto
+                 {
+                     VehicleId = v.Id
+                 }
+             ).ToListAsync(); // 💥 EF burada SQL sorgusunu çalıştırır
+
+            // Artık DistinctBy hatasız çalışır
+            var documentlist = documentPlateList
+                .DistinctBy(d => d.VehicleId)
+                .ToList();
+
+            foreach (var item2 in documentlist)//Trafik kasko süreleri
+            {
+                if (plates.Count(w => w.VehicleId == item2.VehicleId) > 0)
+                    timeUpDocumentACar++;
+            }
+
+            return new ENotificationDto()
+            {
+                TimeUpRentACar = countUpContract, //Süresi biten
+                TimeDownRentACar = countDownContract,//Süresi bitmeye -- gün kalan
+                TimeUpDocumentACar = documentPlateList.Count()
+            };
+        }
+
+        public async Task<ENotificationDto> GetNotificationMessages2(RFilterModelDto filterModel)
+        {
+            var dateNow = DateTime.Now.Date;
+            var add1Month = dateNow.AddDays(30);
 
             // 1️⃣ Kiralık araç sözleşmesi yaklaşan veya bitenler
             var plateQuery = from v in _vehicleRepository.GetAll()
@@ -2480,11 +2559,10 @@ namespace CoreArchV2.Services.Services
 
             try
             {
-                var plateList =  plateQuery.ToList();
-                plateList = plateList
-                    .GroupBy(d => d.VehicleId)
-                    .Select(g => g.First())
-                    .ToList();
+                var plateList = (await plateQuery.ToListAsync())
+                             .DistinctBy(d => d.VehicleId)
+                             .ToList();
+
                 int countUpContract = 0;
                 int countDownContract = 0;
 
@@ -2492,12 +2570,15 @@ namespace CoreArchV2.Services.Services
                 var vehicleIds = plateList.Select(x => x.VehicleId).ToList();
 
 
+                var lastContracts = _vehicleContractRepository
+                     .GetAll()
+                     .Where(w => w.Status)
+                     .AsEnumerable() // 👈 JSON hatasını engeller
+                     .Where(w => vehicleIds.Contains(w.VehicleId))
+                     .GroupBy(g => g.VehicleId)
+                     .Select(g => g.OrderByDescending(o => o.EndDate).FirstOrDefault())
+                     .ToList();
 
-                var lastContracts =  _vehicleContractRepository.GetAll()
-                    .Where(w => w.Status && vehicleIds.Contains(w.VehicleId))
-                    .GroupBy(g => g.VehicleId)
-                    .Select(g => g.OrderByDescending(o => o.EndDate).FirstOrDefault())
-                    .ToList();
                 foreach (var contract in lastContracts)
                 {
                     if (contract.EndDate < dateNow)
@@ -2506,7 +2587,6 @@ namespace CoreArchV2.Services.Services
                         countDownContract++;
                 }
 
-                // 3️⃣ Belgeleri yaklaşan veya biten araçlar
                 var dateForDocs = dateNow.AddDays(10);
 
                 var documentPlateQuery = from ed in _vehicleExaminationDateRepository.GetAll()
@@ -2518,7 +2598,7 @@ namespace CoreArchV2.Services.Services
                                                 ed.TrafficEndDate <= dateForDocs)
                                          select ed.VehicleId;
 
-                var documentVehicleIds =  documentPlateQuery.Distinct().ToList();
+                var documentVehicleIds = documentPlateQuery.Distinct().ToList();
 
                 // 4️⃣ Her iki gruba da dahil olan araçlar (belgesi bitmiş kiralık)
                 var timeUpDocumentACar = plateList.Count(p => documentVehicleIds.Contains(p.VehicleId));
@@ -2545,33 +2625,33 @@ namespace CoreArchV2.Services.Services
             var dateNow = DateTime.Now.Date;
             var add1Month = dateNow.AddDays(filterModel.DayCount);
             var result = new List<RVehicleCostDto>();
-            var plates = (await Task.FromResult(from vc in _vehicleContractRepository.GetAll()
-                                                join v in _vehicleRepository.GetAll() on vc.VehicleId equals v.Id
-                                                join un in _unitRepository.GetAll() on v.LastUnitId equals un.Id into unL
-                                                from un in unL.DefaultIfEmpty()
-                                                join un1 in _unitRepository.GetAll() on un.ParentId equals un1.Id into un1L
-                                                from un1 in un1L.DefaultIfEmpty()
-                                                join vr in _vehicleRentRepository.GetAll() on v.Id equals vr.VehicleId into vrL
-                                                from vr in vrL.DefaultIfEmpty()
-                                                join rt in _lookUpListRepository.GetAll() on vr.RentTypeId equals rt.Id into rtL
-                                                from rt in rtL.DefaultIfEmpty()
-                                                join lr in _lookUpListRepository.GetAll() on vr.FirmTypeId equals lr.Id into lrL
-                                                from lr in lrL.DefaultIfEmpty()
-                                                where v.Status && vc.Status /*&& dateNow <= vc.EndDate*/ && vc.EndDate <= add1Month
-                                                select new RVehicleCostDto()
-                                                {
-                                                    Id = vc.Id,
-                                                    Plate = v.Plate,
-                                                    VehicleId = v.Id,
-                                                    UnitId = un.Id,
-                                                    VehicleTypeName = v.FixtureTypeId == (int)FixtureType.Ownership ? "Mülkiyet" : "Kiralık",
-                                                    ParentUnitId = un1.Id,
-                                                    StartDate = vc.StartDate,
-                                                    //DayCount = (dateNow - vc.EndDate).Days,
-                                                    EndDate = vc.EndDate,
-                                                    RentFirmName = lr.Name ?? "--",
-                                                    RentTypeName = rt.Name ?? "--",
-                                                }));
+            var plates = await (from vc in _vehicleContractRepository.GetAll()
+                                join v in _vehicleRepository.GetAll() on vc.VehicleId equals v.Id
+                                join un in _unitRepository.GetAll() on v.LastUnitId equals un.Id into unL
+                                from un in unL.DefaultIfEmpty()
+                                join un1 in _unitRepository.GetAll() on un.ParentId equals un1.Id into un1L
+                                from un1 in un1L.DefaultIfEmpty()
+                                join vr in _vehicleRentRepository.GetAll() on v.Id equals vr.VehicleId into vrL
+                                from vr in vrL.DefaultIfEmpty()
+                                join rt in _lookUpListRepository.GetAll() on vr.RentTypeId equals rt.Id into rtL
+                                from rt in rtL.DefaultIfEmpty()
+                                join lr in _lookUpListRepository.GetAll() on vr.FirmTypeId equals lr.Id into lrL
+                                from lr in lrL.DefaultIfEmpty()
+                                where v.Status && vc.Status /*&& dateNow <= vc.EndDate*/ && vc.EndDate <= add1Month
+                                select new RVehicleCostDto()
+                                {
+                                    Id = vc.Id,
+                                    Plate = v.Plate,
+                                    VehicleId = v.Id,
+                                    UnitId = un.Id,
+                                    VehicleTypeName = v.FixtureTypeId == (int)FixtureType.Ownership ? "Mülkiyet" : "Kiralık",
+                                    ParentUnitId = un1.Id,
+                                    StartDate = vc.StartDate,
+                                    //DayCount = (dateNow - vc.EndDate).Days,
+                                    EndDate = vc.EndDate,
+                                    RentFirmName = lr.Name ?? "--",
+                                    RentTypeName = rt.Name ?? "--",
+                                }).ToListAsync();
 
             var plateList = plates
                 .GroupBy(p => p.VehicleId)
@@ -2632,7 +2712,7 @@ namespace CoreArchV2.Services.Services
         public async Task<List<EVehicleExaminationDateDto>> GetTimeUpExaminationVehicle(RFilterModelDto filterModel)
         {
             var dateNow = DateTime.Now.AddDays(10).Date;
-            var plates = (await Task.FromResult(from ed in _vehicleExaminationDateRepository.GetAll()
+            var plates = await (from ed in _vehicleExaminationDateRepository.GetAll()
                                                 join v in _vehicleRepository.GetAll() on ed.VehicleId equals v.Id
                                                 join un in _unitRepository.GetAll() on v.LastUnitId equals un.Id into unL
                                                 from un in unL.DefaultIfEmpty()
@@ -2653,7 +2733,7 @@ namespace CoreArchV2.Services.Services
                                                     UnitId = un.Id,
                                                     ParentUnitId = un1.Id,
                                                     VehicleTypeName = v.FixtureTypeId == (int)FixtureType.Ownership ? "Mülkiyet" : "Kiralık",
-                                                })).ToList();
+                                                }).ToListAsync();
 
             var plateList = plates
                 .GroupBy(p => p.VehicleId)

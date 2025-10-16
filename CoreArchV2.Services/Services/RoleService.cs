@@ -29,12 +29,6 @@ namespace CoreArchV2.Services.Services
             _roleAuthorizationRepository = uow.GetRepository<RoleAuthorization>();
         }
 
-        public SessionContext _workContext
-        {
-            get => new SessionContext();
-            set => _roleRepository._workContext = value;
-        }
-
         public PagedList<ERoleDto> GetAllWithPaged(int? page, ERoleDto filterModel)
         {
             //Sıra no için

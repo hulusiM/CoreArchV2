@@ -566,7 +566,7 @@ namespace CoreArchV2.Services.Services
             {
                 if (model.IsAdmin)
                 {
-                    var vehicleEnt = _vehicleRepository.FindForInsertUpdateDelete(model.VehicleId);
+                    var vehicleEnt = _vehicleRepository.Find(model.VehicleId);
                     if (vehicleEnt.LastKm == null)
                     {
                         result.Message = "Bu araç daha önce göreve çıkmadığı için km değişimi yapılamaz";
@@ -848,7 +848,7 @@ namespace CoreArchV2.Services.Services
                         _tripRepository.Update(trip);
 
                         //vehicle table
-                        var vehicleEnt = _vehicleRepository.FindForInsertUpdateDelete(trip.VehicleId);
+                        var vehicleEnt = _vehicleRepository.Find(trip.VehicleId);
                         vehicleEnt.LastKm = model.EndKm;
                         vehicleEnt.LastCityId = model.EndCityId;
                         _vehicleRepository.Update(vehicleEnt);
@@ -956,7 +956,7 @@ namespace CoreArchV2.Services.Services
                         return result;
                     }
 
-                    var vehicleEnt = _vehicleRepository.FindForInsertUpdateDelete(model.VehicleId);
+                    var vehicleEnt = _vehicleRepository.Find(model.VehicleId);
                     //if (vehicleEnt.LastKm != null && vehicleEnt.LastKm.Value != 0 && vehicleEnt.LastKm.Value != model.StartKm)
                     //{
                     //    result.Message = "Aracın son km değeri: <b>" + $"{vehicleEnt.LastKm.Value:0,0.00}" + "</b> <br/> Bu değerden az/fazla girilemez";
@@ -1101,7 +1101,7 @@ namespace CoreArchV2.Services.Services
                             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                             {
                                 //Trip table
-                                var newEnt = _tripRepository.FindForInsertUpdateDelete(model.Id);
+                                var newEnt = _tripRepository.Find(model.Id);
                                 var driverId = newEnt.DriverId;
                                 var trip = _mapper.Map(model, newEnt);
                                 trip.DriverId = driverId;
@@ -1274,7 +1274,7 @@ namespace CoreArchV2.Services.Services
                         decimal kmEdit = (decimal)0;
                         if (lastTripFinished != null)
                             kmEdit = (decimal)_tripLogRepository.Where(w => w.Status && w.TripId == lastTripFinished.Id && w.State == (int)TripState.ChangeKm).Sum(s => s.Km);
-                        var vehicle = _vehicleRepository.FindForInsertUpdateDelete(entity.VehicleId);
+                        var vehicle = _vehicleRepository.Find(entity.VehicleId);
                         vehicle.LastKm = lastTripFinished != null ? (lastTripFinished.StartKm + kmEdit) : 0;
                         vehicle.LastCityId = lastTripFinished != null ? (lastTripFinished?.EndCityId) : null;
                         _uow.SaveChanges();

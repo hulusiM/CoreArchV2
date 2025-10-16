@@ -106,7 +106,7 @@ namespace CoreArchV2.Services.Services
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //FileUpload Table delete
-                    var fileUpload = _fileUploadRepository.FindForInsertUpdateDelete(fileUploadId);
+                    var fileUpload = _fileUploadRepository.Find(fileUploadId);
                     _fileUploadRepository.Delete(fileUpload);
                     _uow.SaveChanges();//Bir sorun olursa alt satıra geçme hata fırlat
 
@@ -137,7 +137,7 @@ namespace CoreArchV2.Services.Services
                     var vehiclePhysicalImageId = _vehiclePhysicalImageFileGenericRepository.FirstOrDefault(w => w.FileUploadId == fileUploadId).VehiclePhysicalImageId;
 
                     //FileUpload Table delete
-                    var fileUpload = _fileUploadRepository.FindForInsertUpdateDelete(fileUploadId);
+                    var fileUpload = _fileUploadRepository.Find(fileUploadId);
                     _fileUploadRepository.Delete(fileUpload);
                     _uow.SaveChanges();//Bir sorun olursa alt satıra geçme hata fırlat
 
@@ -301,7 +301,7 @@ namespace CoreArchV2.Services.Services
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //FileUpload Table delete
-                    var fileUpload = _fileUploadRepository.FindForInsertUpdateDelete(fileUploadId);
+                    var fileUpload = _fileUploadRepository.Find(fileUploadId);
                     _fileUploadRepository.Delete(fileUpload);
                     _uow.SaveChanges();//Bir sorun olursa alt satıra geçme hata fırlat
 
@@ -405,7 +405,7 @@ namespace CoreArchV2.Services.Services
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     //FileUpload Table delete
-                    var fileUpload = _fileUploadRepository.FindForInsertUpdateDelete(fileUploadId);
+                    var fileUpload = _fileUploadRepository.Find(fileUploadId);
                     _fileUploadRepository.Delete(fileUpload);
                     _uow.SaveChanges();//Bir sorun olursa alt satıra geçme hata fırlat
 

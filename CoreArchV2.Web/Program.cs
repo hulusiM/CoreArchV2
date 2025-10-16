@@ -13,7 +13,7 @@ using Microsoft.Extensions.FileProviders;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
-// MVC, Session, SignalR
+// 🔹 MVC, Session, SignalR
 services.AddControllersWithViews();
 services.AddSignalR();
 services.AddHttpContextAccessor();
@@ -25,14 +25,14 @@ services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Hosted Services
-services.AddHostedService<CoreArchV2.Services.SignalR.ArventoMapService>();
-services.AddHostedService<CoreArchV2.Services.SignalR.BasaranMapService>();
+// 🔹 Hosted Services
+services.AddHostedService<ArventoMapService>();
+services.AddHostedService<BasaranMapService>();
 
-// AutoMapper
+// 🔹 AutoMapper
 services.AddAutoMapper(typeof(MapperProfileWeb));
 
-#region Scoped Servisleri Bağlama
+// 🔹 Scoped Servisleri Bağlama
 services.AddScoped<IUnitOfWork, UnitOfWork>();
 services.AddScoped<IAuthService, AuthService>();
 services.AddScoped<IUserService, UserService>();
@@ -54,30 +54,47 @@ services.AddScoped<IBrandService, BrandService>();
 services.AddScoped<INoticeService, NoticeService>();
 services.AddScoped<ITripService, TripService>();
 services.AddScoped<IMobileService, MobileService>();
-services.AddScoped<IArventoService, CoreArchV2.Services.Arvento.ArventoService>();
+services.AddScoped<IArventoService, ArventoService>();
 services.AddScoped<ICacheService, CacheService>();
 services.AddScoped<IOutOfHourService, OutOfHourService>();
 services.AddScoped<IMailService, MailService>();
 services.AddScoped<ILicenceWebService, LicenceWebService>();
 services.AddScoped<IVehicleMapService, VehicleMapService>();
-#endregion
 
-#region Veritabanı Bağlantıları
+// 🔹 Veritabanı Bağlantıları
 services.AddDbContext<CoreArchDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
-services.AddDbContext<LicenceDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("LicenceDbConnection")));
-#endregion
+{
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DevConnection"),
+        sqlOptions =>
+        {
+            // EF8 JSON parameter optimizasyonunu kapat
+            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
+            sqlOptions.UseRelationalNulls(false);
+        });
+});
 
-#region Konfigürasyon Ayarlarını Bağlama
+services.AddDbContext<LicenceDbContext>(options =>
+{
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("LicenceDbConnection"),
+        sqlOptions =>
+        {
+            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
+            sqlOptions.UseRelationalNulls(false);
+        });
+});
+
+
+// 🔹 Konfigürasyon Ayarlarını Bağlama
 services.Configure<MailSetting>(builder.Configuration.GetSection("MailSetting"));
 services.Configure<ArventoSetting>(builder.Configuration.GetSection("ArventoSetting"));
 services.Configure<FirmSetting>(builder.Configuration.GetSection("FirmSetting"));
 services.Configure<POSetting>(builder.Configuration.GetSection("POSetting"));
 services.Configure<WebSendPushNotification>(builder.Configuration.GetSection("WebSendPushNotification"));
 services.Configure<LicenceSetting>(builder.Configuration.GetSection("LicenceSetting"));
-#endregion
 
+// 🔹 JSON serializer yapılandırması
 services.AddControllers().AddJsonOptions(jsonOptions =>
 {
     jsonOptions.JsonSerializerOptions.PropertyNamingPolicy = null;
@@ -85,40 +102,40 @@ services.AddControllers().AddJsonOptions(jsonOptions =>
 
 var app = builder.Build();
 
-// ✅ Middleware sıralaması çok önemli
+// 🔹 Middleware sıralaması çok önemli
 if (!app.Environment.IsDevelopment())
+{
     app.UseHsts();
+}
 else
+{
     app.UseDeveloperExceptionPage();
+}
 
 app.UseHttpsRedirection();
+
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"))
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot")),
+    RequestPath = ""
 });
 
 app.UseRouting();
 
-// Authentication ve Authorization middleware’leri
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Session middleware’ini endpointlerden önce aktif et
 app.UseSession();
 
-// Özel middleware (Session aktif olduktan sonra)
+// 🔹 Özel middleware (Session sonrasında)
 var accessor = app.Services.GetRequiredService<IHttpContextAccessor>();
 app.UseCustomRoleManagement(accessor);
 
-// En sonda endpoint mapping
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapHub<ArventoMapHub>("/ArventoMapHub");
-    endpoints.MapHub<BasaranVehicleMapHub>("/BasaranVehicleMapHub");
-    endpoints.MapHub<SignalRHub>("/SignalRHub");
-    endpoints.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Login}/{action=Index}/{id?}");
-});
+// 🔹 Endpoint mapping
+app.MapHub<ArventoMapHub>("/ArventoMapHub");
+app.MapHub<BasaranVehicleMapHub>("/BasaranVehicleMapHub");
+app.MapHub<SignalRHub>("/SignalRHub");
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Login}/{action=Index}/{id?}");
 
 app.Run();

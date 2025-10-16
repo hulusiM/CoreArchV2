@@ -671,14 +671,14 @@ namespace CoreArchV2.Services.Services
                             var notSendNoticeList = tempModel.NoticeList.Where(w => !w.IsSend).ToList();
                             if (NoticeCompareOldNew(oldNoticeList, sendNoticeList) && NoticeCompareOldNew(oldNoticeList, notSendNoticeList))//Kontrol
                             {
-                                var sendNoticeEntity = sendNoticeList.Select(item => _noticeRepository.FindForInsertUpdateDelete(item.Id)).ToList();// Birime gönderilecekler state değişiyor
+                                var sendNoticeEntity = sendNoticeList.Select(item => _noticeRepository.Find(item.Id)).ToList();// Birime gönderilecekler state değişiyor
                                 sendNoticeEntity.ForEach(f =>
                                 {
                                     f.State = (int)NoticeState.SendUnit;
                                     f.NoticeUnitId = noticeUnitEnt.Id;
                                 });
 
-                                var notSendNoticeEntity = notSendNoticeList.Select(item => _noticeRepository.FindForInsertUpdateDelete(item.Id)).ToList();
+                                var notSendNoticeEntity = notSendNoticeList.Select(item => _noticeRepository.Find(item.Id)).ToList();
                                 notSendNoticeEntity.ForEach(f =>
                                 {
                                     f.State = (int)NoticeState.SendCancelled;
@@ -853,7 +853,7 @@ namespace CoreArchV2.Services.Services
             var result = new EResultDto() { IsSuccess = false };
             try
             {
-                var noticeUnit = _noticeUnitRepository.FindForInsertUpdateDelete(model.NoticeUnitId.Value);
+                var noticeUnit = _noticeUnitRepository.Find(model.NoticeUnitId.Value);
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
                     var noticeList = _noticeRepository.Where(w => w.NoticeUnitId == model.NoticeUnitId).ToList();
@@ -1268,7 +1268,7 @@ namespace CoreArchV2.Services.Services
                     {
                         using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                         {
-                            var notSendNoticeEntity = notSendNoticeList.Select(item => _noticeRepository.FindForInsertUpdateDelete(item.Id)).ToList();
+                            var notSendNoticeEntity = notSendNoticeList.Select(item => _noticeRepository.Find(item.Id)).ToList();
                             notSendNoticeEntity.ForEach(f => { f.State = (int)NoticeState.RedirectToCancelled; });
                             _noticeRepository.UpdateRange(notSendNoticeEntity);
                             foreach (var item in sendNoticeList)

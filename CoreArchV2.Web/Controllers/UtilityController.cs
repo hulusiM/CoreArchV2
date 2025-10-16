@@ -241,7 +241,7 @@ namespace CoreArchV2.Web.Controllers
         {
             try
             {
-                var message = await Task.FromResult(_messageRepository.FindForInsertUpdateDelete(messageId));
+                var message = await Task.FromResult(_messageRepository.Find(messageId));
                 if (message.UnRead)
                     message.UnRead = false;
                 else
@@ -259,7 +259,7 @@ namespace CoreArchV2.Web.Controllers
         {
             try
             {
-                var message = await Task.FromResult(_messageRepository.FindForInsertUpdateDelete(messageId));
+                var message = await Task.FromResult(_messageRepository.Find(messageId));
                 message.Status = false;
                 _messageRepository.Update(message);
                 _uow.SaveChanges();

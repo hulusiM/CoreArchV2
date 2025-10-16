@@ -1,5 +1,4 @@
-﻿using CoreArchV2.Utilies.SessionOperations;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
 namespace CoreArchV2.Data.GenericRepository
@@ -7,7 +6,7 @@ namespace CoreArchV2.Data.GenericRepository
     public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEntity : class
     {
         protected readonly DbContext _context;
-        private readonly DbSet<TEntity> _dbSet;
+        protected readonly DbSet<TEntity> _dbSet;
 
         public GenericRepository(DbContext context)
         {
@@ -15,113 +14,104 @@ namespace CoreArchV2.Data.GenericRepository
             _dbSet = context.Set<TEntity>();
         }
 
-        public SessionContext _workContext
-        {
-            get => new SessionContext();
-            set => _workContext = value;
-        }
-
-
         #region Async Methods
 
         public async Task<TEntity> InsertAsync(TEntity entity)
         {
-            await _context.AddAsync(entity);
+            await _dbSet.AddAsync(entity).ConfigureAwait(false);
             return entity;
         }
 
         public async Task<IEnumerable<TEntity>> InsertRangeAsync(IEnumerable<TEntity> entities)
         {
-            await _dbSet.AddRangeAsync(entities);
+            // EF Core 8 AddRangeAsync memory-efficient hale getirildi
+            await _dbSet.AddRangeAsync(entities).ConfigureAwait(false);
             return entities;
         }
 
-        public async Task<IEnumerable<TEntity>> WhereAsync(Expression<Func<TEntity, bool>> predicate)
+        public async Task<List<TEntity>> WhereAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await _dbSet.Where(predicate).ToListAsync();
+            return await _dbSet.AsNoTracking()
+                               .Where(predicate)
+                               .ToListAsync()
+                               .ConfigureAwait(false);
         }
 
         public async Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await _context.Set<TEntity>().CountAsync(predicate);
+            return await _dbSet.CountAsync(predicate).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<TEntity>> GetAllAsync()
+        public async Task<List<TEntity>> GetAllAsync()
         {
-            return await _dbSet.ToListAsync();
+            return await _dbSet.AsNoTracking().ToListAsync().ConfigureAwait(false);
         }
 
-        public async Task<TEntity> FindAsync(int id)
+        public async Task<TEntity?> FindAsync(int id)
         {
-            return await _dbSet.FindAsync(id);
+            return await _dbSet.FindAsync(id).ConfigureAwait(false);
         }
 
-        public async Task<TEntity> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
+        public async Task<TEntity?> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
         {
-            return await _dbSet.SingleOrDefaultAsync(predicate);
+            return await _dbSet.AsNoTracking()
+                               .SingleOrDefaultAsync(predicate)
+                               .ConfigureAwait(false);
         }
 
         public async Task<bool> AnyAsync(Expression<Func<TEntity, bool>> filter)
         {
-            return await _context.Set<TEntity>().Where(filter).AnyAsync();
+            return await _dbSet.AnyAsync(filter).ConfigureAwait(false);
         }
 
-        #endregion Async Methods
-
-        #region sync Methods
-
-        public TEntity SingleOrDefault(Expression<Func<TEntity, bool>> filter)
+        public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter)
         {
-            return _context.Set<TEntity>().SingleOrDefault(filter);
+            return await _dbSet.FirstOrDefaultAsync(filter).ConfigureAwait(false);
         }
 
-        public TEntity FirstOrDefault(Expression<Func<TEntity, bool>> filter)
+        public async Task<TEntity?> FirstOrDefaultNoTrackingAsync(Expression<Func<TEntity, bool>> filter)
         {
-            return _context.Set<TEntity>().FirstOrDefault(filter);
-        }
-        public async Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> filter)
-        {
-            return await _context.Set<TEntity>().FirstOrDefaultAsync(filter);
+            return await _dbSet.AsNoTracking()
+                               .FirstOrDefaultAsync(filter)
+                               .ConfigureAwait(false);
         }
 
-        public TEntity FirstOrDefaultNoTracking(Expression<Func<TEntity, bool>> filter)
-        {
-            return _context.Set<TEntity>().AsNoTracking().FirstOrDefault(filter);
-        }
+        #endregion
 
-        public async Task<TEntity> FirstOrDefaultNoTrackingAsync(Expression<Func<TEntity, bool>> filter)
-        {
-            return await _context.Set<TEntity>().AsNoTracking().FirstOrDefaultAsync(filter);
-        }
+        #region Sync Methods
 
         public IQueryable<TEntity> GetAll()
         {
+            // Varsayılan NoTracking (sadece okuma senaryoları için hızlı)
             return _dbSet.AsNoTracking();
         }
 
         public IQueryable<TEntity> Where(Expression<Func<TEntity, bool>> predicate)
         {
-            return _context.Set<TEntity>().Where(predicate);
+            return _dbSet.Where(predicate).AsNoTracking();
         }
 
         public int Count(Expression<Func<TEntity, bool>> predicate)
         {
-            return _context.Set<TEntity>().Count(predicate);
+            return _dbSet.Count(predicate);
         }
 
-        public TEntity Find(int id)
+        public TEntity? SingleOrDefault(Expression<Func<TEntity, bool>> filter)
         {
-            if (id > 0)
-            {
-                var entity = _context.Set<TEntity>().Find(id);
-                _context.Entry(entity).State = EntityState.Detached;
-                return entity;
-            }
-
-            return null;
+            return _dbSet.AsNoTracking().SingleOrDefault(filter);
         }
 
-        public TEntity FindForInsertUpdateDelete(int id)
+        public TEntity? FirstOrDefault(Expression<Func<TEntity, bool>> filter)
+        {
+            return _dbSet.AsNoTracking().FirstOrDefault(filter);
+        }
+
+        public TEntity? FirstOrDefaultNoTracking(Expression<Func<TEntity, bool>> filter)
+        {
+            return _dbSet.AsNoTracking().FirstOrDefault(filter);
+        }
+
+        public TEntity? Find(int id)
         {
             return _dbSet.Find(id);
         }
@@ -140,20 +130,16 @@ namespace CoreArchV2.Data.GenericRepository
 
         public void Update(TEntity entity)
         {
-            _context.Entry(entity).State = EntityState.Modified;
-            // return entity;
+            _dbSet.Update(entity);
         }
+
         public void UpdateRange(IEnumerable<TEntity> entities)
         {
-            entities.ToList().ForEach(e =>
-            {
-                _context.Entry(e).State = EntityState.Modified;
-            });
+            _dbSet.UpdateRange(entities);
         }
+
         public void Delete(TEntity entity)
         {
-            if (_context.Entry(entity).State == EntityState.Detached)
-                _dbSet.Attach(entity);
             _dbSet.Remove(entity);
         }
 
@@ -164,9 +150,9 @@ namespace CoreArchV2.Data.GenericRepository
 
         public bool Any(Expression<Func<TEntity, bool>> filter)
         {
-            return _context.Set<TEntity>().Where(filter).Any();
+            return _dbSet.Any(filter);
         }
 
-        #endregion sync Methods
+        #endregion
     }
 }
