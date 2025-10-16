@@ -875,7 +875,7 @@ namespace CoreArchV2.Services.Services
             catch (Exception e) { result.Message = "Kayıt sırasında hata oluştu"; }
             return result;
         }
-        public EResultDto TripAddCity(ETripDto model)
+        public async Task<EResultDto> TripAddCity(ETripDto model)
         {
             var result = new EResultDto() { IsSuccess = false };
             try
@@ -900,8 +900,8 @@ namespace CoreArchV2.Services.Services
                         Description = model.Description,
                         State = (int)TripState.AddAddress
                     };
-                    _tripLogRepository.Insert(tripLog);
-                    _uow.SaveChanges();
+                    await _tripLogRepository.InsertAsync(tripLog);
+                    await _uow.SaveChangesAsync();
                     result.Message = "Adres eklendi";
                     result.IsSuccess = true;
                 }
@@ -1086,7 +1086,8 @@ namespace CoreArchV2.Services.Services
                     body += "<br />Güncelleme yapan kullanıcı: " + renew.Name + " " + renew.Surname + " ➤➤➤ <a href='tel:" + renew.MobilePhone + "'>Ara ☎</a>";
                     if (model.IsAdmin || entity.DriverId == model.CreatedBy)
                     {
-                        var lastTrip = GetLastTripTop10(model.VehicleId).Where(w => w.Id != entity.Id && w.State == (int)TripState.EndTrip).OrderByDescending(o => o.TripLogId).Take(1).FirstOrDefault();
+                        var last10Trip = await GetLastTripTop10(model.VehicleId);
+                        var lastTrip = last10Trip.Where(w => w.Id != entity.Id && w.State == (int)TripState.EndTrip).OrderByDescending(o => o.TripLogId).Take(1).FirstOrDefault();
                         if (entity.State == (int)TripState.EndTrip)
                             result.Message = "Görev tamamlanmıştır, düzenleme yapılamaz";
                         else if (entity.State == (int)TripState.NotAllowedForManager)
@@ -1201,24 +1202,25 @@ namespace CoreArchV2.Services.Services
                         select u).ToList();
             return list;
         }
-        public ETripDto GetById(int id)
+        public async Task<ETripDto> GetById(int id)
         {
-            var result = (from t in _tripRepository.GetAll()
-                          where t.Id == id
-                          select new ETripDto()
-                          {
-                              Id = t.Id,
-                              VehicleId = t.VehicleId,
-                              Type = t.Type,
-                              MissionName = t.MissionName,
-                              StartCityId = t.StartCityId,
-                              StartKm = t.StartKm,
-                              StartDate = t.StartDate
-                          }).FirstOrDefault();
+            var result = await (from t in _tripRepository.GetAll()
+                                where t.Id == id
+                                select new ETripDto()
+                                {
+                                    Id = t.Id,
+                                    VehicleId = t.VehicleId,
+                                    Type = t.Type,
+                                    MissionName = t.MissionName,
+                                    StartCityId = t.StartCityId,
+                                    StartKm = t.StartKm,
+                                    StartDate = t.StartDate
+                                }).FirstOrDefaultAsync();
 
             if (result != null)
             {
-                var lastTrip = GetLastTripTop10(result.VehicleId).Where(w => w.State == (int)TripState.EndTrip)
+                var last10Trip = await GetLastTripTop10(result.VehicleId);
+                var lastTrip = last10Trip.Where(w => w.State == (int)TripState.EndTrip)
                     .OrderByDescending(o => o.TripLogId).Take(1).FirstOrDefault();
                 result.IsPastRecord = lastTrip != null;
                 result.StartCityName = GetCityName(result.StartCityId);
@@ -1329,7 +1331,7 @@ namespace CoreArchV2.Services.Services
 
             return lastStartTripLog;
         }
-        public List<ETripDto> GetLastTripTop10(int vehicleId)
+        public async Task<List<ETripDto>> GetLastTripTop10(int vehicleId)
         {
             var list = (from t in _tripRepository.GetAll()
                         join tl in _tripLogRepository.GetAll() on t.Id equals tl.TripId
@@ -1340,9 +1342,9 @@ namespace CoreArchV2.Services.Services
                             TripLogId = tl.Id,
                             State = tl.State,
                             StartKm = tl.Km
-                        }).OrderByDescending(o => o.TripLogId).Take(10).ToList();
+                        });
 
-            return list;
+            return await list.OrderByDescending(o => o.TripLogId).Take(10).ToListAsync();
         }
         public async Task<List<ETripDto>> GetReport(ETripDto filterModel)
         {

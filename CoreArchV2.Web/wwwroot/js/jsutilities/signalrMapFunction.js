@@ -6,8 +6,7 @@ connectionMap.start().then(function () {
     console.log("error: " + err);
 });
 
-connectionMap.on("ReceiveVehiclePosition", function (vehicleList) {
+connectionMap.on("ArventoMapPosition", function (vehicleList) {
     loadVehicles(vehicleList);
 });
-
 

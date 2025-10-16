@@ -72,19 +72,19 @@ namespace CoreArchV2.Web.Controllers
             tempModel.CreatedBy = _loginUserInfo.Id;
             return Json(_tripService.UpdateVehicleKm(tempModel));
         }
-        public IActionResult GetVehicleLastKm(int vehicleId) => Json(_tripService.GetVehicleLastKm(vehicleId));
-        public IActionResult TripAddCity(ETripDto tempModel)
+        public async Task<IActionResult> GetVehicleLastKm(int vehicleId) => Json(await _tripService.GetVehicleLastKm(vehicleId));
+        public async Task<IActionResult> TripAddCity(ETripDto tempModel)
         {
             tempModel.CreatedBy = _loginUserInfo.Id;
             tempModel.IsAdmin = _loginUserInfo.IsAdmin;
-            return Json(_tripService.TripAddCity(tempModel));
+            return Json(await _tripService.TripAddCity(tempModel));
         }
         public async Task<IActionResult> GetByTripIdHistory(int tripId)
         {
             var list = await _tripService.GetByTripIdHistory(tripId);
             return Json(list);
         }
-        public IActionResult GetByTripIdHistoryMap(int tripId)
+        public async Task<IActionResult> GetByTripIdHistoryMap(int tripId)
         {
             var trip = _tripRepository.Find(tripId);
             var vehicle = _vehicleRepository.Find(trip.VehicleId);
@@ -95,14 +95,14 @@ namespace CoreArchV2.Web.Controllers
             //if (diffDate.TotalDays > 15)
             //    return Json(2);
 
-            var result = _tripService.GetByTripIdHistoryMap(tripId);
+            var result = await _tripService.GetByTripIdHistoryMap(tripId);
             return Json(result);
         }
-        public IActionResult CloseTrip(ETripDto tempModel)
+        public async Task<IActionResult> CloseTrip(ETripDto tempModel)
         {
             tempModel.CreatedBy = _loginUserInfo.Id;
             tempModel.IsAdmin = _loginUserInfo.IsAdmin;
-            return Json(_tripService.CloseTrip(tempModel));
+            return Json(await _tripService.CloseTrip(tempModel));
         }
         public async Task<IActionResult> ActiveMissionControl() => Json(await _tripService.ActiveMissionControl(_loginUserInfo.Id));
         public async Task<IActionResult> TripInsertUpdate(ETripDto tempModel)
@@ -118,7 +118,7 @@ namespace CoreArchV2.Web.Controllers
 
             return Json(result);
         }
-        public IActionResult GetById(int id) => Json(_tripService.GetById(id));
+        public async Task<IActionResult> GetById(int id) => Json(await _tripService.GetById(id));
         public async Task<IActionResult> Delete(int id) => Json(await _tripService.Delete(id, _loginUserInfo.IsAdmin, _loginUserInfo.Id));
         public async Task<IActionResult> GetReport(ETripDto tempModel)
         {

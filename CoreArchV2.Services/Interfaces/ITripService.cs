@@ -14,7 +14,7 @@ namespace CoreArchV2.Services.Interfaces
         List<ETripDto> GetAllTrip(ETripDto filterModel);
         Task<EResultDto> TripInsert(ETripDto model);
         Task<EResultDto> TripUpdate(ETripDto model);
-        ETripDto GetById(int id);
+        Task<ETripDto> GetById(int id);
         Task<EResultDto> Delete(int id, bool isAdmin, int createdBy);
         Task<EVehicleDto> GetVehicleLastKm(int vehicleId);
         EResultDto UpdateVehicleKm(ETripDto model);
@@ -22,7 +22,7 @@ namespace CoreArchV2.Services.Interfaces
         Task<EResultDto> CloseTrip(ETripDto model);
         Task<List<ETripDto>> GetByTripIdHistory(int tripId);
         Task<List<EGeneralReport2Dto>> GetByTripIdHistoryMap(int tripId);
-        EResultDto TripAddCity(ETripDto model);
+        Task<EResultDto> TripAddCity(ETripDto model);
         Task<List<ETripDto>> GetReport(ETripDto filterModel);
         #endregion
 

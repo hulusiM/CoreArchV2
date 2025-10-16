@@ -1,5 +1,7 @@
-﻿using CoreArchV2.Services.Arvento;
+﻿using CoreArchV2.Core.Entity.Track;
+using CoreArchV2.Services.Arvento;
 using CoreArchV2.Services.Arvento.Dto;
+using CoreArchV2.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -7,7 +9,7 @@ using System.Collections.Concurrent;
 
 namespace CoreArchV2.Services.SignalR
 {
-    public class VehicleMapHub : Hub
+    public class BasaranVehicleMapHub : Hub
     {
         private static ConcurrentDictionary<string, bool> ConnectedClients = new ConcurrentDictionary<string, bool>();
         public override async Task OnConnectedAsync()
@@ -27,11 +29,11 @@ namespace CoreArchV2.Services.SignalR
         }
     }
 
-    public class VehicleTrackingService : BackgroundService
+    public class BasaranMapService : BackgroundService
     {
-        private readonly IHubContext<VehicleMapHub> _hubContext;
+        private readonly IHubContext<BasaranVehicleMapHub> _hubContext;
         private readonly IServiceProvider _serviceProvider;
-        public VehicleTrackingService(IHubContext<VehicleMapHub> hubContext,
+        public BasaranMapService(IHubContext<BasaranVehicleMapHub> hubContext,
            IServiceProvider serviceProvider)
         {
             _hubContext = hubContext;
@@ -41,20 +43,20 @@ namespace CoreArchV2.Services.SignalR
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (!VehicleMapHub.HasConnectedClients())//Hub bağlandıysa istek atmaya başla
+                if (!BasaranVehicleMapHub.HasConnectedClients())//Hub bağlandıysa istek atmaya başla
                 {
                     await Task.Delay(3000, stoppingToken);
                     continue;
                 }
 
-                var vehicleList = new List<ECoordinateDto>();
+                var vehicleList = new List<VehicleTracking>();
                 using (var scope = _serviceProvider.CreateScope())
                 {
-                    var arventoService = scope.ServiceProvider.GetRequiredService<IArventoService>();
-                    vehicleList = await arventoService.GetAracSonKoordinatList();
+                    var trackingService = scope.ServiceProvider.GetRequiredService<IVehicleMapService>();
+                    vehicleList = await trackingService.GetTrackingCoordinateList();
                 }
 
-                await _hubContext.Clients.All.SendAsync("ReceiveVehiclePosition", vehicleList);
+                await _hubContext.Clients.All.SendAsync("BasaranMapPosition", vehicleList);
                 await Task.Delay(3000, stoppingToken);
             }
         }

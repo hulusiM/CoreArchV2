@@ -91,7 +91,7 @@ namespace CoreArchV2.Web.Controllers
             if (!_loginUserInfo.IsAdmin)
                 filterModel = ForAutVehicleSetUnitId(filterModel);
 
-            var result = await Task.Run(() => _vehicleService.GetNotificationMessages(filterModel));
+            var result = await _vehicleService.GetNotificationMessages(filterModel);
             return Json(result);
         }
 
@@ -101,8 +101,7 @@ namespace CoreArchV2.Web.Controllers
             if (!_loginUserInfo.IsAdmin)
                 filterModel = ForAutVehicleSetUnitId(filterModel);
 
-            var result = await Task.Run(() => _vehicleService.GetTimeUpContractVehicle(filterModel));
-
+            var result = await _vehicleService.GetTimeUpContractVehicle(filterModel);
             return Json(result);
         }
 

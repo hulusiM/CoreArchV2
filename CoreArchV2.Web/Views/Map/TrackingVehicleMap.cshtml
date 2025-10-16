@@ -1,0 +1,218 @@
+﻿@using CoreArchV2.Core.Enum
+@using Microsoft.AspNetCore.Http
+<script>$('#broadCrumbDiv').text('Araç Harita (Başaran)')</script>
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<script src="~/leaflet/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="~/leaflet/sidebar/js/leaflet-sidebar.js"></script>
+
+
+<div id="map"></div>
+<script src="~/js/jsutilities/signalrMapBasaranFunction.js" defer></script>
+<script>
+    var map = L.map('map').setView([38.265791, 35.143366], 6);
+    setTimeout(() => { map.invalidateSize(); }, 100);
+    var markers = L.markerClusterGroup();
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="#">Canlı Harita (Başaran)</a>'
+    }).addTo(map);
+
+
+        function loadVehicles2(data) {
+        // 1️⃣ Haritadaki tüm marker ve layer’ları temizle (tile layer hariç)
+        map.eachLayer(function (layer) {
+            if (!(layer instanceof L.TileLayer)) {
+                map.removeLayer(layer);
+            }
+        });
+
+        // 2️⃣ Marker cluster grubunu sıfırla
+        markers.clearLayers();
+        markers = L.markerClusterGroup();
+
+        // 3️⃣ Eğer veri varsa işle
+        if (data && data.length) {
+            // 🔹 Harita merkezini ilk aracın koordinatına ayarla
+            var first = data[0];
+            if (first.latitude && first.longitude) {
+                map.setView([first.latitude, first.longitude], 18); // zoom'u istersen 10 yerine 8-12 arasında değiştir
+            }
+
+            // 🔹 Marker'ları ekle
+            data.forEach(vehicle => {
+                var speed = vehicle.speed;
+                var iconColor =  'green';
+
+                var html = speed > 0
+                    ? `<div class="marker-label">${vehicle.imei}/${speed}</div><img src="/leaflet/images/${iconColor}.png" style="height: 35px;" />`
+                    : `<div class="marker-label">${vehicle.imei}</div><img src="/leaflet/images/${iconColor}.png" style="height: 35px;" />`;
+
+                var customIcon = L.divIcon({
+                    className: 'marker-with-text',
+                    html: html,
+                    iconSize: [35, 35],
+                    iconAnchor: [17, 35]
+                });
+
+                var marker = L.marker([vehicle.latitude, vehicle.longitude], { icon: customIcon })
+                    .bindPopup(`${vehicle.imei}`);
+
+                if (data.length > 5)
+                    markers.addLayer(marker);
+                else
+                    marker.addTo(map);
+
+                marker.on('mouseover', function () {
+                    this.openPopup();
+                });
+            });
+
+            // 🔹 Eğer 30’dan fazla araç varsa cluster ekle
+            if (data.length > 30) {
+                map.addLayer(markers);
+            }
+
+            // 🔹 Görsel düzeni güncelle
+            setTimeout(() => { map.invalidateSize(); }, 100);
+        }
+        else {
+            // Veri yoksa varsayılan konuma dön
+            map.setView([38.265791, 35.143366], 6);
+        }
+    }
+
+
+
+    function setCenterViewAnimation(coor, zoom) {
+        map.flyTo(coor, zoom, {
+            animate: true,
+            duration: 2,
+            easeLinearity: 0.25
+        });
+    }
+
+    function findCenter(coords) {
+        if (!coords.length) return [38.265791, 35.143366];
+
+        let latSum = 0, lngSum = 0;
+        coords.forEach(coord => {
+            latSum += coord.latitudeY;
+            lngSum += coord.longitudeX;
+        });
+
+        return [latSum / coords.length, lngSum / coords.length];
+    }
+
+    function loadGeoLocation2() {
+        var customPane = map.createPane('customPane');
+        customPane.style.zIndex = 650;
+
+        fetch('https://raw.githubusercontent.com/cihadturhan/tr-geojson/master/geo/tr-cities-utf8.json')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: { color: "#00BCD4", weight: 2, opacity: 0.6 }
+                }).addTo(map);
+            });
+
+    }
+</script>
+
+
+<style>
+    #map {
+        width: 102%;
+        height: 90vh;
+        z-index: 0;
+        margin-left: -26px;
+        margin-top: 4px;
+    }
+
+    /* Marker üstüne yazı eklemek için stil */
+    .marker-with-text {
+        position: relative;
+        font-size: 11px;
+        font-weight: bold;
+        color: black;
+        margin-left: -10px;
+    }
+
+        /* Yazı için stil */
+        .marker-with-text .marker-label {
+            position: absolute;
+            top: -17px; /* Marker'ın üstüne yerleştir */
+            left: -10px;
+            white-space: nowrap;
+        }
+    /* Leaflet Popup Özelleştirme */
+    .leaflet-popup-content-wrapper {
+        background-color: #66BB6A; /* Arka plan rengi */
+        color: #fff; /* Metin rengi */
+        border-radius: 5px; /* Kenarlık yuvarlaklığı */
+        //padding: 10px; /* İç dolgu */
+        border: 2px solid #283229; /* Kenarlık rengi ve kalınlığı */
+        margin-bottom: 23px;
+    }
+
+    .leaflet-popup-tip-container {
+        visibility: hidden; /* Popup'ın altındaki küçük okları gizler */
+    }
+
+    .leaflet-popup-content {
+        font-size: 14px; /* Metin boyutu */
+        text-align: center; /* Metni ortala */
+    }
+
+    .top-button {
+        margin: 2px 0px -2px 10px;
+        width: 100%;
+        padding: 12px;
+        color: white;
+        text-align: center;
+        cursor: pointer;
+        border: none;
+        outline: none;
+        font-size: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    .sliding-div {
+        width: 103%;
+        margin: 10px 0px 0px -36px;
+        max-height: 0;
+        overflow: hidden;
+        background-color: #f1f1f1;
+        transition: max-height 0.5s ease-out;
+    }
+
+    .arrow {
+        margin-left: 10px;
+        transition: transform 0.3s ease;
+        position: absolute;
+        animation: bounce 5s infinite;
+    }
+
+    @@keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(5px);
+        }
+    }
+
+    .arrow.rotate {
+        transform: rotate(180deg);
+        animation: none;
+    }
+</style>

@@ -237,7 +237,6 @@
             <div class="modal-body">
                 <div class="form-group">
                     <div id="PublishFuel_FormId" class="row" style="max-height: 300px; min-height: 100px; overflow: scroll;">
-
                     </div>
                 </div>
             </div>
@@ -264,7 +263,6 @@
             <div class="modal-body">
                 <div class="form-group">
                     <div id="PassiveFuel_FormId" class="row" style="max-height: 300px; min-height: 100px; overflow: scroll;">
-
                     </div>
                 </div>
             </div>
@@ -291,7 +289,6 @@
             <div class="modal-body">
                 <div class="form-group">
                     <div id="DeleteFuel_FormId" class="row" style="max-height: 300px; min-height: 100px; overflow: scroll;">
-
                     </div>
                 </div>
             </div>
@@ -515,6 +512,13 @@
             var totalAmountDiscount = amount - (amount * discount / 100);
             $('#TotalAmountDiscount').val(formatMoney(totalAmountDiscount));
         });
+
+    $('#TransactionDate').datepicker({
+        format: 'dd.mm.yyyy',
+        language: 'tr',
+        autoclose: true,
+        todayHighlight: true
+    });
 
     //------------------------------------- Static Area Start ---------------------------------------//
     function funcFilterTable(incomingUrl) {

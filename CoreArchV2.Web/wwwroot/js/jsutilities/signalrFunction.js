@@ -43,4 +43,6 @@ function loadSignalR() {
     }
 }
 
-var connectionMap = new signalR.HubConnectionBuilder().withUrl("/VehicleMapHub").build();
+var connectionMap = new signalR.HubConnectionBuilder().withUrl("/ArventoMapHub").build();
+
+var connectionMap2 = new signalR.HubConnectionBuilder().withUrl("/BasaranVehicleMapHub").build();
