@@ -1,8 +1,10 @@
-﻿var connection = new signalR.HubConnectionBuilder().withUrl("/signalrhub").build();
+﻿var connection = new signalR.HubConnectionBuilder().withUrl("/SignalRHub").build();
+var connectionMap = new signalR.HubConnectionBuilder().withUrl("/ArventoMapHub").build();
+var connectionMap2 = new signalR.HubConnectionBuilder().withUrl("/BasaranVehicleMapHub").build();
+
 connection.start().then(function () {
     //loadSignalR();
 }).catch(function (err) {
-    console.log("error: " + err);
 });
 
 //connection.invoke('Mesaj', 'Merhaba SignalR');
@@ -42,7 +44,3 @@ function loadSignalR() {
         //sendAjxForm(model, "/Login/UserConnectionInsertSignalR", function (e) { }, 'POST');
     }
 }
-
-var connectionMap = new signalR.HubConnectionBuilder().withUrl("/ArventoMapHub").build();
-
-var connectionMap2 = new signalR.HubConnectionBuilder().withUrl("/BasaranVehicleMapHub").build();

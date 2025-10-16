@@ -1,4 +1,5 @@
-﻿using CoreArchV2.Data;
+﻿using ClosedXML.Parser;
+using CoreArchV2.Data;
 using CoreArchV2.Data.UnitOfWork;
 using CoreArchV2.Services.Arvento;
 using CoreArchV2.Services.Interfaces;
@@ -24,6 +25,7 @@ services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
 
 // 🔹 Hosted Services
 services.AddHostedService<ArventoMapService>();
@@ -63,27 +65,18 @@ services.AddScoped<IVehicleMapService, VehicleMapService>();
 
 // 🔹 Veritabanı Bağlantıları
 services.AddDbContext<CoreArchDbContext>(options =>
-{
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DevConnection"),
-        sqlOptions =>
-        {
-            // EF8 JSON parameter optimizasyonunu kapat
-            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
-            sqlOptions.UseRelationalNulls(false);
-        });
-});
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection"), sqlOptions =>
+    {
+        sqlOptions.CommandTimeout(300);
+        sqlOptions.EnableRetryOnFailure(5); // 5 defa tekrar denesin
+    }));
 
 services.AddDbContext<LicenceDbContext>(options =>
-{
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("LicenceDbConnection"),
-        sqlOptions =>
-        {
-            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
-            sqlOptions.UseRelationalNulls(false);
-        });
-});
+    options.UseSqlServer(builder.Configuration.GetConnectionString("LicenceDbConnection"), sqlOptions =>
+    {
+        sqlOptions.CommandTimeout(300);
+        sqlOptions.EnableRetryOnFailure(5); // 5 defa tekrar denesin
+    }));
 
 
 // 🔹 Konfigürasyon Ayarlarını Bağlama
@@ -121,7 +114,7 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseRouting();
-
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
@@ -134,6 +127,7 @@ app.UseCustomRoleManagement(accessor);
 app.MapHub<ArventoMapHub>("/ArventoMapHub");
 app.MapHub<BasaranVehicleMapHub>("/BasaranVehicleMapHub");
 app.MapHub<SignalRHub>("/SignalRHub");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Login}/{action=Index}/{id?}");
