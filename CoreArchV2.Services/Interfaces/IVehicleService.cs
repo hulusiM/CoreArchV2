@@ -48,10 +48,10 @@ namespace CoreArchV2.Services.Interfaces
         EResultDto InsertVehicleAmount(VehicleAmount model);
         EVehicleContractWithAmountDto GetByVehicleIdVehicleAmountHistory(int vehicleId, int vehicleAmountTypeId, bool isAdmin);
 
-        EResultDto InsertVehicleContract(VehicleContract model);
-        EResultDto UpdateVehicleContract(VehicleContract model);
+        Task<EResultDto> InsertVehicleContract(VehicleContract model);
+        Task<EResultDto> UpdateVehicleContract(VehicleContract model);
         EResultDto DeleteVehicleContract(int vehicleId);
-        List<EVehicleContractWithAmountDto> GetByIdVehicleIdContractDateAndAmount(int vehicleId);
+        Task<List<EVehicleContractWithAmountDto>> GetByIdVehicleIdContractDateAndAmount(int vehicleId);
         EResultDto DeleteVehicleAmount(int vehicleContractId, int vehicleAmountId);
 
         EResultDto InsertVehicleMaterial(int vehicleId, int[] materials, int createdBy);

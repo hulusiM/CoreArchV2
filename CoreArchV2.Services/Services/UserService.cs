@@ -11,7 +11,9 @@ using CoreArchV2.Dto.ECommonDto;
 using CoreArchV2.Services.Interfaces;
 using CoreArchV2.Utilies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
+using System.Threading.Tasks;
 using System.Transactions;
 
 namespace CoreArchV2.Services.Services
@@ -256,10 +258,10 @@ namespace CoreArchV2.Services.Services
 
             return result;
         }
-        public EUserDto FindByUsernameAndPass(EUserDto model)
+        public async Task<EUserDto> FindByUsernameAndPass(EUserDto model)
         {
             var passHash = OneWayHash.Create(model.Password);
-            var user = (from u in _userRepository.GetAll()
+            var user = await (from u in _userRepository.GetAll()
                         join unit in _unitRepository.GetAll() on u.UnitId equals unit.Id into unitL
                         from unit in unitL.DefaultIfEmpty()
                         where u.Status && u.MobilePhone == model.MobilePhone.Replace(" ", "") //&& u.Password == HashMD5.Create(model.Password)
@@ -279,7 +281,7 @@ namespace CoreArchV2.Services.Services
                             IsAdmin = u.IsAdmin,// u.Flag == (int)Flag.Admin ? true : false,
                             Flag = model.Flag,
                             UnitId = u.UnitId
-                        }).FirstOrDefault();
+                        }).FirstOrDefaultAsync();
 
             if (user != null)
             {

@@ -221,21 +221,21 @@ namespace CoreArchV2.Web.Controllers
 
         #region VehicleContract
 
-        public IActionResult InsertVehicleContract(VehicleContract model)
+        public async Task<IActionResult> InsertVehicleContract(VehicleContract model)
         {
             model.CreatedBy = (int)HttpContext.Session.GetInt32("UserId");
             var result = new EResultDto();
             if (model.Id > 0)
-                result = _vehicleService.UpdateVehicleContract(model);
+                result = await _vehicleService.UpdateVehicleContract(model);
             else
-                result = _vehicleService.InsertVehicleContract(model);
+                result = await _vehicleService.InsertVehicleContract(model);
             return Json(result);
         }
         public IActionResult DeleteVehicleContract(int vehicleId) => Json(_vehicleService.DeleteVehicleContract(vehicleId));
 
         //Araca göre sözleşme tarihler arasındaki masrafları listeler
-        public IActionResult GetByIdVehicleIdContractDateAndAmount(int vehicleId) =>
-            Json(_vehicleService.GetByIdVehicleIdContractDateAndAmount(vehicleId));
+        public async Task<IActionResult> GetByIdVehicleIdContractDateAndAmount(int vehicleId) =>
+            Json(await _vehicleService.GetByIdVehicleIdContractDateAndAmount(vehicleId));
 
         //Sözleşme tutarı siler
         public IActionResult DeleteVehicleAmount(int vehicleContractId, int vehicleAmountId) =>

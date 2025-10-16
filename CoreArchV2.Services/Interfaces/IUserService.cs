@@ -9,7 +9,7 @@ namespace CoreArchV2.Services.Interfaces
     {
         PagedList<EUserDto> GetAllWithPaged(int? page, EUserDto filterModel);
         Task<IEnumerable<User>> GetAllAsync();
-        EUserDto FindByUsernameAndPass(EUserDto model);
+        Task<EUserDto> FindByUsernameAndPass(EUserDto model);
         Task<EUserDto> GetByIdAsync(int id);
         EResultDto Insert(EUserDto model);
         EResultDto Update(EUserDto model);

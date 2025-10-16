@@ -110,7 +110,7 @@ namespace CoreArchV2.Web.Controllers
                 if (!mobilePhone.StartsWith("0"))
                     mobilePhone = "0" + mobilePhone;
 
-                var user = _userService.FindByUsernameAndPass(new EUserDto { MobilePhone = mobilePhone, Password = pass });
+                var user = await _userService.FindByUsernameAndPass(new EUserDto { MobilePhone = mobilePhone, Password = pass });
                 if (user != null && user.ParentUnitId == null && user.UnitId == null)
                     loginInfo.LoginMessage = "Herhangi bir birime/projeye yetkiniz bulunmamaktadır. Yöneticiyle iletişime geçiniz.";
                 else
